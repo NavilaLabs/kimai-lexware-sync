@@ -1,0 +1,3 @@
+lexware_sync_webhook:
+    resource: '@KimaiLexwareSyncBundle/Controller/LexwareWebhookController.php'
+    type: attribute
