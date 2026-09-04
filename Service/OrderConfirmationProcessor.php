@@ -46,7 +46,7 @@ final class OrderConfirmationProcessor
 
         $project = $this->projectService->createNewProject($customer);
         $project->setName($orderConfirmation->getVoucherNumber());
-        $project->setStart($orderConfirmation->getVoucherDate());
+        $project->setStart(\DateTime::createFromImmutable($orderConfirmation->getVoucherDate()));
         $project->setColor($this->pickRandomColor());
         $this->projectService->saveProject($project);
 
