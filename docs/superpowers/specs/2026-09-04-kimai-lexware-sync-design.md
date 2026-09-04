@@ -266,16 +266,26 @@ pacing, and idempotency handling.
 
 ## 10. Testing strategy
 
-Unit tests cover the matching rule logic, the API client against a mocked HTTP client, and
-signature verification once the real header and payload mechanism has been confirmed, see the
-spike below.
+This deployment has no test harness for plugins. It is a production release build of Kimai,
+with no `tests` directory, no `phpunit.xml.dist`, `APP_ENV` set to `prod`, and a single database
+with no separate test environment configured. Setting up a full kernel boot against a real
+Doctrine test database, which is what an integration or functional test in the usual Symfony
+sense would need, is infrastructure work that reaches outside this plugin and was deliberately
+not taken on for milestone one.
 
-Integration tests exercise the processor against a real Doctrine test database, covering
-customer, project and activity creation, and the transaction rollback behavior on a partial
-failure.
+Automated tests are therefore limited to plain PHPUnit tests that need neither the Symfony
+kernel nor a database connection: the matching rule logic, the Lexware API client against a
+mocked HTTP client, the random color selection, and, once the spike below has confirmed the real
+header and payload mechanism, signature verification. These run against the plugin's own
+classes with Kimai's `vendor/autoload.php` for its dependencies, nothing more.
 
-Functional tests exercise the webhook controller with a valid signature, an invalid one, and a
-missing one, and the triage controller's permission checks and its convert and reject flows.
+Anything that touches Doctrine or the kernel, meaning the synchronizer, the processor, and the
+webhook and triage controllers, is verified by hand, following the lint, boot, exercise loop the
+`kimai-plugin` skill describes for plugins generally: rebuild the cache, confirm the service and
+route wiring with the relevant `debug:*` commands, run the install command, and exercise the real
+behavior through the Lexware sandbox account and the Kimai browser interface. Each task in the
+implementation plan that touches this layer states exactly what to click through or call to
+confirm it works.
 
 One manual spike happens before the "hardened" verifier is written: register one real event
 subscription against the live account, trigger a real delivery, for example by pointing it at a
