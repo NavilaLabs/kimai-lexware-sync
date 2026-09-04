@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+    <file source-language="en" target-language="en" datatype="plaintext" original="system-configuration.en.xlf">
+        <body>
+            <trans-unit id="lexware_sync.auto_convert_enabled" resname="lexware_sync.auto_convert_enabled">
+                <source>lexware_sync.auto_convert_enabled</source>
+                <target>Automatically convert a matching order confirmation into a project</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.title_regex" resname="lexware_sync.title_regex">
+                <source>lexware_sync.title_regex</source>
+                <target>Title pattern an order confirmation must match to convert automatically, empty matches every title</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.read_lines_enabled" resname="lexware_sync.read_lines_enabled">
+                <source>lexware_sync.read_lines_enabled</source>
+                <target>Create one activity per matching order confirmation line</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.line_regex" resname="lexware_sync.line_regex">
+                <source>lexware_sync.line_regex</source>
+                <target>Pattern a line's name or description must match to produce an activity, empty matches every line</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.reconcile_interval_minutes" resname="lexware_sync.reconcile_interval_minutes">
+                <source>lexware_sync.reconcile_interval_minutes</source>
+                <target>Minutes between reconciliation polls</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

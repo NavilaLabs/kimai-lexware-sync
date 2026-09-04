@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+    <file source-language="en" target-language="de" datatype="plaintext" original="system-configuration.de.xlf">
+        <body>
+            <trans-unit id="lexware_sync.auto_convert_enabled" resname="lexware_sync.auto_convert_enabled">
+                <source>lexware_sync.auto_convert_enabled</source>
+                <target>Passende Auftragsbestätigung automatisch in ein Projekt umwandeln</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.title_regex" resname="lexware_sync.title_regex">
+                <source>lexware_sync.title_regex</source>
+                <target>Titelmuster, das eine Auftragsbestätigung für die automatische Umwandlung erfüllen muss, leer bedeutet jeder Titel passt</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.read_lines_enabled" resname="lexware_sync.read_lines_enabled">
+                <source>lexware_sync.read_lines_enabled</source>
+                <target>Für jede passende Position der Auftragsbestätigung eine Aktivität anlegen</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.line_regex" resname="lexware_sync.line_regex">
+                <source>lexware_sync.line_regex</source>
+                <target>Muster, das Name oder Beschreibung einer Position erfüllen muss, um eine Aktivität zu erzeugen, leer bedeutet jede Position passt</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.reconcile_interval_minutes" resname="lexware_sync.reconcile_interval_minutes">
+                <source>lexware_sync.reconcile_interval_minutes</source>
+                <target>Minuten zwischen den Abgleichläufen</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>
