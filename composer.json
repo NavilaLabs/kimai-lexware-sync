@@ -1,0 +1,54 @@
+{
+    "name": "navilalabs/kimai-lexware-sync-bundle",
+    "description": "Synchronizes a Kimai instance with its own Lexware account for order confirmations and invoices.",
+    "homepage": "https://github.com/navilalabs/KimaiLexwareSyncBundle",
+    "type": "kimai-plugin",
+    "version": "1.0.0",
+    "keywords": ["kimai", "kimai-plugin", "lexware"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "NavilaLabs",
+            "email": "steffen.konermann@navilalabs.com"
+        }
+    ],
+    "extra": {
+        "kimai": {
+            "require": 26500,
+            "name": "KimaiLexwareSync"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "KimaiPlugin\\KimaiLexwareSyncBundle\\": ""
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "symfony/flex": false,
+            "symfony/runtime": false
+        },
+        "platform": {
+            "php": "8.2"
+        },
+        "preferred-install": {
+            "*": "dist"
+        },
+        "sort-packages": true
+    },
+    "scripts": {
+        "codestyle": "vendor/bin/php-cs-fixer fix --dry-run --verbose --show-progress=none",
+        "codestyle-fix": "vendor/bin/php-cs-fixer fix",
+        "phpstan": "vendor/bin/phpstan analyse . --configuration=phpstan.neon",
+        "tests": "vendor/bin/phpunit"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.0",
+        "kimai/kimai": "dev-main",
+        "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan-doctrine": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpstan/phpstan-symfony": "^2.0",
+        "phpunit/phpunit": "^10.0"
+    }
+}

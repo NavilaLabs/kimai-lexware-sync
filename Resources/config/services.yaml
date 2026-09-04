@@ -1,0 +1,16 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    KimaiPlugin\KimaiLexwareSyncBundle\:
+        resource: '../../*'
+        exclude:
+            - '../../Entity/'
+            - '../../Migrations/'
+            - '../../Resources/'
+
+    KimaiPlugin\KimaiLexwareSyncBundle\Controller\:
+        resource: '../../Controller'
+        tags: ['controller.service_arguments']
