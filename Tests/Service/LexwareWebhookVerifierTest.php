@@ -6,6 +6,7 @@ namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Service;
 
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareWebhookVerifier;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpClient\Exception\TransportException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -50,6 +51,51 @@ final class LexwareWebhookVerifierTest extends TestCase
         $verifier = $this->createVerifier();
 
         self::assertFalse($verifier->verify('{}', []));
+    }
+
+    public function testEmptyHeaderValueArrayFails(): void
+    {
+        $verifier = $this->createVerifier();
+
+        self::assertFalse($verifier->verify('{}', ['x-lxo-signature' => []]));
+    }
+
+    public function testInvalidBase64SignatureFails(): void
+    {
+        $verifier = $this->createVerifier();
+
+        self::assertFalse($verifier->verify('{}', ['x-lxo-signature' => ['not valid base64!!!']]));
+    }
+
+    public function testPublicKeyFetchFailureReturnsFalseWithoutThrowing(): void
+    {
+        $body = '{"eventType":"order-confirmation.changed","resourceId":"abc"}';
+        $signature = $this->sign($body);
+        $httpClient = new MockHttpClient(function () {
+            throw new TransportException('network down');
+        });
+        $verifier = new LexwareWebhookVerifier($httpClient);
+
+        self::assertFalse($verifier->verify($body, ['x-lxo-signature' => [$signature]]));
+    }
+
+    public function testPublicKeyIsFetchedOnlyOnce(): void
+    {
+        $body = '{"eventType":"order-confirmation.changed","resourceId":"abc"}';
+        $signature = $this->sign($body);
+        $requestCount = 0;
+        $httpClient = new MockHttpClient(function () use (&$requestCount) {
+            $requestCount++;
+
+            return new MockResponse(self::$publicKeyPem, ['http_code' => 200]);
+        });
+        $verifier = new LexwareWebhookVerifier($httpClient);
+
+        $verifier->verify($body, ['x-lxo-signature' => [$signature]]);
+        $verifier->verify($body, ['x-lxo-signature' => [$signature]]);
+        $verifier->verify($body, ['x-lxo-signature' => [$signature]]);
+
+        self::assertSame(1, $requestCount);
     }
 
     private function sign(string $body): string
