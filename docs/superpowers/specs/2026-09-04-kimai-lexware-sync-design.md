@@ -83,27 +83,40 @@ same processing path, so there is only one piece of code that turns a Lexware or
 confirmation into Kimai state. The trigger only decides when that path runs, never what it
 does.
 
+Symfony Messenger, which would be the obvious way to decouple the trigger from the processing,
+is not among the libraries Kimai ships to its plugins, confirmed against both the local
+installation and the current Kimai source. Since a plugin may not add a dependency of its own,
+the processing described below runs synchronously, inside the same request that received the
+webhook call, or the same console invocation that ran the reconciliation poll.
+
 1. `LexwareWebhookController` receives the webhook call and verifies its signature, or the
    reconciliation command notices a new or changed voucher identifier during its poll.
-2. Either trigger dispatches the same Messenger message, carrying only the order confirmation's
-   identifier, never any of its business data.
-3. The message handler refetches the full order confirmation by identifier from the Lexware API.
+2. Either trigger calls the same synchronizer service directly, passing only the order
+   confirmation's identifier, never any of its business data.
+3. The synchronizer refetches the full order confirmation by identifier from the Lexware API.
    The webhook body itself is never treated as trustworthy data, only as a signal to go and
    fetch the current, authoritative state.
-4. The handler upserts a `TrackedOrderConfirmation` record from that fresh response.
-5. If the configured matching rules pass, the handler creates the corresponding Kimai customer,
-   if one does not already exist, then the project, and then, if line reading is enabled, the
-   matching activities, all inside one database transaction together with the tracking record.
+4. The synchronizer upserts a `TrackedOrderConfirmation` record from that fresh response.
+5. If the configured matching rules pass, the synchronizer creates the corresponding Kimai
+   customer, if one does not already exist, then the project, and then, if line reading is
+   enabled, the matching activities, all inside one database transaction together with the
+   tracking record.
 6. If the rules do not pass, the record simply stays in a pending state and becomes visible in
    the triage screen described in section 7.
+
+Running this synchronously means a webhook call only returns once processing has finished. At
+the volume one company's own order confirmations produce, this is an acceptable simplification
+rather than a real bottleneck. If that assumption ever stops holding, the fallback is a plugin
+owned queue table processed by its own cron triggered command, following the same pattern
+`ReconcileOrderConfirmationsCommand` already uses, rather than a new runtime dependency.
 
 ### Components
 
 | Component | Responsibility |
 |---|---|
-| `Controller/LexwareWebhookController.php` | Receives the Lexware callback request, verifies the signature, persists the raw event as an audit trail, and dispatches a Messenger message. It always responds quickly and never performs the actual synchronization work inline. |
-| `Message/ProcessOrderConfirmationEvent.php` and its handler | Refetches `GET /v1/order-confirmations/{id}`, upserts the `TrackedOrderConfirmation` record, applies the matching rules, and creates Kimai entities when applicable, all inside one Doctrine transaction. |
-| `Command/ReconcileOrderConfirmationsCommand.php` | A cron triggered console command. It pages through `GET /v1/voucherlist` filtered to order confirmations, compares the results against the identifiers and modification dates already known locally, and dispatches the same message for anything new or changed. This is the safety net for missed webhook deliveries. |
+| `Controller/LexwareWebhookController.php` | Receives the Lexware callback request, verifies the signature, persists the raw event as an audit trail, and then calls `OrderConfirmationSynchronizer` directly. Any exception raised during that call is caught and recorded against the audit trail entry, rather than left to fail the response, since the reconciliation poll is the real safety net for a failed attempt. |
+| `Service/OrderConfirmationSynchronizer.php` | The single entry point both triggers call. Refetches `GET /v1/order-confirmations/{id}`, upserts the `TrackedOrderConfirmation` record, applies the matching rules, and delegates to `OrderConfirmationProcessor` for the actual Kimai entity creation, all inside one Doctrine transaction. |
+| `Command/ReconcileOrderConfirmationsCommand.php` | A cron triggered console command. It pages through `GET /v1/voucherlist` filtered to order confirmations, compares the results against the identifiers and modification dates already known locally, and calls the same synchronizer for anything new or changed. This is the safety net for missed webhook deliveries and for any earlier attempt that failed. |
 | `Service/LexwareApiClient.php` | A thin, hand written client on top of the Symfony HTTP client, covering exactly the endpoints this project needs: contacts, order confirmations, invoices for milestone two, and event subscriptions. It paces its own requests to Lexware's documented limit of two requests per second. It is deliberately not a third party library; see section 9 for the licensing reason. |
 | `Service/LexwareWebhookVerifier.php` | Fetches and caches Lexware's signature public key, and verifies each incoming callback before anything about it is trusted. |
 | `Service/OrderConfirmationProcessor.php` | The core business logic: mapping or creating a Kimai customer for a Lexware contact, creating the project, creating one activity per matching line, and choosing a random color from Kimai's configured palette for each. Used identically by the automatic path and by the manual "convert" action in the triage screen. |
@@ -203,8 +216,8 @@ plus a warning icon whenever that order confirmation changed after it was conver
 ## 8. Error handling and integrity
 
 An invalid or missing webhook signature is logged in the webhook event table with its validity
-flag set to false, the request receives an unauthorized response, and no message is dispatched.
-A delivery that is unsigned or signed incorrectly is never trusted.
+flag set to false, the request receives an unauthorized response, and the synchronizer is never
+called. A delivery that is unsigned or signed incorrectly is never trusted.
 
 The webhook body is never trusted for data. It only triggers a refetch of the resource through
 the authenticated API, and only that freshly fetched, authenticated response is ever processed.
@@ -216,10 +229,17 @@ Kimai project without a tracking record, or the other way around.
 Deduplication is keyed on the Lexware identifier together with its modification date. An event
 whose modification date is not newer than what is already stored is treated as a no-op,
 regardless of whether it arrived through the webhook or through the reconciliation poll, since
-both funnel through the same message type.
+both funnel through the same synchronizer.
 
-Messenger applies its standard bounded retry with backoff, and after that its failure queue,
-rather than allowing a failure to disappear silently.
+There is no message queue to retry a failed attempt automatically. When the synchronizer is
+called from the webhook controller and raises an exception, the error is caught, its text is
+recorded against the webhook event table entry, and the request still receives a response,
+rather than causing Lexware to see a failure and apply whatever retry behavior it has. The
+reconciliation poll picks up the same order confirmation again on its next run, since it
+re-checks every voucher's modification date regardless of why an earlier attempt did not
+succeed. When the synchronizer is called from the reconciliation command itself and raises an
+exception, the command logs it and continues with the next voucher, rather than letting one bad
+record stop the whole poll.
 
 Requests toward Lexware are paced client side to stay within the documented limit of two
 requests per second, independent of which trigger caused them.
