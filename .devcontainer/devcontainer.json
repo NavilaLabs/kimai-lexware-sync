@@ -1,0 +1,36 @@
+{
+  "name": "kimai-plugin",
+  "dockerComposeFile": "docker-compose.yaml",
+  "service": "dev",
+  "runServices": ["sqldb", "kimai", "dev"],
+  "workspaceFolder": "/opt/kimai/var/plugins/KimaiPlugin",
+  "remoteUser": "dev",
+  "shutdownAction": "stopCompose",
+  "forwardPorts": [8001],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "bmewburn.vscode-intelephense-client",
+        "xdebug.php-debug",
+        "junstyle.php-cs-fixer",
+        "SanderRonde.phpstan-vscode",
+        "mblode.twig-language-2",
+        "redhat.vscode-yaml",
+        "EditorConfig.EditorConfig",
+      ],
+      "settings": {
+        "php.validate.executablePath": "/usr/local/bin/php",
+        "intelephense.environment.phpVersion": "8.3.0",
+        "intelephense.environment.includePaths": [
+          "/opt/kimai/src",
+          "/opt/kimai/vendor",
+          "/opt/kimai/config",
+          "/opt/kimai/var/cache/dev",
+        ],
+        "phpstan.binPath": "/opt/kimai/vendor/bin/phpstan",
+        "phpstan.rootPath": "/opt/kimai",
+        "php-cs-fixer.executablePath": "/opt/kimai/vendor/bin/php-cs-fixer",
+      },
+    },
+  },
+}
