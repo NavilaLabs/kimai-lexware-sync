@@ -2110,63 +2110,187 @@ git commit -m "Add the reconciliation command that polls Lexware as a safety net
 
 ---
 
-## Task 10: Webhook signature verification spike and verifier
+## Task 10: Webhook signature verifier
 
 **Files:**
 - Create: `Service/LexwareWebhookVerifier.php`
-- Create: `Tests/Service/LexwareWebhookVerifierTest.php` (only once the spike below confirms the mechanism; see Step 4)
+- Create: `Tests/Service/LexwareWebhookVerifierTest.php`
 
 **Interfaces:**
-- Produces: `LexwareWebhookVerifier` with `verify(string $rawBody, array $headers): bool`. Task 11 calls exactly this method, passing the raw request body and the request's header bag as a plain associative array, and trusts its boolean result completely.
+- Produces: `LexwareWebhookVerifier` with `verify(string $rawBody, array $headers): bool`. Task 11 calls exactly this method, passing the raw request body and the request's header bag as the array `Symfony\Component\HttpFoundation\HeaderBag::all()` returns (lowercase header names, each value an array of strings), and trusts its boolean result completely.
 
-This is the manual spike the spec's testing strategy section requires before any code enforces a signature. It needs the user's participation for one step, since it involves creating or editing an order confirmation in the real Lexware account.
+The manual spike the spec's testing strategy section required has already happened, before this task was dispatched, since it needed direct interactive access to the real Lexware account and could not be delegated. A real event subscription was registered against the live sandbox account, pointed at a disposable webhook dot site endpoint, an order confirmation was saved in the real Lexware interface to trigger a real delivery, and the captured request was inspected directly. Findings, confirmed against the real captured request and the real published key, not merely inferred from documentation or a third party client's source:
 
-- [ ] **Step 1: Register a real event subscription pointed at a capture endpoint**
+- The signature arrives in the `X-Lxo-Signature` header (a single value, base64 encoded).
+- The algorithm is RSA-SHA512, verified over the exact raw request body bytes as transmitted, not a reserialized or reformatted version of it.
+- The public key is published, unauthenticated, at `https://developers.lexware.io/webhookSignature/public/public_key.pub`, a PEM encoded RSA public key. Fetching it once and caching it for the process lifetime is safe and sufficient; Lexware does not rotate it per request.
+- The delivered payload is a thin notification, not the full resource: `organizationId`, `eventType`, `resourceId`, `eventDate`. This confirms the design's assumption that the payload is only ever a signal to refetch, never treated as data.
+- The disposable subscription was deleted immediately after the capture; this task registers no subscription of its own, Task 11 registers the real, permanent one.
 
-Open `https://webhook.site` in a browser and copy the unique URL it assigns. Then, using the sandbox key already in `.env`:
+This history is recorded in the spec's section 3 and section 10. This task's own work is writing the verifier and its test using these already-confirmed facts, nothing further needs discovering.
 
-```bash
-source .env
-curl -s -X POST \
-  -H "Authorization: Bearer $LEXWARE_API_KEY" \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json" \
-  -d '{"eventType":"order-confirmation.changed","callbackUrl":"<the webhook.site URL>"}' \
-  https://api.lexware.io/v1/event-subscriptions
+- [ ] **Step 1: Write the failing test**
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Service;
+
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareWebhookVerifier;
+use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
+
+final class LexwareWebhookVerifierTest extends TestCase
+{
+    private static string $publicKeyPem;
+    private static string $privateKeyPem;
+
+    public static function setUpBeforeClass(): void
+    {
+        $keyPair = openssl_pkey_new([
+            'private_key_bits' => 2048,
+            'private_key_type' => OPENSSL_KEYTYPE_RSA,
+        ]);
+        openssl_pkey_export($keyPair, $privateKeyPem);
+        self::$privateKeyPem = $privateKeyPem;
+
+        $details = openssl_pkey_get_details($keyPair);
+        self::$publicKeyPem = $details['key'];
+    }
+
+    public function testValidSignaturePasses(): void
+    {
+        $body = '{"eventType":"order-confirmation.changed","resourceId":"abc"}';
+        $signature = $this->sign($body);
+        $verifier = $this->createVerifier();
+
+        self::assertTrue($verifier->verify($body, ['x-lxo-signature' => [$signature]]));
+    }
+
+    public function testTamperedBodyFails(): void
+    {
+        $body = '{"eventType":"order-confirmation.changed","resourceId":"abc"}';
+        $signature = $this->sign($body);
+        $verifier = $this->createVerifier();
+
+        self::assertFalse($verifier->verify($body . 'tampered', ['x-lxo-signature' => [$signature]]));
+    }
+
+    public function testMissingHeaderFails(): void
+    {
+        $verifier = $this->createVerifier();
+
+        self::assertFalse($verifier->verify('{}', []));
+    }
+
+    private function sign(string $body): string
+    {
+        openssl_sign($body, $signature, self::$privateKeyPem, OPENSSL_ALGO_SHA512);
+
+        return base64_encode($signature);
+    }
+
+    private function createVerifier(): LexwareWebhookVerifier
+    {
+        $httpClient = new MockHttpClient(fn () => new MockResponse(self::$publicKeyPem, ['http_code' => 200]));
+
+        return new LexwareWebhookVerifier($httpClient);
+    }
+}
 ```
 
-Expected: a `200` or `201` response with an `id`, confirming the subscription was created.
-
-- [ ] **Step 2: Ask the user to trigger a real delivery**
-
-Ask the user to open the Lexware web interface now, open the order confirmation `AB0001` used throughout this project's design, and save it again with no changes, or make a small edit and save it. This is the one step in this whole plan that only a human can perform, since it requires acting inside Lexware's own interface, not the API.
-
-- [ ] **Step 3: Inspect the captured delivery**
-
-Reload the webhook.site page and inspect the captured request. Record, in a short note appended to this plan file or the spec's open items section:
-
-- The exact header name carrying the signature (the third party client research during design pointed at an asymmetric, public key based scheme rather than a shared secret, so look for a header naming a signature and, separately, a header or field identifying which key signed it).
-- Whether the payload is the full resource or a thin notification requiring a refetch, confirming or correcting the spec's assumption that it is always treated as the latter regardless.
-- Whether Lexware retries a failed delivery, and on what schedule, if the capture tool exposes that.
-
-- [ ] **Step 4: Write the verifier using what was found**
-
-The exact shape depends entirely on Step 3's findings, so this is deliberately the last step in this task rather than pre-written. Implement `LexwareWebhookVerifier::verify()` to fetch Lexware's public key once, cache it for the process lifetime, and verify the signature header found in Step 3 against the raw body using that key, returning `false` for a missing header, an unparseable signature, or a key mismatch, never throwing for those cases. Once implemented, write `Tests/Service/LexwareWebhookVerifierTest.php` covering a valid signature, a tampered body, and a missing header, following the same plain PHPUnit pattern as Task 5 and Task 6, using a fixed key pair generated for the test rather than the real Lexware key.
-
-- [ ] **Step 5: Delete the capture subscription**
+- [ ] **Step 2: Run the test to confirm it fails**
 
 ```bash
-source .env
-curl -s -X DELETE -H "Authorization: Bearer $LEXWARE_API_KEY" https://api.lexware.io/v1/event-subscriptions/<the id from Step 1>
+../../../vendor/bin/phpunit --bootstrap Tests/bootstrap.php Tests/Service/LexwareWebhookVerifierTest.php
 ```
 
-This avoids leaving a stale subscription pointed at a throwaway inspection tool once Task 11 registers the real one.
+Expected: FAIL, `Class "KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareWebhookVerifier" not found`.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 3: Write the implementation**
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace KimaiPlugin\KimaiLexwareSyncBundle\Service;
+
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+
+final class LexwareWebhookVerifier
+{
+    private const PUBLIC_KEY_URL = 'https://developers.lexware.io/webhookSignature/public/public_key.pub';
+    private const SIGNATURE_HEADER = 'x-lxo-signature';
+
+    private ?string $publicKey = null;
+
+    public function __construct(private readonly HttpClientInterface $httpClient)
+    {
+    }
+
+    /**
+     * @param array<string, array<int, string>> $headers
+     */
+    public function verify(string $rawBody, array $headers): bool
+    {
+        $signatureHeader = $headers[self::SIGNATURE_HEADER][0] ?? null;
+        if (!\is_string($signatureHeader) || $signatureHeader === '') {
+            return false;
+        }
+
+        $signature = base64_decode($signatureHeader, true);
+        if ($signature === false) {
+            return false;
+        }
+
+        $publicKey = $this->getPublicKey();
+        if ($publicKey === null) {
+            return false;
+        }
+
+        return openssl_verify($rawBody, $signature, $publicKey, OPENSSL_ALGO_SHA512) === 1;
+    }
+
+    private function getPublicKey(): ?string
+    {
+        if ($this->publicKey !== null) {
+            return $this->publicKey;
+        }
+
+        try {
+            $pem = $this->httpClient->request('GET', self::PUBLIC_KEY_URL)->getContent();
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if ($pem === '') {
+            return null;
+        }
+
+        $this->publicKey = $pem;
+
+        return $pem;
+    }
+}
+```
+
+- [ ] **Step 4: Run the test to confirm it passes**
 
 ```bash
-git add Service/LexwareWebhookVerifier.php Tests/Service/LexwareWebhookVerifierTest.php docs/superpowers/specs/2026-09-04-kimai-lexware-sync-design.md
-git commit -m "Add the webhook signature verifier, confirmed against a real Lexware delivery"
+../../../vendor/bin/phpunit --bootstrap Tests/bootstrap.php Tests/Service/LexwareWebhookVerifierTest.php
+```
+
+Expected: PASS, 3 tests.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add Service/LexwareWebhookVerifier.php Tests/Service/LexwareWebhookVerifierTest.php
+git commit -m "Add the webhook signature verifier, using the mechanism confirmed against a real Lexware delivery"
 ```
 
 ---
@@ -2256,7 +2380,7 @@ final class LexwareWebhookController
 }
 ```
 
-The exact key read from the decoded body for the resource identifier depends on what Task 10's spike found the real payload to contain; adjust the `resourceId` extraction above to match that shape before this task is considered complete. The response is still returned successfully to Lexware even when synchronization fails, since the webhook event record and the reconciliation poll are the recovery path, not a Lexware side retry this plugin depends on.
+The `eventType` and `resourceId` keys read from the decoded body above match the real payload shape Task 10's spike captured from a live delivery, confirmed field for field, not assumed. The response is still returned successfully to Lexware even when synchronization fails, since the webhook event record and the reconciliation poll are the recovery path, not a Lexware side retry this plugin depends on.
 
 - [ ] **Step 3: Register the real event subscription**
 

@@ -61,11 +61,16 @@ These are the grounding facts the design below relies on. See the two reference 
   type values was obtained directly from the API's own validation error, and includes
   `order-confirmation.created`, `order-confirmation.changed` and
   `order-confirmation.status.changed` for milestone one, plus `invoice.created`,
-  `invoice.changed` and `invoice.status.changed` for milestone two. Signature verification is
-  asymmetric, based on a public key fetched from Lexware and cached, according to a third party
-  open source client that implements it, rather than a shared secret. The exact header name and
-  payload shape were not resolvable from the documentation pages that could be fetched, and are
-  called out as an implementation spike in section 10.
+  `invoice.changed` and `invoice.status.changed` for milestone two. A real subscription was
+  registered against the live sandbox account on 2026-09-04, and a real delivery was captured
+  after an order confirmation was saved in the Lexware interface. The delivered payload is a
+  thin notification, not the full resource: `organizationId`, `eventType`, `resourceId`,
+  `eventDate`, confirming the plan to always refetch the resource by its identifier rather than
+  trust the payload for data. The signature arrives in the `X-Lxo-Signature` header, is RSA-SHA512
+  over the exact raw request body bytes as transmitted, and verifies against the public key
+  published at `https://developers.lexware.io/webhookSignature/public/public_key.pub`. Both the
+  live delivery and the signature verification were confirmed end to end with the actual captured
+  request and the actual published key, not assumed from a third party client's behavior alone.
 - Lexware invoices and order confirmations have no update endpoint and no documented deletion or
   void endpoint. This confirms that milestone two cannot edit an existing Lexware invoice in
   place. It must create a new invoice containing the combined line items, and can at most flag
@@ -275,9 +280,9 @@ not taken on for milestone one.
 
 Automated tests are therefore limited to plain PHPUnit tests that need neither the Symfony
 kernel nor a database connection: the matching rule logic, the Lexware API client against a
-mocked HTTP client, the random color selection, and, once the spike below has confirmed the real
-header and payload mechanism, signature verification. These run against the plugin's own
-classes with Kimai's `vendor/autoload.php` for its dependencies, nothing more.
+mocked HTTP client, the random color selection, and, using the header and payload mechanism the
+spike below confirmed, signature verification. These run against the plugin's own classes with
+Kimai's `vendor/autoload.php` for its dependencies, nothing more.
 
 Anything that touches Doctrine or the kernel, meaning the synchronizer, the processor, and the
 webhook and triage controllers, is verified by hand, following the lint, boot, exercise loop the
@@ -287,16 +292,16 @@ behavior through the Lexware sandbox account and the Kimai browser interface. Ea
 implementation plan that touches this layer states exactly what to click through or call to
 confirm it works.
 
-One manual spike happens before the "hardened" verifier is written: register one real event
-subscription against the live account, trigger a real delivery, for example by pointing it at a
-tool like ngrok or webhook dot site to inspect it, and confirm the exact signature header name
-and payload shape before any code is written that actually enforces anything based on them.
-This is tracked as the first implementation task, not something deferred indefinitely.
+One manual spike happened before the "hardened" verifier was written: a real event subscription
+was registered against the live account, pointed at a disposable webhook dot site inspection
+endpoint, a real order confirmation was saved to trigger a real delivery, and the captured
+request confirmed the exact signature header, algorithm and payload shape before any code was
+written that enforces anything based on them. The signature was independently verified against
+the actual captured body and the actual published public key, not merely inferred from a third
+party client's source. The disposable subscription was deleted immediately afterward. See
+section 3 for the confirmed mechanism.
 
 ## 11. Open items carried into implementation
-
-The exact webhook signature header name and payload shape remain to be confirmed by the spike
-described in section 10.
 
 A public HTTPS endpoint with a valid certificate for the production Kimai instance is an
 infrastructure precondition owned by the user, not by the plugin, and webhook delivery cannot be
