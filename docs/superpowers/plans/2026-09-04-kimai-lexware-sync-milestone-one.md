@@ -2011,6 +2011,7 @@ namespace KimaiPlugin\KimaiLexwareSyncBundle\Command;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedOrderConfirmationRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiClient;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\OrderConfirmationSynchronizer;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -2024,6 +2025,7 @@ final class ReconcileOrderConfirmationsCommand extends Command
         private readonly LexwareApiClient $client,
         private readonly TrackedOrderConfirmationRepository $repository,
         private readonly OrderConfirmationSynchronizer $synchronizer,
+        private readonly LoggerInterface $logger,
     ) {
         parent::__construct();
     }
@@ -2033,6 +2035,7 @@ final class ReconcileOrderConfirmationsCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $page = 0;
         $synchronized = 0;
+        $failed = 0;
         $isLastPage = false;
 
         while (!$isLastPage) {
@@ -2053,7 +2056,10 @@ final class ReconcileOrderConfirmationsCommand extends Command
                     $this->synchronizer->synchronize($lexwareId);
                     $synchronized++;
                 } catch (\Throwable $exception) {
-                    $io->error(\sprintf('Failed to synchronize order confirmation %s: %s', $lexwareId, $exception->getMessage()));
+                    $message = \sprintf('Failed to synchronize order confirmation %s: %s', $lexwareId, $exception->getMessage());
+                    $this->logger->error($message);
+                    $io->error($message);
+                    $failed++;
                 }
             }
 
@@ -2061,9 +2067,9 @@ final class ReconcileOrderConfirmationsCommand extends Command
             $page++;
         }
 
-        $io->success(\sprintf('Reconciled %d order confirmation(s).', $synchronized));
+        $io->success(\sprintf('Reconciled %d order confirmation(s), %d failed.', $synchronized, $failed));
 
-        return Command::SUCCESS;
+        return $failed === 0 ? Command::SUCCESS : Command::FAILURE;
     }
 
     /**
