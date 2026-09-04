@@ -1,9 +1,9 @@
 {
-  "name": "kimai-plugin",
+  "name": "kimai-lexware-sync",
   "dockerComposeFile": "docker-compose.yaml",
   "service": "dev",
   "runServices": ["sqldb", "kimai", "dev"],
-  "workspaceFolder": "/opt/kimai/var/plugins/KimaiPlugin",
+  "workspaceFolder": "/opt/kimai/var/plugins/KimaiLexwareSyncBundle",
   "remoteUser": "dev",
   "shutdownAction": "stopCompose",
   "forwardPorts": [8001],

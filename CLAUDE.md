@@ -5,11 +5,11 @@ repeats, `README.md`.
 
 ## What this is
 
-A Kimai 2 plugin, a bundle under the namespace `KimaiPlugin\KimaiLexwareSync`, that synchronizes
-one company's own Kimai instance with that same company's own Lexware account (formerly known
-as lexoffice), through the Lexware Public API. That is a static bearer key, not the Partner
-API or its OAuth flow. See `.claude/skills/kimai-lexware-sync/references/lexware-api.md` for
-why that distinction matters.
+A Kimai 2 plugin, a bundle under the namespace `KimaiPlugin\KimaiLexwareSyncBundle`, that
+synchronizes one company's own Kimai instance with that same company's own Lexware account
+(formerly known as lexoffice), through the Lexware Public API. That is a static bearer key, not
+the Partner API or its OAuth flow. See `.claude/skills/kimai-lexware-sync/references/lexware-api.md`
+for why that distinction matters.
 
 The authoritative design document is
 `docs/superpowers/specs/2026-09-04-kimai-lexware-sync-design.md`. Read it before making any
