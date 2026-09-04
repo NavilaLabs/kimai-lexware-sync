@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+    <file source-language="en" target-language="en" datatype="plaintext" original="messages.en.xlf">
+        <body>
+            <trans-unit id="lexware_sync.triage.title" resname="lexware_sync.triage.title">
+                <source>lexware_sync.triage.title</source>
+                <target>Pending order confirmations</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.triage.action" resname="lexware_sync.triage.action">
+                <source>lexware_sync.triage.action</source>
+                <target>Pending order confirmations</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.triage.voucher_number" resname="lexware_sync.triage.voucher_number">
+                <source>lexware_sync.triage.voucher_number</source>
+                <target>Voucher number</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.triage.title_column" resname="lexware_sync.triage.title_column">
+                <source>lexware_sync.triage.title_column</source>
+                <target>Title</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.triage.voucher_date" resname="lexware_sync.triage.voucher_date">
+                <source>lexware_sync.triage.voucher_date</source>
+                <target>Date</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.triage.convert" resname="lexware_sync.triage.convert">
+                <source>lexware_sync.triage.convert</source>
+                <target>Convert to project</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.triage.reject" resname="lexware_sync.triage.reject">
+                <source>lexware_sync.triage.reject</source>
+                <target>Reject</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

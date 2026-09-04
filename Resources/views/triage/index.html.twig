@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block main %}
+    {% embed '@theme/embeds/card.html.twig' %}
+        {% block box_title %}{{ 'lexware_sync.triage.title'|trans }}{% endblock %}
+        {% block box_body %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>{{ 'lexware_sync.triage.voucher_number'|trans }}</th>
+                        <th>{{ 'lexware_sync.triage.title_column'|trans }}</th>
+                        <th>{{ 'lexware_sync.triage.voucher_date'|trans }}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for orderConfirmation in orderConfirmations %}
+                        <tr>
+                            <td>{{ orderConfirmation.voucherNumber }}</td>
+                            <td>{{ orderConfirmation.title }}</td>
+                            <td>{{ orderConfirmation.voucherDate|date('Y-m-d') }}</td>
+                            <td>
+                                <form method="post" action="{{ path('lexware_sync_triage_convert', {id: orderConfirmation.id}) }}" style="display: inline">
+                                    <button type="submit" class="btn btn-sm btn-primary">{{ 'lexware_sync.triage.convert'|trans }}</button>
+                                </form>
+                                <form method="post" action="{{ path('lexware_sync_triage_reject', {id: orderConfirmation.id}) }}" style="display: inline">
+                                    <button type="submit" class="btn btn-sm btn-secondary">{{ 'lexware_sync.triage.reject'|trans }}</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endblock %}
+    {% endembed %}
+{% endblock %}
