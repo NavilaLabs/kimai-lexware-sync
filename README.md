@@ -69,7 +69,7 @@ never that it matches nothing. This rule is applied consistently across the whol
 
 ## Permissions
 
-A dedicated `lexware_sync.triage` permission gates the manual triage screen. It is kept separate
+A dedicated `triage_lexware_sync` permission gates the manual triage screen. It is kept separate
 from Kimai's general project management permissions, so it can be granted only to the roles
 that should decide which order confirmations become projects.
 

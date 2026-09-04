@@ -192,7 +192,7 @@ the rest of the interface, rather than an arbitrary color value.
 
 ## 7. Triage screen and permissions
 
-A dedicated permission, `lexware_sync.triage`, gates the manual triage feature. Only a role
+A dedicated permission, `triage_lexware_sync`, gates the manual triage feature. Only a role
 granted this permission sees it. It is kept separate from Kimai's general project management
 permissions on purpose.
 
@@ -345,4 +345,4 @@ instead of an instant update.
   example when a project is invoiced in several batches over time, and how the triage-equivalent
   list for milestone two should present that.
 - The permission model for milestone two's user interface: whether it reuses the
-  `lexware_sync.triage` permission or introduces a separate one.
+  `triage_lexware_sync` permission or introduces a separate one.
