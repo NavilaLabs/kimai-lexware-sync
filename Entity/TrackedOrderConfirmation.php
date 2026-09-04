@@ -15,7 +15,7 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedOrderConfirmationReposi
 
 #[ORM\Entity(repositoryClass: TrackedOrderConfirmationRepository::class)]
 #[ORM\Table(name: 'kimai2_ext_lexware_order_confirmation')]
-final class TrackedOrderConfirmation
+class TrackedOrderConfirmation
 {
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
