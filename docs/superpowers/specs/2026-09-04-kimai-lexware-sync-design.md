@@ -218,6 +218,15 @@ Kimai's normal project list shows a small icon on any project that originated fr
 confirmation, with a tooltip carrying the voucher number and a link to the Lexware document,
 plus a warning icon whenever that order confirmation changed after it was converted.
 
+Milestone one ships a first version of this indicator on the project detail page only, showing
+the voucher number and the changed-after-conversion warning, since the detail page already has
+a documented extension point for it. The project list placement and the link to the Lexware
+document are not yet built: putting an icon on the list itself needs a deliberate choice between
+Kimai's meta field mechanism, which would make the column opt-in rather than always visible, and
+some other approach, and the document link needs the real Lexware web application deep link
+pattern confirmed against a live account first. Both are tracked as a small follow-up task, not
+abandoned.
+
 ## 8. Error handling and integrity
 
 An invalid or missing webhook signature is logged in the webhook event table with its validity

@@ -2820,6 +2820,14 @@ git add EventSubscriber/ProjectDetailSubscriber.php Resources/translations/messa
 git commit -m "Show the originating order confirmation on a converted project's detail page"
 ```
 
+When this task was actually executed, `App\Event\ProjectDetailControllerEvent` turned out to have
+no `addInfoBox()` method at all; the real extension point is `addController(string $controller)`,
+consumed by the detail template's fragment rendering loop. The delivered implementation used a
+small `ProjectOriginController` fragment controller instead, referenced from the subscriber, with
+the same visible result. Separately, this task's own instructions targeted the project detail
+page, while the design spec describes the project list page with a link to the Lexware document.
+That gap was not closed here; see the spec's section 7 for the follow-up this leaves open.
+
 ---
 
 ## Task 14: Lexware API key expiry health check
