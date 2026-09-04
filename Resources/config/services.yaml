@@ -10,7 +10,12 @@ services:
             - '../../Entity/'
             - '../../Migrations/'
             - '../../Resources/'
+            - '../../Tests/'
 
     KimaiPlugin\KimaiLexwareSyncBundle\Controller\:
         resource: '../../Controller'
         tags: ['controller.service_arguments']
+
+    KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiClient:
+        arguments:
+            $apiKey: '%env(LEXWARE_API_KEY)%'

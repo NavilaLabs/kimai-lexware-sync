@@ -44,7 +44,10 @@ Full design: [`docs/superpowers/specs/2026-09-04-kimai-lexware-sync-design.md`](
 - A Lexware Public API key, not a Partner API key. Generate one at
   `https://app.lexware.de/addons/public-api`. Store it as an environment variable and reference
   it from `local.yaml` rather than entering it directly into Kimai's system configuration,
-  which persists every value as plain text.
+  which persists every value as plain text. Add `LEXWARE_API_KEY=...` to `.env.local` or the
+  deployment's own secret store, since the plugin's service configuration reads the key from
+  the `LEXWARE_API_KEY` environment variable. This repository's own `.env` already does this
+  for the development sandbox.
 - For webhook delivery, the Kimai instance must be reachable over public HTTPS with a valid
   certificate. Lexware requires a rating of grade A or better and silently rejects a
   self-signed certificate. Until that is in place, the reconciliation poll still keeps
