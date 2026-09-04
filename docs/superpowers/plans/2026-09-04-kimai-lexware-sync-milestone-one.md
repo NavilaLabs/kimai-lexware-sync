@@ -346,7 +346,7 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedOrderConfirmationReposi
 
 #[ORM\Entity(repositoryClass: TrackedOrderConfirmationRepository::class)]
 #[ORM\Table(name: 'kimai2_ext_lexware_order_confirmation')]
-final class TrackedOrderConfirmation
+class TrackedOrderConfirmation
 {
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
@@ -547,6 +547,8 @@ final class TrackedOrderConfirmation
     }
 }
 ```
+
+This class is deliberately not `final`, unlike every other class in this plan. It is the target of `TrackedOrderConfirmationLine`'s lazily loaded `ManyToOne` association, and Doctrine's proxy generator subclasses a lazily loaded entity to defer loading it; a `final` class cannot be subclassed, so marking it `final` fatals the first time Doctrine needs a reference to an unloaded row. Kimai's own core entities that are `ManyToOne` targets, `Customer`, `Project`, `Activity`, `User`, avoid `final` for the same reason. `TrackedOrderConfirmationLine`, `ContactMapping` and `WebhookEvent` have no incoming association and stay `final`.
 
 - [ ] **Step 3: Write `Entity/TrackedOrderConfirmationLine.php`**
 
