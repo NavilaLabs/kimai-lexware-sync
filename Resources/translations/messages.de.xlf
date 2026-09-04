@@ -30,6 +30,10 @@
                 <source>lexware_sync.triage.reject</source>
                 <target>Ablehnen</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.origin" resname="lexware_sync.origin">
+                <source>lexware_sync.origin</source>
+                <target>Lexware Auftragsbestätigung</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>
