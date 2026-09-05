@@ -1,0 +1,60 @@
+{
+  "skill_name": "kimai-plugin",
+  "evals": [
+    {
+      "id": 0,
+      "name": "menu-permission-scaffold",
+      "prompt": "Wir nutzen Kimai 2.65 und ich brauche ein eigenes Plugin: FahrtenBundle. Es soll im Hauptmenue einen Eintrag 'Fahrten' bekommen, der nur fuer Leute sichtbar ist, die eine neue Berechtigung haben (Teamleads und Super-Admins sollen sie per Default kriegen), und dahinter eine simple Seite. Leg mir bitte alle Dateien an die dafuer noetig sind, komplett, nicht nur Ausschnitte.",
+      "expected_output": "Complete plugin skeleton with correct flat layout, composer.json with extra.kimai.require/name, Bundle class implementing PluginInterface, Extension loading services.yaml and prepending permissions, ConfigureMainMenuEvent subscriber, routes.yaml with type attribute, controller, twig template.",
+      "files": [],
+      "expectations": [
+        "Plugin directory is named FahrtenBundle with no version suffix, and its PHP files live directly under var/plugins/FahrtenBundle (no src/ subfolder)",
+        "composer.json exists with extra.kimai.require set to an integer VERSION_ID and extra.kimai.name set, and has no top-level require section for third-party packages",
+        "A FahrtenBundle.php class in namespace KimaiPlugin\\FahrtenBundle implements Kimai's plugin bundle interface",
+        "A DependencyInjection Extension class explicitly loads services.yaml (services are not left to autoload implicitly)",
+        "A new permission (plain lowercase string, not dotted) is registered specifically via prependExtensionConfig()/PrependExtensionInterface — this assertion FAILS if the permission is instead granted by any other mechanism (e.g. a DependencyInjection compiler pass mutating the kimai.permissions/kimai.permission_names container parameters directly), even if the resulting role grants are correct, since that is not Kimai's supported extension point and Kimai owns and can reshape those parameters at will",
+        "Default role mapping grants the new permission to team lead and super admin roles",
+        "An event subscriber on ConfigureMainMenuEvent adds a 'Fahrten' menu entry and gates its visibility on the new permission",
+        "routes.yaml exists under Resources/config (or config/) and uses the 'type' attribute pointing at the controller's PHP attributes",
+        "A controller class and a Twig template rendering a simple page both exist and are wired to the route",
+        "None of the produced files are truncated or contain placeholder text like '...' or '// rest of implementation'",
+        "The plugin was verified to boot cleanly (e.g. kimai:reload -n succeeded) rather than only being asserted to work"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "doctrine-sync-command",
+      "prompt": "Ich muss Kimai-Zeiteintraege zu unserem Buchhaltungssystem (REST-API mit Bearer-Token) rausschieben. Was ich brauche: eine eigene Tabelle die sich pro Timesheet merkt welche externe ID zurueckkam und wann zuletzt uebertragen wurde, plus einen Console-Command den ich per Cron laufen lassen kann. Kimai 2.65. Schreib mir das Plugin.",
+      "expected_output": "Plugin with Doctrine entity in Entity/ (kimai2_ext_ prefixed table), doctrine_migrations.yaml with own bundle_migration_ table, migration class, AbstractBundleInstallerCommand subclass, AsCommand console command, symfony/http-client usage, NO composer require section, Entity/ excluded from services.yaml, secrets not in system configuration.",
+      "files": [],
+      "expectations": [
+        "A Doctrine entity class lives under Entity/ and maps to a table prefixed kimai2_ext_, storing the external id and last-synced timestamp per timesheet",
+        "doctrine_migrations.yaml (or equivalent config) points at a migration table name specific to this bundle, not the core migration table",
+        "A migration class exists that creates the new table, and it was NOT executed against the live database during this eval (schema stayed a written file only)",
+        "An install/update command extends AbstractBundleInstallerCommand and returns the plugin's migration directory path",
+        "A separate console command class uses the #[AsCommand] attribute and is documented as runnable via cron",
+        "The sync logic uses Symfony's HttpClientInterface (symfony/http-client) to call the REST API with a Bearer token, not curl or a vendored HTTP library",
+        "composer.json has no top-level 'require' section for third-party packages",
+        "services.yaml excludes the Entity/ directory from the autowiring/autoconfigure resource pattern",
+        "The bearer token / credential is documented as coming from an environment variable via local.yaml rather than being stored as a plain System Configuration value",
+        "None of the produced files are truncated or contain placeholder text"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "boot-failure-troubleshooting",
+      "prompt": "hilfe, ich hab gerade ein plugin in unsere kimai instanz kopiert (liegt jetzt unter var/plugins/UrlaubBundle-2.3.1/) und seitdem kriege ich auf JEDER seite nur noch einen 500er, auch beim login. komme nicht mehr ins admin backend rein. was ist da los und wie krieg ich die instanz wieder hoch?",
+      "expected_output": "Identifies the version-suffixed directory name as the cause (Kernel throws), explains the rename fix, mentions cache rebuild via kimai:reload, mentions .disabled as the general recovery lever and var/log/prod.log for diagnosis, and covers the other boot-time failure causes (extra.kimai.require too high, missing composer.json).",
+      "files": [],
+      "expectations": [
+        "Response identifies the version suffix in 'UrlaubBundle-2.3.1' as the root cause of the site-wide 500, not a guess at unrelated causes",
+        "Response gives the concrete fix: rename the directory to drop the version suffix (e.g. to UrlaubBundle)",
+        "Response tells the user to rebuild the cache afterwards (kimai:reload or cache:clear)",
+        "Response mentions var/log/prod.log (or dev.log) as where to confirm the exact error",
+        "Response covers at least one other boot-time failure cause beyond the version suffix (e.g. extra.kimai.require higher than installed version, missing/invalid composer.json)",
+        "Response is written in German, matching the user's message, and gives concrete commands rather than only abstract advice",
+        "Response does not claim .disabled fixes this specific cause without qualification, since the version-suffix check in Kernel::getBundleClasses() throws before .disabled is ever consulted — .disabled only helps once the directory is already validly named"
+      ]
+    }
+  ]
+}
