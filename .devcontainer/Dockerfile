@@ -8,7 +8,8 @@ COPY --from=mlocati/php-extension-installer:2 /usr/bin/install-php-extensions /u
 RUN install-php-extensions xdebug \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
-        git less procps unzip default-mysql-client \
+        git less procps unzip default-mysql-client curl ca-certificates \
+    && curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/local/bin \
     && rm -rf /var/lib/apt/lists/*
 
 RUN printf '%s\n' \

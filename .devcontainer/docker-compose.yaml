@@ -30,13 +30,13 @@ services:
       sqldb:
         condition: service_healthy
     ports:
-      - 8001:8001
+      - 3000:8001
     environment:
       APP_ENV: dev
       DATABASE_URL: "mysql://kimai:kimai@sqldb/kimai?charset=utf8mb4&serverVersion=8.3.0"
       TRUSTED_HOSTS: localhost|127.0.0.1
-      ADMINMAIL: admin@kimai.local
-      ADMINPASS: kimai
+      ADMINMAIL: "admin@kimai.local"
+      ADMINPASS: kimai12345
       USER_ID: ${USER_UID:-1000}
       GROUP_ID: ${USER_GID:-1000}
       XDEBUG_MODE: ${XDEBUG_MODE:-off}
@@ -60,6 +60,14 @@ services:
       PHP_IDE_CONFIG: serverName=kimai
     volumes:
       - ..:/opt/kimai/var/plugins/${BUNDLE_NAME:-KimaiPlugin}
+      # Share the host's Claude Code installation and account state, so the
+      # container has the same login, plugins and marketplaces as the host
+      # instead of a fresh install. Requires that `claude` has been run at
+      # least once on the host, so these paths already exist there.
+      - ${HOME}/.claude:/home/dev/.claude
+      - ${HOME}/.claude.json:/home/dev/.claude.json
+      - ${HOME}/.local/share/claude:/home/dev/.local/share/claude
+      - ${HOME}/.local/bin/claude:/home/dev/.local/bin/claude
 
 volumes:
   mysql:
