@@ -535,8 +535,11 @@ final class LicenseEvaluatorTest extends TestCase
 
     public function testATokenWithABrokenSignatureIsNotUsable(): void
     {
-        $raw = $this->sign(['licensed' => true, 'version' => '1.0.0']);
-        $tampered = self::encode('{"licensed":true,"version":"1.0.0"}') . '.' . explode('.', $raw)[1];
+        // The signed body says false and the pasted body says true, so the two really differ.
+        // Signing and pasting the same content would leave the signature valid and the
+        // assertion impossible to satisfy.
+        $signedForARefusal = $this->sign(['licensed' => false, 'version' => '1.0.0']);
+        $tampered = self::encode('{"licensed":true,"version":"1.0.0"}') . '.' . explode('.', $signedForARefusal)[1];
 
         self::assertNull($this->evaluator->usableToken($tampered, '1.0.0', $this->now()));
     }
