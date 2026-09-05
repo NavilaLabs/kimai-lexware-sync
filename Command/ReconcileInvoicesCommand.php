@@ -15,7 +15,12 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-#[AsCommand(name: 'kimai:lexware-sync:reconcile-invoices', description: 'Poll Lexware for invoice drafts that a webhook delivery might have missed')]
+#[
+    AsCommand(
+        name: 'kimai:lexware-sync:reconcile-invoices',
+        description: 'Poll Lexware for invoice drafts that a webhook delivery might have missed',
+    ),
+]
 final class ReconcileInvoicesCommand extends Command
 {
     public function __construct(
@@ -28,8 +33,10 @@ final class ReconcileInvoicesCommand extends Command
         parent::__construct();
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): int
-    {
+    protected function execute(
+        InputInterface $input,
+        OutputInterface $output,
+    ): int {
         $io = new SymfonyStyle($input, $output);
         $page = 0;
         $synchronized = 0;
@@ -54,7 +61,11 @@ final class ReconcileInvoicesCommand extends Command
                     $this->synchronizer->synchronize($lexwareId);
                     $synchronized++;
                 } catch (\Throwable $exception) {
-                    $message = \sprintf('Failed to synchronize invoice %s: %s', $lexwareId, $exception->getMessage());
+                    $message = \sprintf(
+                        'Failed to synchronize invoice %s: %s',
+                        $lexwareId,
+                        $exception->getMessage(),
+                    );
                     $this->logger->error($message);
                     $io->error($message);
                     $failed++;
@@ -65,7 +76,13 @@ final class ReconcileInvoicesCommand extends Command
             $page++;
         }
 
-        $io->success(\sprintf('Reconciled %d invoice(s), %d failed.', $synchronized, $failed));
+        $io->success(
+            \sprintf(
+                'Reconciled %d invoice(s), %d failed.',
+                $synchronized,
+                $failed,
+            ),
+        );
 
         return $failed === 0 ? Command::SUCCESS : Command::FAILURE;
     }
@@ -73,13 +90,20 @@ final class ReconcileInvoicesCommand extends Command
     /**
      * @param array<string, mixed> $voucher
      */
-    private function needsSynchronization(string $lexwareId, array $voucher): bool
-    {
+    private function needsSynchronization(
+        string $lexwareId,
+        array $voucher,
+    ): bool {
         $existing = $this->repository->findByLexwareId($lexwareId);
 
         if ($existing === null) {
             $contactId = (string) ($voucher['contactId'] ?? '');
-            if ($contactId !== '' && $this->contactMappingRepository->findByLexwareContactId($contactId) === null) {
+            if (
+                $contactId !== '' &&
+                $this->contactMappingRepository->findByLexwareContactId(
+                    $contactId,
+                ) === null
+            ) {
                 return false;
             }
 
