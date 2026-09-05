@@ -41,13 +41,15 @@ final class OrderConfirmationSynchronizer
         try {
             $orderConfirmation = $existing ?? new TrackedOrderConfirmation($lexwareId);
 
-            $address = $payload['address'] ?? [];
+            $address = \is_array($payload['address'] ?? null) ? $payload['address'] : [];
+            $contactName = $address['name'] ?? '';
 
             $orderConfirmation->updateFromLexwarePayload(
                 (string) ($payload['voucherNumber'] ?? ''),
                 (string) ($payload['title'] ?? ''),
                 new \DateTimeImmutable((string) ($payload['voucherDate'] ?? 'now')),
                 (string) ($address['contactId'] ?? ''),
+                \is_string($contactName) ? $contactName : '',
                 json_encode($payload, \JSON_THROW_ON_ERROR),
                 $remoteUpdatedAt,
             );

@@ -68,9 +68,13 @@ final class InvoiceSynchronizer
             $trackedInvoice->reopen();
         }
 
+        $address = \is_array($payload['address'] ?? null) ? $payload['address'] : [];
+        $contactName = $address['name'] ?? '';
+
         $trackedInvoice->updateFromLexwarePayload(
             (string) ($payload['voucherNumber'] ?? ''),
             new \DateTimeImmutable((string) ($payload['voucherDate'] ?? 'now')),
+            \is_string($contactName) ? $contactName : '',
             json_encode($payload, \JSON_THROW_ON_ERROR),
             $remoteUpdatedAt,
         );
