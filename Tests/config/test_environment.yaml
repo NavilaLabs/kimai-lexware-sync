@@ -19,3 +19,6 @@ services:
         arguments:
             $httpClient: '@KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\FakeLexwareHttpClient'
             $minimumIntervalSeconds: 0.0
+
+    KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseStore:
+        public: true
