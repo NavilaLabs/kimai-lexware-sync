@@ -206,6 +206,13 @@ with a badge showing how many are currently pending. Opening it shows a list, bu
 existing table components for visual consistency, with the voucher number, the title, the
 customer, the date, the amount, and a preview of its lines.
 
+Milestone one ships this list with only the voucher number, the title and the date. The customer
+column, the amount column and the line preview are not yet built, and the table is a plain
+markup table rather than Kimai's own table component. None of the three missing columns block a
+correct decision, since converting or rejecting only ever needs the voucher number and the title
+to identify the right row, but they were part of the original intent and are tracked as a small
+follow-up rather than quietly dropped.
+
 Each row offers two actions. Converting to a project runs the identical processor logic used by
 the automatic path, skipping the regular expression check since this is an explicit human
 decision, sets the status to manually converted, and records which user made the decision.
