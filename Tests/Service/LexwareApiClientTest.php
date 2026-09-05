@@ -81,4 +81,24 @@ final class LexwareApiClientTest extends TestCase
 
         self::assertSame('draft', $result['voucherStatus']);
     }
+
+    public function testFindInvoicesQueriesVoucherListWithContactAndDateFilter(): void
+    {
+        $seenRequest = null;
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use (&$seenRequest) {
+            $seenRequest = [$method, $url, $options];
+
+            return new MockResponse('{"content":[{"id":"invoice-1"}]}', ['http_code' => 200]);
+        });
+
+        $client = new LexwareApiClient($httpClient, 'test-key');
+        $result = $client->findInvoices('contact-1', new \DateTimeImmutable('2026-01-01'));
+
+        self::assertSame([['id' => 'invoice-1']], $result);
+        self::assertSame('GET', $seenRequest[0]);
+        self::assertStringContainsString('/v1/voucherlist', $seenRequest[1]);
+        self::assertStringContainsString('voucherType=invoice', $seenRequest[1]);
+        self::assertStringContainsString('contactId=contact-1', $seenRequest[1]);
+        self::assertStringContainsString('voucherDateFrom=2026-01-01', $seenRequest[1]);
+    }
 }

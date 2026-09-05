@@ -77,12 +77,14 @@ final class LexwareApiClient
      */
     public function findInvoices(string $contactId, \DateTimeImmutable $voucherDateFrom): array
     {
-        $result = $this->request('GET', '/v1/invoices', [
+        $result = $this->request('GET', '/v1/voucherlist', [
+            'voucherType' => 'invoice',
+            'voucherStatus' => 'draft',
             'contactId' => $contactId,
             'voucherDateFrom' => $voucherDateFrom->format('Y-m-d'),
         ]);
 
-        $content = $result['content'] ?? $result;
+        $content = $result['content'] ?? [];
 
         return \is_array($content) ? $content : [];
     }
