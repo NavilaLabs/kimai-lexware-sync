@@ -68,7 +68,7 @@ $this->lexware()->willRespondWith('GET', '/v1/order-confirmations/abc', ['id' =>
 
 The fake is strict on purpose: a request that no stub matches fails the test with the method and
 URL it saw. That is a feature, not an obstacle. If a test fails with
-`UnexpectedLexwareRequest`, the code under test made a call you did not expect, and the right
+`UnexpectedHttpRequest`, the code under test made a call you did not expect, and the right
 first question is whether it should have.
 
 `recordedRequests()` returns what was sent, including `decodedBody()` for a request body.

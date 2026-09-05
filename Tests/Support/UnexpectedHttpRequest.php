@@ -4,6 +4,6 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support;
 
-final class UnexpectedLexwareRequest extends \RuntimeException
+final class UnexpectedHttpRequest extends \RuntimeException
 {
 }
