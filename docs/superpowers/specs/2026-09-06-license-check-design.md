@@ -195,8 +195,17 @@ and only then used for signing. The cost now is one line.
 
 `AlwaysLicensedGate` is wired until the licensing service exists. It is a service definition, not
 a condition inside the logic, so nothing in the checking code is dead or untested while the
-switch is off, and turning it on later is a single line of configuration rather than a change to
-behaviour.
+switch is off.
+
+There is exactly one place to touch: a parameter in `Resources/config/services.yaml` that decides
+which of the two implementations is bound to `LicenseGate`. Not an environment variable, not a
+system configuration field a customer could see, and no branch anywhere in the checking code.
+Switching the mechanism on means changing that one value.
+
+Removing the switch afterwards means deleting three things: the parameter, the
+`AlwaysLicensedGate` class, and its test. One implementation is then left, and the interface can
+stay or go depending on whether a second one is ever wanted. Nothing else in the design refers to
+the switch, which is the point of putting it there rather than inside the logic.
 
 The switched off state gets its own test, asserting that a conversion succeeds with no artefact
 present at all. Without that test nobody would notice if the switch quietly stopped doing
