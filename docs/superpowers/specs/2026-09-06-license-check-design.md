@@ -58,8 +58,12 @@ nothing piles up unseen, and the moment they renew they are working again.
 | `LicenseVerdict` | Value object: state, customer name, time of the last confirmation |
 | `LicenseState` | Enum: `Licensed`, `NoKeyConfigured`, `Rejected`, `Unreachable`, `VersionNotCovered` |
 | `LicenseToken` | Parses and holds the signed artefact, exposes its fields |
+| `MalformedLicenseToken` | Thrown when a string is not a license artefact at all |
 | `LicenseSignatureVerifier` | Ed25519 verification against the list of accepted public keys |
+| `LicenseEvaluator` | Decides whether a stored artefact is still usable, and what verdict it yields |
+| `PluginVersion` | Reads the installed version from the plugin's own `composer.json` |
 | `LicenseClient` | The one request against the licensing service |
+| `LicenseServiceUnavailable` | Thrown when the service cannot be reached or answers unusably |
 | `LicenseStore` | Reads and writes the artefact in Kimai's system configuration |
 | `CheckLicenseCommand` | The scheduled refresh, sibling of the existing key check command |
 | `LicenseRequiredException` | Thrown by both processors, carries the verdict |
@@ -197,12 +201,12 @@ and only then used for signing. The cost now is one line.
 a condition inside the logic, so nothing in the checking code is dead or untested while the
 switch is off.
 
-There is exactly one place to touch: a parameter in `Resources/config/services.yaml` that decides
-which of the two implementations is bound to `LicenseGate`. Not an environment variable, not a
-system configuration field a customer could see, and no branch anywhere in the checking code.
-Switching the mechanism on means changing that one value.
+There is exactly one place to touch: the alias in `Resources/config/services.yaml` that binds
+`LicenseGate` to one of the two implementations. Not an environment variable, not a system
+configuration field a customer could see, and no branch anywhere in the checking code. Switching
+the mechanism on means pointing that one alias at `ServiceBackedLicenseGate`.
 
-Removing the switch afterwards means deleting three things: the parameter, the
+Removing the switch afterwards means deleting three things: the alias, the
 `AlwaysLicensedGate` class, and its test. One implementation is then left, and the interface can
 stay or go depending on whether a second one is ever wanted. Nothing else in the design refers to
 the switch, which is the point of putting it there rather than inside the logic.
