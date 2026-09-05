@@ -30,6 +30,14 @@
                 <source>lexware_sync.no_documents</source>
                 <target>Keine Belege in dieser Ansicht.</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.no_search_results" resname="lexware_sync.no_search_results">
+                <source>lexware_sync.no_search_results</source>
+                <target>Keine Belege gefunden.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.search_placeholder" resname="lexware_sync.search_placeholder">
+                <source>lexware_sync.search_placeholder</source>
+                <target>Belegnummer oder Kunde</target>
+            </trans-unit>
             <trans-unit id="lexware_sync.open_project" resname="lexware_sync.open_project">
                 <source>lexware_sync.open_project</source>
                 <target>Projekt öffnen</target>

@@ -7,16 +7,30 @@
     'all': 'lexware_sync.filter.all'
 } %}
 
+{% set listStateFields %}
+    {% for name, value in listRouteParameters %}
+        <input type="hidden" name="{{ name }}" value="{{ value }}">
+    {% endfor %}
+    <input type="hidden" name="page" value="{{ orderConfirmations.currentPage }}">
+{% endset %}
+
 {% block main %}
     {% embed '@theme/embeds/card.html.twig' %}
         {% block box_title %}{{ 'lexware_sync.triage.title'|trans }}{% endblock %}
         {% block box_tools %}
-            <div class="btn-group btn-group-sm">
-                {% for value, label in statusFilters %}
-                    <a href="{{ path('lexware_sync_triage', {status: value}) }}" class="btn {{ filter == value ? 'btn-primary' : 'btn-outline-secondary' }}">
-                        {{ label|trans }} ({{ counts[value] }})
-                    </a>
-                {% endfor %}
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <form method="get" action="{{ path('lexware_sync_triage') }}" class="input-group input-group-sm w-auto">
+                    <input type="hidden" name="status" value="{{ filter }}">
+                    <input type="search" name="search" value="{{ searchTerm }}" class="form-control form-control-sm" placeholder="{{ 'lexware_sync.search_placeholder'|trans }}" aria-label="{{ 'search'|trans }}">
+                    <button type="submit" class="btn btn-sm" title="{{ 'search'|trans }}">{{ icon('search') }}</button>
+                </form>
+                <div class="btn-group btn-group-sm">
+                    {% for value, label in statusFilters %}
+                        <a href="{{ path('lexware_sync_triage', listRouteParameters|merge({status: value})) }}" class="btn {{ filter == value ? 'btn-primary' : 'btn-outline-secondary' }}">
+                            {{ label|trans }} ({{ counts[value] }})
+                        </a>
+                    {% endfor %}
+                </div>
             </div>
         {% endblock %}
         {% block box_body %}
@@ -38,7 +52,7 @@
                         {% set summary = summaries[orderConfirmation.id] %}
                         <tr>
                             <td>{{ orderConfirmation.voucherNumber }}</td>
-                            <td>{{ summary.contactName }}</td>
+                            <td>{{ orderConfirmation.contactName }}</td>
                             <td>{{ orderConfirmation.voucherDate|date_short }}</td>
                             <td class="text-end">{{ summary.totalNetAmount|money(summary.currency) }}</td>
                             <td class="text-end">{{ summary.lineItemCount }}</td>
@@ -60,7 +74,7 @@
                                 {% if orderConfirmation.status.isConvertible %}
                                     <form method="post" action="{{ path('lexware_sync_triage_convert', {id: orderConfirmation.id}) }}" class="d-inline">
                                         <input type="hidden" name="_token" value="{{ csrf_token('lexware_sync_triage') }}">
-                                        <input type="hidden" name="status" value="{{ filter }}">
+                                        {{ listStateFields }}
                                         <button type="submit" class="btn btn-sm btn-primary">
                                             {{ (orderConfirmation.status.isRejected ? 'lexware_sync.triage.convert_anyway' : 'lexware_sync.triage.convert')|trans }}
                                         </button>
@@ -69,7 +83,7 @@
                                 {% if orderConfirmation.status.isPending %}
                                     <form method="post" action="{{ path('lexware_sync_triage_reject', {id: orderConfirmation.id}) }}" class="d-inline">
                                         <input type="hidden" name="_token" value="{{ csrf_token('lexware_sync_triage') }}">
-                                        <input type="hidden" name="status" value="{{ filter }}">
+                                        {{ listStateFields }}
                                         <button type="submit" class="btn btn-sm btn-secondary">{{ 'lexware_sync.triage.reject'|trans }}</button>
                                     </form>
                                 {% endif %}
@@ -84,11 +98,23 @@
                         </tr>
                     {% else %}
                         <tr>
-                            <td colspan="8" class="text-muted">{{ 'lexware_sync.no_documents'|trans }}</td>
+                            <td colspan="8" class="text-muted">{{ (searchTerm is not null ? 'lexware_sync.no_search_results' : 'lexware_sync.no_documents')|trans }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
+        {% endblock %}
+        {% block box_footer %}
+            {% if orderConfirmations.getNbResults() > 0 %}
+                <div class="d-flex align-items-center">
+                    <p class="d-none d-sm-block m-0 text-body-secondary">
+                        {{ 'pagination'|trans({'%start%': orderConfirmations.getCurrentPageOffsetStart(), '%end%': orderConfirmations.getCurrentPageOffsetEnd(), '%total%': orderConfirmations.getNbResults()}) }}
+                    </p>
+                    {% if orderConfirmations.haveToPaginate() %}
+                        {{ pagination(orderConfirmations, {routeName: 'lexware_sync_triage', routeParams: listRouteParameters, css_container_class: 'pagination m-0 ms-auto d-print-none'}) }}
+                    {% endif %}
+                </div>
+            {% endif %}
         {% endblock %}
     {% endembed %}
 {% endblock %}

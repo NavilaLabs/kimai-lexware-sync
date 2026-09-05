@@ -219,6 +219,16 @@ correct decision, since converting or rejecting only ever needs the voucher numb
 to identify the right row, but they were part of the original intent and are tracked as a small
 follow-up rather than quietly dropped.
 
+Both review screens, the order confirmation triage screen and the invoice draft screen, page
+their table rather than rendering every tracked row, and each offers a search field next to the
+status filter. The search matches the voucher number, the contact name and, for an order
+confirmation, the title, all as a substring and case insensitively, which is why the contact
+name is stored as its own column rather than read back out of the raw payload. The status
+counts next to the filter buttons are computed under the same search term, so the numbers always
+describe the list actually being shown. The status filter, the search term and the current page
+travel with every row action, so converting or rejecting a document returns to the same place in
+the list.
+
 Each row offers two actions. Converting to a project runs the identical processor logic used by
 the automatic path, skipping the regular expression check since this is an explicit human
 decision, sets the status to manually converted, and records which user made the decision.

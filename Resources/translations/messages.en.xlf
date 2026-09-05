@@ -30,6 +30,14 @@
                 <source>lexware_sync.no_documents</source>
                 <target>No documents in this view.</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.no_search_results" resname="lexware_sync.no_search_results">
+                <source>lexware_sync.no_search_results</source>
+                <target>No documents found.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.search_placeholder" resname="lexware_sync.search_placeholder">
+                <source>lexware_sync.search_placeholder</source>
+                <target>Voucher number or customer</target>
+            </trans-unit>
             <trans-unit id="lexware_sync.open_project" resname="lexware_sync.open_project">
                 <source>lexware_sync.open_project</source>
                 <target>Open project</target>

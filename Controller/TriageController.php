@@ -8,7 +8,9 @@ use App\Controller\AbstractController;
 use App\Utils\PageSetup;
 use Doctrine\ORM\EntityManagerInterface;
 use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
+use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedOrderConfirmation;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\DocumentStatusFilter;
+use KimaiPlugin\KimaiLexwareSyncBundle\Repository\Query\DocumentListQuery;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedOrderConfirmationRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\CustomerCurrencyMismatchException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareDocumentSummaryFactory;
@@ -36,38 +38,42 @@ final class TriageController extends AbstractController
     #[Route(path: '', name: 'lexware_sync_triage', methods: ['GET'])]
     public function index(Request $request): Response
     {
-        $filter = DocumentStatusFilter::fromRequestValue($request->query->get('status'));
-        $orderConfirmations = $this->repository->findByStatusFilter($filter);
+        $listQuery = DocumentListQuery::fromParameters($request->query);
+        $orderConfirmations = $this->repository->findPage($listQuery);
 
         $summaries = [];
+
+        /** @var TrackedOrderConfirmation $orderConfirmation */
         foreach ($orderConfirmations as $orderConfirmation) {
             $summaries[(int) $orderConfirmation->getId()] = $this->summaryFactory->fromRawPayload($orderConfirmation->getRawPayload());
         }
 
-        $page = new PageSetup('lexware_sync.triage.title');
-        $page->setTranslationDomain('messages');
+        $pageSetup = new PageSetup('lexware_sync.triage.title');
+        $pageSetup->setTranslationDomain('messages');
 
         return $this->render('@KimaiLexwareSync/triage/index.html.twig', [
-            'page_setup' => $page,
+            'page_setup' => $pageSetup,
             'orderConfirmations' => $orderConfirmations,
             'summaries' => $summaries,
-            'filter' => $filter->value,
-            'counts' => $this->countByStatusFilter(),
+            'filter' => $listQuery->status->value,
+            'searchTerm' => $listQuery->searchTerm,
+            'listRouteParameters' => $listQuery->toRouteParameters(),
+            'counts' => $this->countByStatus($listQuery),
         ]);
     }
 
     #[Route(path: '/{id}/convert', name: 'lexware_sync_triage_convert', methods: ['POST'])]
     public function convert(int $id, Request $request): RedirectResponse
     {
-        $filter = DocumentStatusFilter::fromRequestValue($request->request->get('status'));
+        $listQuery = DocumentListQuery::fromParameters($request->request);
 
         $orderConfirmation = $this->repository->find($id);
         if ($orderConfirmation === null || !$orderConfirmation->getStatus()->isConvertible()) {
-            return $this->redirectToTriage($filter);
+            return $this->redirectToTriage($listQuery);
         }
 
         if (!$this->isCsrfTokenValid('lexware_sync_triage', $request->request->get('_token'))) {
-            return $this->redirectToTriage($filter);
+            return $this->redirectToTriage($listQuery);
         }
 
         $payload = json_decode($orderConfirmation->getRawPayload(), true);
@@ -95,45 +101,48 @@ final class TriageController extends AbstractController
             throw $exception;
         }
 
-        return $this->redirectToTriage($filter);
+        return $this->redirectToTriage($listQuery);
     }
 
     #[Route(path: '/{id}/reject', name: 'lexware_sync_triage_reject', methods: ['POST'])]
     public function reject(int $id, Request $request): RedirectResponse
     {
-        $filter = DocumentStatusFilter::fromRequestValue($request->request->get('status'));
+        $listQuery = DocumentListQuery::fromParameters($request->request);
 
         $orderConfirmation = $this->repository->find($id);
         if ($orderConfirmation === null || !$orderConfirmation->getStatus()->isPending()) {
-            return $this->redirectToTriage($filter);
+            return $this->redirectToTriage($listQuery);
         }
 
         if (!$this->isCsrfTokenValid('lexware_sync_triage', $request->request->get('_token'))) {
-            return $this->redirectToTriage($filter);
+            return $this->redirectToTriage($listQuery);
         }
 
         $orderConfirmation->markRejected($this->getUser());
         $this->repository->save($orderConfirmation);
 
-        return $this->redirectToTriage($filter);
+        return $this->redirectToTriage($listQuery);
     }
 
     /**
      * @return array<string, int>
      */
-    private function countByStatusFilter(): array
+    private function countByStatus(DocumentListQuery $listQuery): array
     {
         $counts = [];
 
         foreach (DocumentStatusFilter::cases() as $case) {
-            $counts[$case->value] = $this->repository->countByStatusFilter($case);
+            $counts[$case->value] = $this->repository->countByListQuery($listQuery->withStatus($case));
         }
 
         return $counts;
     }
 
-    private function redirectToTriage(DocumentStatusFilter $filter): RedirectResponse
+    private function redirectToTriage(DocumentListQuery $listQuery): RedirectResponse
     {
-        return $this->redirectToRoute('lexware_sync_triage', ['status' => $filter->value]);
+        return $this->redirectToRoute(
+            'lexware_sync_triage',
+            $listQuery->toRouteParameters() + ['page' => $listQuery->page],
+        );
     }
 }

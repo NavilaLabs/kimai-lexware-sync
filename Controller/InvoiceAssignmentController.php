@@ -13,6 +13,7 @@ use App\Utils\PageSetup;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedInvoice;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\DocumentStatusFilter;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\InvoiceLineShape;
+use KimaiPlugin\KimaiLexwareSyncBundle\Repository\Query\DocumentListQuery;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedInvoiceRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedInvoiceTimesheetRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\AmbiguousLexwareRequestException;
@@ -46,11 +47,13 @@ final class InvoiceAssignmentController extends AbstractController
     #[Route(path: '', name: 'lexware_sync_invoices', methods: ['GET'])]
     public function index(Request $request): Response
     {
-        $filter = DocumentStatusFilter::fromRequestValue($request->query->get('status'));
-        $trackedInvoices = $this->repository->findByStatusFilter($filter);
+        $listQuery = DocumentListQuery::fromParameters($request->query);
+        $trackedInvoices = $this->repository->findPage($listQuery);
 
         $summaries = [];
         $warnings = [];
+
+        /** @var TrackedInvoice $trackedInvoice */
         foreach ($trackedInvoices as $trackedInvoice) {
             $id = (int) $trackedInvoice->getId();
             $summaries[$id] = $this->summaryFactory->fromRawPayload($trackedInvoice->getRawPayload());
@@ -61,16 +64,18 @@ final class InvoiceAssignmentController extends AbstractController
         $convertedVoucherNumber = $request->query->get('converted_voucher_number');
         $convertedVoucherNumber = \is_string($convertedVoucherNumber) ? $convertedVoucherNumber : null;
 
-        $page = new PageSetup('lexware_sync.invoice.title');
-        $page->setTranslationDomain('messages');
+        $pageSetup = new PageSetup('lexware_sync.invoice.title');
+        $pageSetup->setTranslationDomain('messages');
 
         return $this->render('@KimaiLexwareSync/invoice/index.html.twig', [
-            'page_setup' => $page,
+            'page_setup' => $pageSetup,
             'trackedInvoices' => $trackedInvoices,
             'summaries' => $summaries,
             'warnings' => $warnings,
-            'filter' => $filter->value,
-            'counts' => $this->countByStatusFilter(),
+            'filter' => $listQuery->status->value,
+            'searchTerm' => $listQuery->searchTerm,
+            'listRouteParameters' => $listQuery->toRouteParameters(),
+            'counts' => $this->countByStatus($listQuery),
             'convertedVoucherNumber' => $convertedVoucherNumber,
             'convertedVoucherUrl' => $convertedVoucherNumber !== null ? $this->deepLink->forInvoice($convertedVoucherNumber) : null,
         ]);
@@ -90,35 +95,35 @@ final class InvoiceAssignmentController extends AbstractController
     #[Route(path: '/{id}/reject', name: 'lexware_sync_invoices_reject', methods: ['POST'])]
     public function reject(int $id, Request $request): RedirectResponse
     {
-        $filter = DocumentStatusFilter::fromRequestValue($request->request->get('status'));
+        $listQuery = DocumentListQuery::fromParameters($request->request);
 
         $trackedInvoice = $this->repository->find($id);
         if ($trackedInvoice === null || !$trackedInvoice->getStatus()->isPending()) {
-            return $this->redirectToIndex($filter);
+            return $this->redirectToIndex($listQuery);
         }
 
         if (!$this->isCsrfTokenValid('lexware_sync_invoices', $request->request->get('_token'))) {
-            return $this->redirectToIndex($filter);
+            return $this->redirectToIndex($listQuery);
         }
 
         $trackedInvoice->markRejected($this->getUser());
         $this->repository->save($trackedInvoice);
 
-        return $this->redirectToIndex($filter);
+        return $this->redirectToIndex($listQuery);
     }
 
     #[Route(path: '/{id}/reopen', name: 'lexware_sync_invoices_reopen', methods: ['POST'])]
     public function reopen(int $id, Request $request): RedirectResponse
     {
-        $filter = DocumentStatusFilter::fromRequestValue($request->request->get('status'));
+        $listQuery = DocumentListQuery::fromParameters($request->request);
 
         $trackedInvoice = $this->repository->find($id);
         if ($trackedInvoice === null || !$trackedInvoice->getStatus()->isRejected()) {
-            return $this->redirectToIndex($filter);
+            return $this->redirectToIndex($listQuery);
         }
 
         if (!$this->isCsrfTokenValid('lexware_sync_invoices', $request->request->get('_token'))) {
-            return $this->redirectToIndex($filter);
+            return $this->redirectToIndex($listQuery);
         }
 
         $trackedInvoice->reopen();
@@ -335,12 +340,12 @@ final class InvoiceAssignmentController extends AbstractController
     /**
      * @return array<string, int>
      */
-    private function countByStatusFilter(): array
+    private function countByStatus(DocumentListQuery $listQuery): array
     {
         $counts = [];
 
         foreach (DocumentStatusFilter::cases() as $case) {
-            $counts[$case->value] = $this->repository->countByStatusFilter($case);
+            $counts[$case->value] = $this->repository->countByListQuery($listQuery->withStatus($case));
         }
 
         return $counts;
@@ -388,8 +393,11 @@ final class InvoiceAssignmentController extends AbstractController
         ));
     }
 
-    private function redirectToIndex(DocumentStatusFilter $filter): RedirectResponse
+    private function redirectToIndex(DocumentListQuery $listQuery): RedirectResponse
     {
-        return $this->redirectToRoute('lexware_sync_invoices', ['status' => $filter->value]);
+        return $this->redirectToRoute(
+            'lexware_sync_invoices',
+            $listQuery->toRouteParameters() + ['page' => $listQuery->page],
+        );
     }
 }
