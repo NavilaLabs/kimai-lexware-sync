@@ -29,7 +29,7 @@ final class TriageActionSubscriber extends AbstractActionsSubscriber
 
     public function onActions(PageActionsEvent $event): void
     {
-        if (!$this->isGranted('triage_lexware_sync')) {
+        if (!$this->isGranted('manage_lexware_sync')) {
             return;
         }
 

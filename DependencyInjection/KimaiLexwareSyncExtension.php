@@ -23,8 +23,8 @@ final class KimaiLexwareSyncExtension extends Extension implements PrependExtens
         $container->prependExtensionConfig('kimai', [
             'permissions' => [
                 'roles' => [
-                    'ROLE_SUPER_ADMIN' => ['triage_lexware_sync'],
-                    'ROLE_ADMIN' => ['triage_lexware_sync'],
+                    'ROLE_SUPER_ADMIN' => ['manage_lexware_sync'],
+                    'ROLE_ADMIN' => ['manage_lexware_sync'],
                 ],
             ],
         ]);

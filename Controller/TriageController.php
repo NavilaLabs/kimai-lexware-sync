@@ -19,7 +19,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route(path: '/admin/lexware-sync/triage')]
-#[IsGranted('triage_lexware_sync')]
+#[IsGranted('manage_lexware_sync')]
 final class TriageController extends AbstractController
 {
     public function __construct(
