@@ -83,6 +83,11 @@ final class ReconcileOrderConfirmationsCommand extends Command
             return true;
         }
 
-        return $existing->getLastSynchronizedAt() < new \DateTimeImmutable((string) $updatedDate);
+        $remoteUpdatedAt = $existing->getRemoteUpdatedAt();
+        if ($remoteUpdatedAt === null) {
+            return true;
+        }
+
+        return $remoteUpdatedAt < new \DateTimeImmutable((string) $updatedDate);
     }
 }

@@ -31,6 +31,7 @@ final class Version20260904120000 extends AbstractMigration
             $table->addColumn('customer_id', 'integer', ['notnull' => false]);
             $table->addColumn('first_seen_at', 'datetime_immutable', ['notnull' => true]);
             $table->addColumn('last_synchronized_at', 'datetime_immutable', ['notnull' => true]);
+            $table->addColumn('remote_updated_at', 'datetime_immutable', ['notnull' => false]);
             $table->addColumn('processed_at', 'datetime_immutable', ['notnull' => false]);
             $table->addColumn('processed_by_id', 'integer', ['notnull' => false]);
             $table->setPrimaryKey(['id']);

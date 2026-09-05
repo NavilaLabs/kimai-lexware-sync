@@ -38,6 +38,14 @@ final class OrderConfirmationProcessor
         string $lineRegex,
         bool $readLinesEnabled
     ): void {
+        $voucherNumberLength = \strlen($orderConfirmation->getVoucherNumber());
+        if ($voucherNumberLength < 2 || $voucherNumberLength > 150) {
+            throw new UnprocessableOrderConfirmationException(\sprintf(
+                'Order confirmation "%s" has a voucher number that is unusable as a project name.',
+                $orderConfirmation->getLexwareId(),
+            ));
+        }
+
         $address = $payload['address'] ?? [];
         $contactId = (string) ($address['contactId'] ?? '');
         $contactName = (string) ($address['name'] ?? $orderConfirmation->getTitle());
@@ -110,13 +118,38 @@ final class OrderConfirmationProcessor
                 continue;
             }
 
+            $activityName = $this->resolveActivityName($name, $description);
+            if ($activityName === null) {
+                continue;
+            }
+
             $activity = $this->activityService->createNewActivity($project);
-            $activity->setName($name);
+            $activity->setName($activityName);
             $activity->setColor($this->pickRandomColor());
             $this->activityService->saveActivity($activity);
 
             $line->setActivity($activity);
         }
+    }
+
+    private function resolveActivityName(string $name, ?string $description): ?string
+    {
+        if ($this->isUsableAsActivityName($name)) {
+            return $name;
+        }
+
+        if ($description !== null && $this->isUsableAsActivityName($description)) {
+            return $description;
+        }
+
+        return null;
+    }
+
+    private function isUsableAsActivityName(string $value): bool
+    {
+        $length = \strlen($value);
+
+        return $length >= 2 && $length <= 150;
     }
 
     private function pickRandomColor(): string

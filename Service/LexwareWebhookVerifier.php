@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Service;
 
+use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class LexwareWebhookVerifier
@@ -11,10 +13,10 @@ final class LexwareWebhookVerifier
     private const PUBLIC_KEY_URL = 'https://developers.lexware.io/webhookSignature/public/public_key.pub';
     private const SIGNATURE_HEADER = 'x-lxo-signature';
 
-    private ?string $publicKey = null;
-
-    public function __construct(private readonly HttpClientInterface $httpClient)
-    {
+    public function __construct(
+        private readonly HttpClientInterface $httpClient,
+        private readonly CacheInterface $cache,
+    ) {
     }
 
     /**
@@ -42,22 +44,19 @@ final class LexwareWebhookVerifier
 
     private function getPublicKey(): ?string
     {
-        if ($this->publicKey !== null) {
-            return $this->publicKey;
-        }
-
         try {
-            $pem = $this->httpClient->request('GET', self::PUBLIC_KEY_URL)->getContent();
+            return $this->cache->get('lexware_sync.webhook_public_key', function (ItemInterface $item): string {
+                $item->expiresAfter(86400);
+
+                $pem = $this->httpClient->request('GET', self::PUBLIC_KEY_URL)->getContent();
+                if ($pem === '') {
+                    throw new \RuntimeException('Lexware public key fetch returned an empty response');
+                }
+
+                return $pem;
+            });
         } catch (\Throwable) {
             return null;
         }
-
-        if ($pem === '') {
-            return null;
-        }
-
-        $this->publicKey = $pem;
-
-        return $pem;
     }
 }

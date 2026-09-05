@@ -60,6 +60,9 @@ class TrackedOrderConfirmation
     #[ORM\Column(name: 'last_synchronized_at', type: 'datetime_immutable')]
     private \DateTimeImmutable $lastSynchronizedAt;
 
+    #[ORM\Column(name: 'remote_updated_at', type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $remoteUpdatedAt = null;
+
     #[ORM\Column(name: 'processed_at', type: 'datetime_immutable', nullable: true)]
     private ?\DateTimeImmutable $processedAt = null;
 
@@ -153,6 +156,11 @@ class TrackedOrderConfirmation
         return $this->lastSynchronizedAt;
     }
 
+    public function getRemoteUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->remoteUpdatedAt;
+    }
+
     public function getProcessedAt(): ?\DateTimeImmutable
     {
         return $this->processedAt;
@@ -181,9 +189,10 @@ class TrackedOrderConfirmation
         string $title,
         \DateTimeImmutable $voucherDate,
         string $lexwareContactId,
-        string $rawPayload
+        string $rawPayload,
+        ?\DateTimeImmutable $remoteUpdatedAt
     ): void {
-        if ($this->status->isConverted() && ($this->title !== $title || $this->voucherNumber !== $voucherNumber)) {
+        if ($this->status->isConverted() && $this->rawPayload !== $rawPayload) {
             $this->changedAfterConversion = true;
         }
 
@@ -193,6 +202,7 @@ class TrackedOrderConfirmation
         $this->lexwareContactId = $lexwareContactId;
         $this->rawPayload = $rawPayload;
         $this->lastSynchronizedAt = new \DateTimeImmutable();
+        $this->remoteUpdatedAt = $remoteUpdatedAt;
     }
 
     public function markAutomaticallyConverted(): void

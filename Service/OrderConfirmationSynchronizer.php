@@ -28,9 +28,10 @@ final class OrderConfirmationSynchronizer
         $payload = $this->client->getOrderConfirmation($lexwareId);
         $existing = $this->repository->findByLexwareId($lexwareId);
 
-        if ($existing !== null && isset($payload['updatedDate'])) {
-            $remoteUpdatedAt = new \DateTimeImmutable((string) $payload['updatedDate']);
-            if ($remoteUpdatedAt <= $existing->getLastSynchronizedAt()) {
+        $remoteUpdatedAt = isset($payload['updatedDate']) ? new \DateTimeImmutable((string) $payload['updatedDate']) : null;
+
+        if ($existing !== null && $remoteUpdatedAt !== null && $existing->getRemoteUpdatedAt() !== null) {
+            if ($remoteUpdatedAt <= $existing->getRemoteUpdatedAt()) {
                 return;
             }
         }
@@ -48,6 +49,7 @@ final class OrderConfirmationSynchronizer
                 new \DateTimeImmutable((string) ($payload['voucherDate'] ?? 'now')),
                 (string) ($address['contactId'] ?? ''),
                 json_encode($payload, \JSON_THROW_ON_ERROR),
+                $remoteUpdatedAt,
             );
 
             $this->repository->save($orderConfirmation);
@@ -65,7 +67,7 @@ final class OrderConfirmationSynchronizer
                         $this->configuration->isReadLinesEnabled(),
                     );
                     $this->repository->save($orderConfirmation);
-                } catch (CustomerCurrencyMismatchException $exception) {
+                } catch (CustomerCurrencyMismatchException | UnprocessableOrderConfirmationException $exception) {
                     $this->logger->error(\sprintf(
                         'Order confirmation %s was not converted automatically: %s',
                         $lexwareId,

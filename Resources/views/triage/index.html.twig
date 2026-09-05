@@ -21,9 +21,11 @@
                             <td>{{ orderConfirmation.voucherDate|date('Y-m-d') }}</td>
                             <td>
                                 <form method="post" action="{{ path('lexware_sync_triage_convert', {id: orderConfirmation.id}) }}" style="display: inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('lexware_sync_triage') }}">
                                     <button type="submit" class="btn btn-sm btn-primary">{{ 'lexware_sync.triage.convert'|trans }}</button>
                                 </form>
                                 <form method="post" action="{{ path('lexware_sync_triage_reject', {id: orderConfirmation.id}) }}" style="display: inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('lexware_sync_triage') }}">
                                     <button type="submit" class="btn btn-sm btn-secondary">{{ 'lexware_sync.triage.reject'|trans }}</button>
                                 </form>
                             </td>

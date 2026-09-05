@@ -65,10 +65,34 @@ screen.
 | `lexware_sync.title_regex` | Regular expression checked against the order confirmation's title. An empty value matches every order confirmation. | empty |
 | `lexware_sync.read_lines_enabled` | Read order confirmation line items and create a matching Kimai activity for each one. | `false` |
 | `lexware_sync.line_regex` | Regular expression checked against each line's name and description. An empty value matches every line that is not purely informational. | empty |
-| `lexware_sync.reconcile_interval_minutes` | How often the reconciliation poll runs. | `30` |
+| `lexware_sync.reconcile_interval_minutes` | How often an administrator should schedule the reconciliation poll to run. The plugin does not enforce this interval itself, it only reads it back as documentation for the cron entry described below. | `30` |
 
 Every regular expression field is optional. Leaving it empty means it matches everything,
 never that it matches nothing. This rule is applied consistently across the whole plugin.
+
+## Running it
+
+Installing the plugin, with `bin/console kimai:reload -n` followed by
+`bin/console kimai:bundle:lexware-sync:install`, only makes its code and database tables
+available. Two further steps are needed before it actually keeps Kimai and Lexware in sync.
+
+First, two console commands need a cron entry, since the plugin has no scheduler of its own:
+
+- `bin/console kimai:lexware-sync:reconcile` polls Lexware for order confirmations that a
+  webhook delivery might have missed. Schedule it to run as often as the
+  `lexware_sync.reconcile_interval_minutes` setting above says, since that setting exists to
+  tell whoever sets up this cron entry what interval to use, not to make the plugin schedule
+  itself.
+- `bin/console kimai:lexware-sync:check-api-key` confirms the configured Lexware API key still
+  authenticates. Schedule it about once a week, well ahead of the key's twenty four month
+  expiry, so an administrator notices a key that needs renewing instead of finding out when
+  synchronization silently stops.
+
+Second, the real Lexware webhook subscription has to be registered by hand, once this Kimai
+instance is reachable at the public HTTPS endpoint described in the Requirements section above.
+Send a `POST` request to `https://api.lexware.io/v1/event-subscriptions`, authenticated with the
+Lexware API key as a bearer token, with an `eventType` of `order-confirmation.changed` and a
+`callbackUrl` pointing at this instance's `/webhook/lexware/order-confirmation` route.
 
 ## Permissions
 

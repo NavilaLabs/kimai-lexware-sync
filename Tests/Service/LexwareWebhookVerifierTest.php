@@ -6,6 +6,7 @@ namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Service;
 
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareWebhookVerifier;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\HttpClient\Exception\TransportException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -74,7 +75,7 @@ final class LexwareWebhookVerifierTest extends TestCase
         $httpClient = new MockHttpClient(function () {
             throw new TransportException('network down');
         });
-        $verifier = new LexwareWebhookVerifier($httpClient);
+        $verifier = new LexwareWebhookVerifier($httpClient, new ArrayAdapter());
 
         self::assertFalse($verifier->verify($body, ['x-lxo-signature' => [$signature]]));
     }
@@ -89,7 +90,7 @@ final class LexwareWebhookVerifierTest extends TestCase
 
             return new MockResponse(self::$publicKeyPem, ['http_code' => 200]);
         });
-        $verifier = new LexwareWebhookVerifier($httpClient);
+        $verifier = new LexwareWebhookVerifier($httpClient, new ArrayAdapter());
 
         $verifier->verify($body, ['x-lxo-signature' => [$signature]]);
         $verifier->verify($body, ['x-lxo-signature' => [$signature]]);
@@ -109,6 +110,6 @@ final class LexwareWebhookVerifierTest extends TestCase
     {
         $httpClient = new MockHttpClient(fn () => new MockResponse(self::$publicKeyPem, ['http_code' => 200]));
 
-        return new LexwareWebhookVerifier($httpClient);
+        return new LexwareWebhookVerifier($httpClient, new ArrayAdapter());
     }
 }
