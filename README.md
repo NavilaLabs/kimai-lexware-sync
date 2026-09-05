@@ -44,12 +44,10 @@ Full design: [`docs/superpowers/specs/2026-09-04-kimai-lexware-sync-design.md`](
 - A Kimai 2 installation. The exact supported version is pinned in `composer.json` through
   `extra.kimai.require`.
 - A Lexware Public API key, not a Partner API key. Generate one at
-  `https://app.lexware.de/addons/public-api`. Store it as an environment variable and reference
-  it from `local.yaml` rather than entering it directly into Kimai's system configuration,
-  which persists every value as plain text. Add `LEXWARE_API_KEY=...` to `.env.local` or the
-  deployment's own secret store, since the plugin's service configuration reads the key from
-  the `LEXWARE_API_KEY` environment variable. This repository's own `.env` already does this
-  for the development sandbox.
+  `https://app.lexware.de/addons/public-api` and enter it as `lexware_sync.api_key` in Kimai's
+  system configuration screen, described below. Kimai's system configuration persists every
+  value as plain text in the database, so this key is only as protected as the rest of that
+  table, the same as any other credential stored there.
 - For webhook delivery, the Kimai instance must be reachable over public HTTPS with a valid
   certificate. Lexware requires a rating of grade A or better and silently rejects a
   self-signed certificate. Until that is in place, the reconciliation poll still keeps
@@ -63,6 +61,8 @@ screen.
 
 | Key | Meaning | Default |
 |---|---|---|
+| `lexware_sync.api_key` | The Lexware Public API key used to authenticate every request. Rendered as a password field that always displays blank; leaving it blank on save keeps the currently stored key, entering a value replaces it. | empty |
+| `lexware_sync.public_base_url` | The public base URL Lexware should call, used by the "Connect webhooks" button below the API key field. Empty uses this Kimai instance's own configured URL, which is right in production behind a real domain but wrong in local development, where this should be set to a tunnel's public HTTPS URL (see "Running it" below). | empty |
 | `lexware_sync.auto_convert_enabled` | Automatically convert an order confirmation into a project when the title rule matches. | `false` |
 | `lexware_sync.title_regex` | Regular expression checked against the order confirmation's title. An empty value matches every order confirmation. | empty |
 | `lexware_sync.read_lines_enabled` | Read order confirmation line items and create a matching Kimai activity for each one. | `false` |
@@ -95,17 +95,24 @@ First, two console commands need a cron entry, since the plugin has no scheduler
   webhook delivery might have missed, on the same interval as the order confirmation
   reconciliation poll above.
 
-Second, the real Lexware webhook subscription has to be registered by hand, once this Kimai
-instance is reachable at the public HTTPS endpoint described in the Requirements section above.
-Send a `POST` request to `https://api.lexware.io/v1/event-subscriptions`, authenticated with the
-Lexware API key as a bearer token, with an `eventType` of `order-confirmation.changed` and a
-`callbackUrl` pointing at this instance's `/webhook/lexware/order-confirmation` route.
+Second, the real Lexware webhook subscriptions have to be registered, once this Kimai instance is
+reachable at the public HTTPS endpoint described in the Requirements section above. Click
+"Connect webhooks" below the API key field on the system configuration screen: it registers all
+six event subscriptions needed for both milestones in one step (`order-confirmation.created`,
+`order-confirmation.changed` and `order-confirmation.status.changed` pointing at
+`/webhook/lexware/order-confirmation`, plus `invoice.created`, `invoice.changed` and
+`invoice.status.changed` pointing at `/webhook/lexware/invoice`), skipping any that already exist
+with the same callback URL, so clicking it again after some already succeeded is harmless.
 
-Register a second event subscription the same way, once for each of `invoice.created`,
-`invoice.changed` and `invoice.status.changed`, all with a `callbackUrl` pointing at this
-instance's `/webhook/lexware/invoice` route, so an invoice draft pursued from a tracked order
-confirmation, and any later change to its status, is picked up the same way order confirmations
-themselves are.
+In local development, where this instance has no public HTTPS endpoint of its own, expose it
+through a tunnel (for example `ngrok http <port>` or a Cloudflare Tunnel) and put that tunnel's
+public HTTPS URL into `lexware_sync.public_base_url` before clicking the button, since Lexware
+needs somewhere it can actually reach to deliver the webhook. A tool like
+[webhook.site](https://webhook.site) only captures and displays what Lexware sends, it does not
+forward the request into this Kimai instance, so it is useful for inspecting a payload once but
+not a substitute for a tunnel. Either way, the reconciliation poll described above keeps
+milestone one and two fully functional even before any webhook is connected, only with a delay of
+up to the configured poll interval instead of an instant update.
 
 ## Permissions
 

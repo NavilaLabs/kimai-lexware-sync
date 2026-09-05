@@ -15,6 +15,20 @@ final class LexwareSyncConfiguration
     {
     }
 
+    public function getApiKey(): string
+    {
+        $value = $this->configuration->find('lexware_sync.api_key');
+
+        return \is_string($value) ? $value : '';
+    }
+
+    public function getPublicBaseUrl(): string
+    {
+        $value = $this->configuration->find('lexware_sync.public_base_url');
+
+        return \is_string($value) ? rtrim($value, '/') : '';
+    }
+
     public function isAutoConvertEnabled(): bool
     {
         return (bool) ($this->configuration->find('lexware_sync.auto_convert_enabled') ?? false);

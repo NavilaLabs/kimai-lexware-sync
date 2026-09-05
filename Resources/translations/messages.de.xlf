@@ -2,6 +2,22 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
     <file source-language="en" target-language="de" datatype="plaintext" original="messages.de.xlf">
         <body>
+            <trans-unit id="lexware_sync.connect_webhooks" resname="lexware_sync.connect_webhooks">
+                <source>lexware_sync.connect_webhooks</source>
+                <target>Webhooks verbinden</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.connect_webhooks_running" resname="lexware_sync.connect_webhooks_running">
+                <source>lexware_sync.connect_webhooks_running</source>
+                <target>Verbinde…</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.connect_webhooks_result" resname="lexware_sync.connect_webhooks_result">
+                <source>lexware_sync.connect_webhooks_result</source>
+                <target>%created% neu angelegt, %existing% bereits verbunden, %failed% fehlgeschlagen.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.connect_webhooks_invalid_token" resname="lexware_sync.connect_webhooks_invalid_token">
+                <source>lexware_sync.connect_webhooks_invalid_token</source>
+                <target>Ungültiges Sicherheitstoken, bitte Seite neu laden und erneut versuchen.</target>
+            </trans-unit>
             <trans-unit id="lexware_sync.triage.title" resname="lexware_sync.triage.title">
                 <source>lexware_sync.triage.title</source>
                 <target>Offene Auftragsbestätigungen</target>

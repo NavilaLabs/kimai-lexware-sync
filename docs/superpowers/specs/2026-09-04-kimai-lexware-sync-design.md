@@ -164,6 +164,8 @@ this:
 
 | Key | Meaning | Default |
 |---|---|---|
+| `lexware_sync.api_key` | The Lexware Public API key used to authenticate every request. Rendered as a password field that always displays blank; leaving it blank on save keeps the currently stored key. | empty |
+| `lexware_sync.public_base_url` | The public base URL used to build webhook callback URLs when the "Connect webhooks" button registers event subscriptions with Lexware. Empty uses this instance's own configured URL. | empty |
 | `lexware_sync.auto_convert_enabled` | Automatically convert an order confirmation into a project when the title rule matches. | `false` |
 | `lexware_sync.title_regex` | A regular expression checked against the order confirmation's title. An empty value matches everything. | empty |
 | `lexware_sync.read_lines_enabled` | Read order confirmation line items and create a matching activity for each one. | `false` |

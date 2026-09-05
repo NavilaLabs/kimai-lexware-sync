@@ -2,6 +2,10 @@ lexware_sync_webhook:
     resource: '@KimaiLexwareSyncBundle/Controller/LexwareWebhookController.php'
     type: attribute
 
+lexware_sync_webhook_subscription:
+    resource: '@KimaiLexwareSyncBundle/Controller/WebhookSubscriptionController.php'
+    type: attribute
+
 lexware_sync_triage:
     resource: '@KimaiLexwareSyncBundle/Controller/TriageController.php'
     type: attribute

@@ -2,6 +2,22 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
     <file source-language="en" target-language="en" datatype="plaintext" original="messages.en.xlf">
         <body>
+            <trans-unit id="lexware_sync.connect_webhooks" resname="lexware_sync.connect_webhooks">
+                <source>lexware_sync.connect_webhooks</source>
+                <target>Connect webhooks</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.connect_webhooks_running" resname="lexware_sync.connect_webhooks_running">
+                <source>lexware_sync.connect_webhooks_running</source>
+                <target>Connecting…</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.connect_webhooks_result" resname="lexware_sync.connect_webhooks_result">
+                <source>lexware_sync.connect_webhooks_result</source>
+                <target>%created% created, %existing% already connected, %failed% failed.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.connect_webhooks_invalid_token" resname="lexware_sync.connect_webhooks_invalid_token">
+                <source>lexware_sync.connect_webhooks_invalid_token</source>
+                <target>Invalid security token, please reload the page and try again.</target>
+            </trans-unit>
             <trans-unit id="lexware_sync.triage.title" resname="lexware_sync.triage.title">
                 <source>lexware_sync.triage.title</source>
                 <target>Pending order confirmations</target>

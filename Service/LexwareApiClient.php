@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Service;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -19,7 +20,7 @@ final class LexwareApiClient
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly string $apiKey,
+        private readonly LexwareSyncConfiguration $configuration,
     ) {
     }
 
@@ -90,6 +91,28 @@ final class LexwareApiClient
     }
 
     /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function listEventSubscriptions(): array
+    {
+        $result = $this->request('GET', '/v1/event-subscriptions');
+        $content = $result['content'] ?? $result;
+
+        return \is_array($content) ? array_values($content) : [];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function createEventSubscription(string $eventType, string $callbackUrl): array
+    {
+        return $this->request('POST', '/v1/event-subscriptions', [], [
+            'eventType' => $eventType,
+            'callbackUrl' => $callbackUrl,
+        ]);
+    }
+
+    /**
      * @param array<string, mixed> $query
      * @param array<string, mixed>|null $jsonBody
      * @return array<string, mixed>
@@ -100,7 +123,7 @@ final class LexwareApiClient
 
         $options = [
             'headers' => [
-                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Authorization' => 'Bearer ' . $this->configuration->getApiKey(),
                 'Accept' => 'application/json',
             ],
             'query' => $query,

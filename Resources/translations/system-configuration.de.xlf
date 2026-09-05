@@ -2,6 +2,14 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
     <file source-language="en" target-language="de" datatype="plaintext" original="system-configuration.de.xlf">
         <body>
+            <trans-unit id="lexware_sync.api_key" resname="lexware_sync.api_key">
+                <source>lexware_sync.api_key</source>
+                <target>Lexware Public API Schlüssel, leer lassen behält den aktuell gespeicherten Schlüssel</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.public_base_url" resname="lexware_sync.public_base_url">
+                <source>lexware_sync.public_base_url</source>
+                <target>Öffentliche Basis-URL, die Lexware aufrufen soll, z. B. eine Tunnel-URL in der lokalen Entwicklung, leer verwendet die eigene konfigurierte URL dieser Instanz</target>
+            </trans-unit>
             <trans-unit id="lexware_sync.auto_convert_enabled" resname="lexware_sync.auto_convert_enabled">
                 <source>lexware_sync.auto_convert_enabled</source>
                 <target>Passende Auftragsbestätigung automatisch in ein Projekt umwandeln</target>

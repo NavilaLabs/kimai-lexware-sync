@@ -8,16 +8,28 @@ use App\Event\SystemConfigurationEvent;
 use App\Form\Model\Configuration;
 use App\Form\Model\SystemConfiguration as SystemConfigurationModel;
 use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
+use KimaiPlugin\KimaiLexwareSyncBundle\Form\LexwareApiKeyType;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Validator\Constraints\Callback;
+use Symfony\Component\Validator\Constraints\Url;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class SystemConfigurationSubscriber implements EventSubscriberInterface
 {
+    public function __construct(
+        private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly CsrfTokenManagerInterface $csrfTokenManager,
+        private readonly TranslatorInterface $translator,
+    ) {
+    }
+
     public static function getSubscribedEvents(): array
     {
         return [SystemConfigurationEvent::class => ['onSystemConfiguration', 200]];
@@ -28,6 +40,16 @@ final class SystemConfigurationSubscriber implements EventSubscriberInterface
         $event->addConfiguration(
             (new SystemConfigurationModel('lexware_sync_configuration'))
                 ->setConfiguration([
+                    (new Configuration('lexware_sync.api_key'))
+                        ->setTranslationDomain('system-configuration')
+                        ->setType(LexwareApiKeyType::class)
+                        ->setRequired(false)
+                        ->setOptions(['help' => $this->buildConnectWebhooksHelpHtml(), 'help_html' => true]),
+                    (new Configuration('lexware_sync.public_base_url'))
+                        ->setTranslationDomain('system-configuration')
+                        ->setType(TextType::class)
+                        ->setRequired(false)
+                        ->setConstraints([new Url()]),
                     (new Configuration('lexware_sync.auto_convert_enabled'))
                         ->setTranslationDomain('system-configuration')
                         ->setType(CheckboxType::class)
@@ -67,6 +89,62 @@ final class SystemConfigurationSubscriber implements EventSubscriberInterface
                         ]),
                 ])
         );
+    }
+
+    private function buildConnectWebhooksHelpHtml(): string
+    {
+        $url = $this->urlGenerator->generate('lexware_sync_connect_webhooks');
+        $token = $this->csrfTokenManager->getToken('lexware_sync_connect_webhooks')->getValue();
+        $label = $this->translator->trans('lexware_sync.connect_webhooks', [], 'messages');
+        $runningLabel = $this->translator->trans('lexware_sync.connect_webhooks_running', [], 'messages');
+
+        return <<<HTML
+            <div class="mt-2">
+                <button type="button" class="btn btn-secondary btn-sm"
+                        data-lexware-connect-webhooks
+                        data-url="{$this->escape($url)}"
+                        data-token="{$this->escape($token)}"
+                        data-label="{$this->escape($label)}"
+                        data-running-label="{$this->escape($runningLabel)}">{$this->escape($label)}</button>
+                <span data-lexware-connect-webhooks-result class="ms-2"></span>
+            </div>
+            <script>
+                document.addEventListener('click', function (event) {
+                    var button = event.target.closest('[data-lexware-connect-webhooks]');
+                    if (!button) {
+                        return;
+                    }
+
+                    var result = button.parentElement.querySelector('[data-lexware-connect-webhooks-result]');
+                    button.disabled = true;
+                    button.textContent = button.dataset.runningLabel;
+                    result.textContent = '';
+
+                    fetch(button.dataset.url, {
+                        method: 'POST',
+                        headers: {'X-CSRF-TOKEN': button.dataset.token},
+                    })
+                        .then(function (response) { return response.json(); })
+                        .then(function (body) {
+                            result.textContent = body.message;
+                            result.className = body.success ? 'ms-2 text-success' : 'ms-2 text-danger';
+                        })
+                        .catch(function () {
+                            result.textContent = 'Request failed.';
+                            result.className = 'ms-2 text-danger';
+                        })
+                        .finally(function () {
+                            button.disabled = false;
+                            button.textContent = button.dataset.label;
+                        });
+                });
+            </script>
+            HTML;
+    }
+
+    private function escape(string $value): string
+    {
+        return htmlspecialchars($value, \ENT_QUOTES, 'UTF-8');
     }
 
     private function createRegexConstraint(): Callback

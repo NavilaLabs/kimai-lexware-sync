@@ -108,6 +108,7 @@ likely in a new namespace, rather than organized with comments inside one large 
   superpowers skill's flow of brainstorming, then a written specification, then an
   implementation plan, for any change that is not trivial. Check here before re-deriving a
   decision from scratch.
-- `.env` and `.devcontainer/.env` hold local development secrets, such as the Lexware API key,
-  and devcontainer settings. Never commit a real production secret here, only development
-  sandbox data such as what is already present.
+- `.env` and `.devcontainer/.env` hold local development secrets and devcontainer settings.
+  Never commit a real production secret here, only development sandbox data such as what is
+  already present. The Lexware API key is not among them: it is entered through Kimai's system
+  configuration screen (`lexware_sync.api_key`), not through an environment variable.
