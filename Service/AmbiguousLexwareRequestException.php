@@ -4,6 +4,6 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Service;
 
-class LexwareApiException extends \RuntimeException
+final class AmbiguousLexwareRequestException extends LexwareApiException
 {
 }
