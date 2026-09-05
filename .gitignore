@@ -5,3 +5,7 @@
 /composer.lock
 /.php-cs-fixer.cache
 /.phpunit.cache/
+/.phpunit.result.cache
+/.phpactor.json
+/.claude/scheduled_tasks.lock
+/.claude/skills/kimai-plugin-workspace/
