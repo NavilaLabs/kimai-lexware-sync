@@ -1,7 +1,7 @@
 # KimaiLexwareSync: design specification
 
-Status: approved for milestone one in detail, milestone two at the roadmap level.
-Date: 2026-09-04
+Status: approved for milestone one and milestone two, both in detail.
+Date: 2026-09-04, milestone two design added 2026-09-05
 
 ## 1. Purpose
 
@@ -28,12 +28,10 @@ configuration namespace, not any runtime logic.
   in, become tracked records, and, either automatically or through a manual triage step, become
   Kimai projects and activities with a recorded, auditable link back to their source order
   confirmation.
-- **Milestone two**, described only at the roadmap level, see section 12: Lexware invoices, or
-  invoice drafts, linked to a tracked order confirmation surface inside Kimai. A user assigns
-  booked timesheets onto one of them, and a new, combined invoice is pushed back to Lexware.
-  Several questions about its user interface and pricing model are explicitly still open and
-  will get their own brainstorming and specification pass once milestone one is live and in
-  use.
+- **Milestone two**, covered in detail from section 12 onward: a Lexware invoice draft, created
+  by a person inside Lexware itself by "pursuing" a tracked order confirmation, surfaces inside
+  Kimai. A user assigns booked timesheets onto it, and a new, combined invoice, containing both
+  the draft's original lines and the newly assigned timesheet lines, is pushed back to Lexware.
 
 ## 3. Feasibility findings, verified against a real Lexware account on 2026-09-04
 
@@ -197,9 +195,14 @@ the rest of the interface, rather than an arbitrary color value.
 
 ## 7. Triage screen and permissions
 
-A dedicated permission, `triage_lexware_sync`, gates the manual triage feature. Only a role
+A dedicated permission, `manage_lexware_sync`, gates the manual triage feature. Only a role
 granted this permission sees it. It is kept separate from Kimai's general project management
-permissions on purpose.
+permissions on purpose. The same permission also gates milestone two's invoice assignment screen,
+see section 15; the name was chosen, and the permission renamed from its milestone one working
+name of `triage_lexware_sync`, once it became clear during milestone two's design that it would
+need to cover more than the order confirmation triage screen alone. Since the permission is a
+static role mapping declared in the bundle's own configuration, not a per-user assignment stored
+in the database, the rename is a plain code change with no migration.
 
 A new button appears in Kimai's project overview, labeled to show pending order confirmations,
 with a badge showing how many are currently pending. Opening it shows a list, built from Kimai's
@@ -325,45 +328,207 @@ tested end to end until it exists. Because of the reconciliation poll, milestone
 functional even before that precondition is met, only with a delay of up to the poll interval
 instead of an instant update.
 
-## 12. Milestone two: roadmap
+## 12. Milestone two: architecture
 
-### Already clarified during milestone one's design
+Milestone two mirrors milestone one's shape, moving in the opposite direction: milestone one
+brings a Lexware order confirmation into Kimai, milestone two pushes Kimai timesheet data out to
+a Lexware invoice. The trigger, however, does not start on the Lexware side by itself. A person
+must first act inside Lexware's own interface, using its "pursue" function on a tracked order
+confirmation, to create an invoice draft. Everything the plugin does happens after that draft
+already exists.
 
-- The primary way to correlate a Lexware invoice with its originating order confirmation is the
-  invoice's `relatedVouchers` entry, not a title pattern. A configured regular expression, if
-  any, is an additional filter applied on top of that link, following the same rule as
-  everywhere else in this project: an empty pattern matches everything.
-- Because Lexware invoices offer no update endpoint, the plugin cannot add rows to an invoice
-  that already exists. It must always create a new invoice containing the order confirmation's
-  original lines together with the newly assigned timesheet lines.
-- Because Lexware offers no documented deletion or void endpoint either, discarding the original
-  invoice cannot be automated. The plugin can, at most, flag that invoice for a person to delete
-  manually inside the Lexware interface.
-- Finalizing the newly created invoice, and marking the related project completed, are both
-  optional, user controlled actions taken at the same time as sending the invoice. Marking a
-  project completed is itself configurable to either set an end date on it or simply hide its
-  visibility, matching the original product idea.
-- The same integrity principles used in milestone one apply here without change: never trust a
-  webhook body, one database transaction per conversion, and deduplication keyed on the
-  Lexware identifier together with its modification date.
-- The data model mirrors milestone one's shape: a dedicated tracked invoice table and a
-  dedicated processor, following the same pattern as `TrackedOrderConfirmation` and
-  `OrderConfirmationProcessor`.
+1. A person opens a tracked order confirmation inside Lexware and uses "pursue" to create an
+   invoice draft from it. Lexware may allow this more than once for the same order confirmation,
+   for example when a project is billed in several batches over time; each resulting draft
+   carries its own `relatedVouchers` entry pointing back to the same order confirmation.
+2. A Lexware webhook call (`invoice.created`, `invoice.changed`, `invoice.status.changed`) or the
+   periodic reconciliation poll, paging through `GET /v1/voucherlist` filtered to invoices,
+   notices the draft. Exactly as in milestone one, the webhook body itself is never trusted for
+   data; both triggers only ever signal that the plugin should refetch the resource by its
+   identifier through `GET /v1/invoices/{id}`.
+3. The freshly fetched invoice is only tracked as a `TrackedInvoice` when both of the following
+   hold: its `voucherStatus` is `draft`, and its `relatedVouchers` entry points to an order
+   confirmation already present in the `TrackedOrderConfirmation` table. An invoice with no such
+   link, for example an unrelated invoice created directly in Lexware with no connection to a
+   Kimai project, is ignored entirely and never appears anywhere in Kimai, following the same
+   rule milestone one applies to an unmapped Lexware contact: an unmatched record is left alone,
+   never guessed at. If a configured `lexware_sync.invoice_title_regex` is set, it is applied as
+   a further, optional filter against the draft's title on top of the `relatedVouchers` match,
+   following the project's usual rule that an empty pattern matches everything.
+4. A previously tracked invoice draft that a person finalized directly inside Lexware, bypassing
+   the plugin entirely, is detected the same way: its `voucherStatus` is no longer `draft` on the
+   next refetch. Its `TrackedInvoice` record is marked superseded, a status distinct from
+   rejected precisely so it is never confused with an explicit human decision, since there is
+   nothing left for the plugin to do with it, and it disappears from the pending list for good.
+   Lexware's own documented status transitions never move an invoice back to `draft` once it has
+   left that status, so this state is permanent and the synchronizer never reconsiders it again.
+   A `TrackedInvoice` already converted through the plugin is left alone the same way: the
+   superseded original draft going on existing in Lexware, untouched until a person deletes it by
+   hand, must never cause the synchronizer to walk a converted record backward into pending.
+5. A person opens the pending list inside Kimai, described in section 15, and either converts a
+   tracked invoice draft by assigning timesheets to it, or rejects it to intentionally leave it
+   for manual handling entirely inside Lexware.
+6. Converting calls `InvoiceProcessor`, which builds the combined line item list, calls
+   `LexwareApiClient::createInvoice()` to create the new invoice in Lexware, and, only once that
+   call succeeds, records the result locally in one Doctrine transaction: the `TrackedInvoice`
+   status becomes converted, the selected timesheets are marked exported, and, if requested, the
+   linked project is marked completed.
 
-### Still open, to be resolved in milestone two's own brainstorming and specification pass
+As in milestone one, there is no message queue available to a plugin, so this all runs
+synchronously inside the same request that received the webhook call, the same console
+invocation that ran the reconciliation poll, or the same request that submitted the assignment
+page.
 
-- Exactly how a booked timesheet becomes an invoice line. The user who requested this project
-  named two candidate shapes without settling on either: one invoice line per timesheet, or
-  timesheets aggregated into a quantity and a price, with either shape editable by hand before
-  sending. This choice, and possibly a way to let the person pick per invoice, needs its own
-  design pass.
-- The exact user interface for assigning timesheets to an invoice: whether it is a popup, a
-  dedicated page, and how a person selects which booked, not yet exported timesheets to include.
-- Whether a timesheet, once included in a milestone two invoice, should be marked exported the
-  same way Kimai's own invoicing marks it, and what happens if a timesheet is edited after being
-  included.
-- What happens when more than one Lexware invoice links to the same order confirmation, for
-  example when a project is invoiced in several batches over time, and how the triage-equivalent
-  list for milestone two should present that.
-- The permission model for milestone two's user interface: whether it reuses the
-  `triage_lexware_sync` permission or introduces a separate one.
+### Components
+
+| Component | Responsibility |
+|---|---|
+| `Service/InvoiceSynchronizer.php` | The single entry point both triggers call, mirroring `OrderConfirmationSynchronizer`. Refetches `GET /v1/invoices/{id}`, applies the `draft` status and `relatedVouchers` checks and the optional title filter, and upserts the `TrackedInvoice` record. Never touches a record already converted or superseded; marks a still-pending or still-rejected record superseded if the draft moved past `draft` status outside the plugin. |
+| `Command/ReconcileInvoicesCommand.php` | A cron triggered console command, mirroring `ReconcileOrderConfirmationsCommand`. Pages through `GET /v1/voucherlist` filtered to invoices, compares against identifiers and modification dates already known locally, and calls the synchronizer for anything new or changed. Runs on the same configured interval as `ReconcileOrderConfirmationsCommand`, as a second cron entry. |
+| `Service/InvoiceProcessor.php` | The core business logic, mirroring `OrderConfirmationProcessor`. Builds the new invoice's line items from the draft's own, unchanged original lines together with the newly assigned timesheets, in the shape the person chose, calls the Lexware client to create it, and, on success, marks the affected timesheets exported and optionally marks the linked project completed. |
+| `Controller/InvoiceAssignmentController.php` and its templates | The manual user interface described in section 15: the pending list, the per-draft assignment page, and the convert and reject actions. |
+| `LexwareApiClient` (extended) | Gains `createInvoice()`, `getInvoice()` and a filtered `findInvoices()` lookup used only for the ambiguous-failure check described in section 16. |
+| `LexwareWebhookController` (extended) | Gains a dispatch step that reads the event type and calls either `OrderConfirmationSynchronizer` or `InvoiceSynchronizer`, otherwise unchanged from milestone one. |
+
+## 13. Milestone two: data model
+
+One new table, following the same principle as milestone one: no change to a core Kimai entity
+beyond the foreign keys that reference it.
+
+**The tracked invoice table** holds one row per Lexware invoice draft the plugin has decided to
+track: an internal identifier, the Lexware identifier as a unique value, the voucher number, the
+voucher date, the raw payload as the last full response received from the API, a reference to the
+`TrackedOrderConfirmation` row its `relatedVouchers` entry points to, a status of pending,
+converted, rejected or superseded, the last of these meaning the draft left `draft` status inside
+Lexware without ever being converted through the plugin, a nullable timestamp recording when an
+invoice creation attempt started,
+used only for the duplicate protection described in section 16, the Lexware identifier of the
+new, combined invoice once one has been created, the timestamps for when it was first seen and
+last synchronized, when it was converted or rejected, and, whichever action a person took, which
+user took it.
+
+There is deliberately no separate line table for the tracked invoice, unlike the order
+confirmation line table in milestone one. The draft's original lines are never matched against a
+rule or turned into a separate Kimai entity; they are only read back out of the raw payload,
+unchanged, when the new combined invoice is built.
+
+Whether a converted timesheet needs an additional field of its own, to detect and warn about an
+edit that happened after its invoice was created, or whether comparing its existing modification
+timestamp against the `TrackedInvoice` row's converted timestamp is enough, is a small detail
+left to the implementation plan rather than decided here; both are within Kimai's own `Timesheet`
+entity capabilities and neither changes this design.
+
+## 14. Milestone two: configuration
+
+Two new keys, exposed through the same system configuration screen milestone one already uses:
+
+| Key | Meaning | Default |
+|---|---|---|
+| `lexware_sync.invoice_title_regex` | A regular expression checked against an invoice draft's title, applied on top of the `relatedVouchers` match. An empty value matches everything. | empty |
+| `lexware_sync.project_completion_mode` | What "mark project completed", offered as an option when converting a tracked invoice, actually does: set an end date on the project, or hide its visibility. | `end_date` |
+
+`lexware_sync.reconcile_interval_minutes`, already defined in section 6, is reused unchanged for
+`ReconcileInvoicesCommand`'s cadence; there is no reason for the two reconciliation polls to run
+on different schedules.
+
+## 15. Milestone two: invoice assignment screen
+
+The same `manage_lexware_sync` permission introduced in section 7 gates this screen, alongside
+the existing triage screen.
+
+A pending list, structured the same way as the order confirmation triage list, shows every
+`TrackedInvoice` still in the pending state: its voucher number, its title, its voucher date, and
+the Kimai project its related order confirmation produced. Each row offers two actions,
+convert and reject, with the same meaning as the equivalent triage actions: converting opens the
+assignment page described below, rejecting marks the row rejected and removes it from the list,
+with no third button needed, since leaving a row untouched already keeps it pending. A row that
+was rejected reappears automatically if the underlying draft in Lexware changes again afterward,
+detected the same way as everywhere else in this project, by its modification date advancing
+past what is already stored.
+
+Opening a pending row leads to a dedicated assignment page, not a popup, for that one draft. It
+shows the draft's original lines, read only, exactly as fetched from Lexware, and below them a
+table of every timesheet booked on the linked project that is not yet exported, each with a
+checkbox. A person picks a line item shape for the timesheets they select, either one invoice
+line per timesheet or one aggregated line per activity, and the page previews the resulting new
+line items, which stay editable by hand before submission. The original lines are never
+editable on this page; only the newly generated timesheet lines are.
+
+Submitting the page offers two optional checkboxes: finalize the new invoice immediately
+(`?finalize=true` on creation, rather than leaving it as a further draft), and mark the linked
+project completed, using whichever behavior
+`lexware_sync.project_completion_mode` configures. Neither checkbox affects whether the new
+invoice is created at all; both only change what happens once it has been.
+
+On success, a confirmation is shown carrying a link to the superseded original draft, so a
+person can go delete it inside Lexware. The link points at Lexware's own filtered voucher list,
+`https://app.lexware.de/vouchers#!/VoucherList/?filter=invoice&sort=sortByVoucherDate&sortDirection=desc&query={voucherNumber}`,
+substituting the original draft's voucher number, confirmed directly against the live account
+during this design's brainstorming rather than assumed. Nothing about the superseded draft is
+changed automatically; deleting it stays a manual action, since Lexware offers no deletion
+endpoint at all.
+
+## 16. Milestone two: error handling and integrity
+
+The same integrity principles milestone one established apply here without change: the webhook
+body is never trusted for data, only ever a signal to refetch; deduplication is keyed on the
+Lexware identifier together with its modification date; and every locally recorded outcome of a
+conversion, the `TrackedInvoice` status, the timesheets marked exported, and an optional project
+completion, happens together inside one Doctrine transaction.
+
+Creating a Lexware invoice is the one step in this whole plugin that is not naturally
+idempotent: unlike every other Lexware call this plugin makes, `POST /v1/invoices` has a
+real, visible side effect with no way to detect after the fact whether an ambiguous failure,
+such as a timeout or a dropped connection, still went through on Lexware's side. To guard
+against that, the `TrackedInvoice` row's creation-attempted timestamp is written and committed
+by itself, before the `POST /v1/invoices` call happens, outside the transaction described above.
+
+- A clear, synchronous failure response from Lexware, such as a validation error, is treated as
+  the call never having happened: the attempted timestamp is cleared, the selected timesheets
+  stay available for selection, and the person sees the actual error Lexware returned.
+- An ambiguous failure, a timeout or a dropped connection, leaves the attempted timestamp in
+  place and shows a visible message instead of silently retrying. The assignment page then
+  offers a "check status" action in place of the normal submit button, which searches for a
+  plausible match with `LexwareApiClient::findInvoices()`, filtered by the linked contact and a
+  recent date window, and compared against the total amount the failed attempt tried to create.
+  This is a heuristic, not a guaranteed answer, since Lexware assigns its own identifier with no
+  client supplied idempotency key to look up directly; if a plausible match is found, it is
+  surfaced to the person to confirm by eye before anything is recorded as converted, and if none
+  is found, the person may retry the original submission.
+
+A timesheet that stopped being eligible between the assignment page being opened and being
+submitted, because it was exported by some other action in the meantime, such as Kimai's own
+invoicing running concurrently in a second browser tab, is rechecked at submission time and
+dropped from the selection with a visible note, rather than silently included or allowed to
+overwrite the other action's result.
+
+If the linked Kimai customer's currency does not match the Lexware contact's, the same check
+milestone one already performs blocks the conversion with a visible error, for the same reason:
+producing a booking in a currency nobody intended is worse than requiring a person to resolve
+the mismatch by hand first.
+
+## 17. Milestone two: testing strategy
+
+The same split milestone one uses applies here. Line item aggregation, the title regular
+expression filter, the `relatedVouchers` correlation logic, and the webhook event type dispatch
+between the order confirmation and invoice paths are all plain PHP logic with no Doctrine or
+kernel dependency, and get real PHPUnit tests. `InvoiceSynchronizer`, `InvoiceProcessor`, and the
+assignment controller all depend on Doctrine and the kernel, and are verified by hand through the
+lint, boot, exercise loop, exactly as milestone one's equivalent components were.
+
+One additional manual spike happens before `LexwareApiClient::createInvoice()` is written: a
+real `POST /v1/invoices` call against the sandbox account, to confirm the actual response shape
+Lexware returns on success, the same way the webhook signature mechanism was confirmed against a
+real delivery before milestone one's verifier was written, rather than assumed from the
+documentation alone.
+
+## 18. Open items carried into milestone two implementation
+
+Whether a Lexware invoice created through `POST /v1/invoices` can itself carry an explicit
+`relatedVouchers` entry back to the originating order confirmation, the way an invoice created
+through Lexware's own "pursue" flow does, was not confirmed during this design and needs the
+spike named in section 17 to settle, since it can only be answered by inspecting a real created
+invoice's response.
+
+The exact field used to detect and warn about a timesheet edited after its invoice was created,
+noted as an open detail in section 13, is left to the implementation plan.
