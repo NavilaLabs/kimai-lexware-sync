@@ -8,6 +8,7 @@ use App\Entity\Activity;
 use App\Entity\Timesheet;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\InvoiceLineShape;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\InvoiceLineBuilder;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\TimesheetRateResolver;
 use PHPUnit\Framework\TestCase;
 
 final class InvoiceLineBuilderTest extends TestCase
@@ -45,7 +46,7 @@ final class InvoiceLineBuilderTest extends TestCase
 
     public function testFixedRateTimesheetIsBilledAtRateDividedByHours(): void
     {
-        $builder = new InvoiceLineBuilder();
+        $builder = new InvoiceLineBuilder(new TimesheetRateResolver());
         $timesheets = [
             $this->createFixedRateTimesheet('Beratung', 7200, 300.0),
         ];
@@ -59,7 +60,7 @@ final class InvoiceLineBuilderTest extends TestCase
 
     public function testPerTimesheetProducesOneLineEach(): void
     {
-        $builder = new InvoiceLineBuilder();
+        $builder = new InvoiceLineBuilder(new TimesheetRateResolver());
         $timesheets = [
             $this->createTimesheet('Beratung', 3600, 100.0),
             $this->createTimesheet('Entwicklung', 7200, 80.0),
@@ -78,7 +79,7 @@ final class InvoiceLineBuilderTest extends TestCase
 
     public function testAggregatedByActivityCombinesSameActivityIntoAWeightedRate(): void
     {
-        $builder = new InvoiceLineBuilder();
+        $builder = new InvoiceLineBuilder(new TimesheetRateResolver());
         $timesheets = [
             $this->createTimesheet('Beratung', 3600, 100.0),
             $this->createTimesheet('Beratung', 3600, 120.0),
@@ -94,7 +95,7 @@ final class InvoiceLineBuilderTest extends TestCase
 
     public function testAggregatedByActivityKeepsDifferentActivitiesSeparate(): void
     {
-        $builder = new InvoiceLineBuilder();
+        $builder = new InvoiceLineBuilder(new TimesheetRateResolver());
         $timesheets = [
             $this->createTimesheet('Beratung', 3600, 100.0),
             $this->createTimesheet('Entwicklung', 3600, 80.0),

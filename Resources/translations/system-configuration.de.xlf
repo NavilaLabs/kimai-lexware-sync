@@ -8,7 +8,7 @@
             </trans-unit>
             <trans-unit id="lexware_sync.public_base_url" resname="lexware_sync.public_base_url">
                 <source>lexware_sync.public_base_url</source>
-                <target>Öffentliche Basis-URL, die Lexware aufrufen soll, z. B. eine Tunnel-URL in der lokalen Entwicklung, leer verwendet die eigene konfigurierte URL dieser Instanz</target>
+                <target>Öffentliche Basis-URL, die Lexware aufrufen soll, zum Beispiel eine Tunnel-URL in der lokalen Entwicklung, leer verwendet die eigene konfigurierte URL dieser Instanz</target>
             </trans-unit>
             <trans-unit id="lexware_sync.auto_convert_enabled" resname="lexware_sync.auto_convert_enabled">
                 <source>lexware_sync.auto_convert_enabled</source>
@@ -20,11 +20,11 @@
             </trans-unit>
             <trans-unit id="lexware_sync.read_lines_enabled" resname="lexware_sync.read_lines_enabled">
                 <source>lexware_sync.read_lines_enabled</source>
-                <target>Für jede passende Position der Auftragsbestätigung eine Aktivität anlegen</target>
+                <target>Für jede passende Position der Auftragsbestätigung eine Tätigkeit anlegen</target>
             </trans-unit>
             <trans-unit id="lexware_sync.line_regex" resname="lexware_sync.line_regex">
                 <source>lexware_sync.line_regex</source>
-                <target>Muster, das Name oder Beschreibung einer Position erfüllen muss, um eine Aktivität zu erzeugen, leer bedeutet jede Position passt</target>
+                <target>Muster, das Name oder Beschreibung einer Position erfüllen muss, um eine Tätigkeit zu erzeugen, leer bedeutet jede Position passt</target>
             </trans-unit>
             <trans-unit id="lexware_sync.reconcile_interval_minutes" resname="lexware_sync.reconcile_interval_minutes">
                 <source>lexware_sync.reconcile_interval_minutes</source>

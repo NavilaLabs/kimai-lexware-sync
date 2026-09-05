@@ -14,19 +14,26 @@ stays out of the way.
    the order confirmation matches a configurable rule, the plugin automatically creates a
    matching Kimai project, and optionally one Kimai activity per matching line item, creating
    the Kimai customer first if it does not exist yet.
-2. Any order confirmation that did not convert automatically shows up in a triage list inside
-   Kimai's project overview, where a user decides for each row whether to convert it into a
-   project, reject it, or leave it for later. Leaving it for later simply means doing nothing,
-   since the row stays in the list until a decision is made.
+2. Any order confirmation that did not convert automatically shows up in a list under the
+   Lexware entry of Kimai's main menu, where a user decides for each row whether to convert it
+   into a project, reject it, or leave it for later. Leaving it for later simply means doing
+   nothing, since the row stays in the list until a decision is made. The list opens on the open
+   documents and can be switched to the converted or the rejected ones, so a rejected order
+   confirmation can still be converted later if it was rejected by mistake. Every row carries the
+   customer, the net total and the number of line items, a link into Lexware and a link to the
+   document's PDF, which the plugin fetches through the API and serves from Kimai.
 3. Time is booked in Kimai exactly as it always is. This plugin does not add a timesheet screen
    of its own.
 4. Once a person pursues a tracked order confirmation into an invoice draft inside Lexware, the
    plugin picks it up the same way, through a webhook with a reconciliation poll as a safety
-   net, and lists it in a second screen. Assigning open, not yet exported timesheets to it, in
-   either one line per timesheet or one aggregated line per activity, produces a new invoice
-   containing both the draft's original lines and the new timesheet lines, pushed back to
-   Lexware. Since Lexware offers no update or deletion endpoint for invoices, the original draft
-   stays in Lexware afterward; the screen links directly to it so a person can delete it by hand.
+   net, and lists it in a second screen with the same status filter. Assigning open, not yet
+   exported times to it, in either one line per time record or one aggregated line per activity,
+   produces a new invoice containing both the draft's original lines and the new time lines,
+   pushed back to Lexware. The assignment screen shows the hourly rate and the amount of every
+   time record, the running total of the selection and the resulting invoice total, and it warns
+   about records without an hourly rate, since those would end up on the invoice at zero. Since
+   Lexware offers no update or deletion endpoint for invoices, the original draft stays in
+   Lexware afterward; the screen links directly to it so a person can delete it by hand.
 
 ## Status
 
@@ -119,7 +126,9 @@ up to the configured poll interval instead of an instant update.
 A dedicated `manage_lexware_sync` permission gates both the order confirmation triage screen and
 the invoice assignment screen. It is kept separate from Kimai's general project management
 permissions, so it can be granted only to the roles that should decide which order confirmations
-become projects and which invoice drafts get their combined invoice created.
+become projects and which invoice drafts get their combined invoice created. The Lexware
+entry in the main menu, including the badge that counts the open documents of each screen, is
+only rendered for users who hold that permission.
 
 ## Design principles worth knowing before touching the code
 

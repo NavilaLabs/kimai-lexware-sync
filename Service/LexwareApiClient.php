@@ -112,6 +112,11 @@ final class LexwareApiClient
         ]);
     }
 
+    public function downloadDocumentFile(string $fileId): string
+    {
+        return $this->send('GET', '/v1/files/' . $fileId, [], null, 'application/pdf');
+    }
+
     /**
      * @param array<string, mixed> $query
      * @param array<string, mixed>|null $jsonBody
@@ -119,12 +124,32 @@ final class LexwareApiClient
      */
     private function request(string $method, string $path, array $query = [], ?array $jsonBody = null): array
     {
+        $content = $this->send($method, $path, $query, $jsonBody, 'application/json');
+
+        if ($content === '') {
+            return [];
+        }
+
+        $decoded = json_decode($content, true);
+        if (!\is_array($decoded)) {
+            throw new LexwareApiException(\sprintf('Lexware API returned a non-object response for %s', $path));
+        }
+
+        return $decoded;
+    }
+
+    /**
+     * @param array<string, mixed> $query
+     * @param array<string, mixed>|null $jsonBody
+     */
+    private function send(string $method, string $path, array $query, ?array $jsonBody, string $accept): string
+    {
         $this->pace();
 
         $options = [
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->configuration->getApiKey(),
-                'Accept' => 'application/json',
+                'Accept' => $accept,
             ],
             'query' => $query,
         ];
@@ -152,16 +177,7 @@ final class LexwareApiClient
             throw new LexwareApiException(\sprintf('Lexware API returned status %d for %s: %s', $statusCode, $path, $content));
         }
 
-        if ($content === '') {
-            return [];
-        }
-
-        $decoded = json_decode($content, true);
-        if (!\is_array($decoded)) {
-            throw new LexwareApiException(\sprintf('Lexware API returned a non-object response for %s', $path));
-        }
-
-        return $decoded;
+        return $content;
     }
 
     private function pace(): void

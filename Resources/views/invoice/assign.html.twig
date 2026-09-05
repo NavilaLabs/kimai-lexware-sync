@@ -3,6 +3,9 @@
 {% block main %}
     {% embed '@theme/embeds/card.html.twig' %}
         {% block box_title %}{{ 'lexware_sync.invoice.assign_title'|trans }} {{ trackedInvoice.voucherNumber }}{% endblock %}
+        {% block box_tools %}
+            <a href="{{ draftUrl }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">{{ 'lexware_sync.invoice.open_draft'|trans }}</a>
+        {% endblock %}
         {% block box_body %}
             {% if plausibleMatch is not null %}
                 <div class="alert alert-warning">
@@ -17,63 +20,121 @@
             {% endif %}
 
             <h4>{{ 'lexware_sync.invoice.original_lines'|trans }}</h4>
-            <table class="table">
+            <table class="table table-vcenter">
                 <thead>
                     <tr>
                         <th>{{ 'lexware_sync.invoice.line_name'|trans }}</th>
-                        <th>{{ 'lexware_sync.invoice.line_quantity'|trans }}</th>
+                        <th class="text-end">{{ 'lexware_sync.invoice.line_quantity'|trans }}</th>
+                        <th class="text-end">{{ 'lexware_sync.invoice.line_unit_price'|trans }}</th>
+                        <th class="text-end">{{ 'lexware_sync.invoice.line_amount'|trans }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for line in originalLines %}
                         <tr>
                             <td>{{ line.name|default('') }}</td>
-                            <td>{{ line.quantity|default('') }}</td>
+                            <td class="text-end">{{ line.quantity|default('') }} {{ line.unitName|default('') }}</td>
+                            <td class="text-end">{{ (line.unitPrice.netAmount|default(0))|money(summary.currency) }}</td>
+                            <td class="text-end">{{ (line.lineItemAmount|default(0))|money(summary.currency) }}</td>
                         </tr>
                     {% endfor %}
+                    <tr>
+                        <th colspan="3" class="text-end">{{ 'lexware_sync.invoice.original_lines_total'|trans }}</th>
+                        <th class="text-end">{{ originalLinesTotal|money(summary.currency) }}</th>
+                    </tr>
                 </tbody>
             </table>
 
-            <form method="post" action="{{ path('lexware_sync_invoices_convert', {id: trackedInvoice.id}) }}">
+            <form method="post" action="{{ path('lexware_sync_invoices_convert', {id: trackedInvoice.id}) }}"
+                  data-lexware-assign-form
+                  data-locale="{{ app.request.locale }}"
+                  data-currency="{{ summary.currency }}"
+                  data-original-total="{{ originalLinesTotal }}">
                 <input type="hidden" name="_token" value="{{ csrf_token('lexware_sync_invoices') }}">
 
                 <h4>{{ 'lexware_sync.invoice.select_timesheets'|trans }}</h4>
-                <table class="table">
+                <table class="table table-vcenter">
                     <thead>
                         <tr>
-                            <th></th>
+                            <th><input type="checkbox" data-lexware-select-all></th>
                             <th>{{ 'lexware_sync.invoice.timesheet_date'|trans }}</th>
                             <th>{{ 'lexware_sync.invoice.timesheet_activity'|trans }}</th>
-                            <th>{{ 'lexware_sync.invoice.timesheet_duration'|trans }}</th>
+                            <th>{{ 'lexware_sync.invoice.timesheet_description'|trans }}</th>
+                            <th class="text-end">{{ 'lexware_sync.invoice.timesheet_duration'|trans }}</th>
+                            <th class="text-end">{{ 'lexware_sync.invoice.timesheet_hourly_rate'|trans }}</th>
+                            <th class="text-end">{{ 'lexware_sync.invoice.timesheet_amount'|trans }}</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for timesheet in timesheets %}
+                        {% for row in timesheetRows %}
+                            {% set missingRate = row.hourlyRate <= 0 %}
+                            <tr{% if missingRate %} class="text-danger"{% endif %}>
+                                <td>
+                                    <input type="checkbox" name="timesheets[]" value="{{ row.timesheet.id }}"
+                                           data-amount="{{ row.amount }}"
+                                           data-missing-rate="{{ missingRate ? '1' : '0' }}"
+                                           {% if row.timesheet.id in selectedTimesheetIds %}checked{% endif %}>
+                                </td>
+                                <td>{{ row.timesheet.begin ? row.timesheet.begin|date_short : '' }}</td>
+                                <td>{{ row.timesheet.activity ? row.timesheet.activity.name : '' }}</td>
+                                <td>{{ row.timesheet.description }}</td>
+                                <td class="text-end">{{ row.timesheet.duration|duration_decimal }}</td>
+                                <td class="text-end">
+                                    {{ row.hourlyRate|money(summary.currency) }}
+                                    {% if missingRate %}
+                                        <i class="fas fa-exclamation-triangle ms-1" title="{{ 'lexware_sync.invoice.missing_rate_hint'|trans }}"></i>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">{{ row.amount|money(summary.currency) }}</td>
+                            </tr>
+                        {% else %}
                             <tr>
-                                <td><input type="checkbox" name="timesheets[]" value="{{ timesheet.id }}" {% if timesheet.id in selectedTimesheetIds %}checked{% endif %}></td>
-                                <td>{{ timesheet.begin ? timesheet.begin|date('Y-m-d') : '' }}</td>
-                                <td>{{ timesheet.activity ? timesheet.activity.name : '' }}</td>
-                                <td>{{ (timesheet.duration / 3600)|number_format(2) }}</td>
+                                <td colspan="7" class="text-muted">{{ 'lexware_sync.invoice.no_timesheets'|trans }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
 
-                <div class="form-group">
-                    <label>
-                        <input type="radio" name="shape" value="per_timesheet" {% if selectedShape == 'per_timesheet' %}checked{% endif %}> {{ 'lexware_sync.invoice.shape_per_timesheet'|trans }}
+                <div class="alert alert-warning" data-lexware-missing-rate-warning style="display: none">
+                    {{ 'lexware_sync.invoice.missing_rate_warning'|trans({'%number%': '<span data-lexware-missing-rate-count>0</span>'})|raw }}
+                </div>
+
+                <table class="table table-vcenter w-auto ms-auto">
+                    <tbody>
+                        <tr>
+                            <th>{{ 'lexware_sync.invoice.original_lines_total'|trans }}</th>
+                            <td class="text-end">{{ originalLinesTotal|money(summary.currency) }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ 'lexware_sync.invoice.selected_timesheets_total'|trans }}</th>
+                            <td class="text-end" data-lexware-selected-total>{{ 0|money(summary.currency) }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ 'lexware_sync.invoice.new_invoice_total'|trans }}</th>
+                            <td class="text-end" data-lexware-new-invoice-total>{{ originalLinesTotal|money(summary.currency) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="mb-3">
+                    <label class="form-check">
+                        <input class="form-check-input" type="radio" name="shape" value="per_timesheet" {% if selectedShape == 'per_timesheet' %}checked{% endif %}>
+                        <span class="form-check-label">{{ 'lexware_sync.invoice.shape_per_timesheet'|trans }}</span>
                     </label>
-                    <label>
-                        <input type="radio" name="shape" value="aggregated_by_activity" {% if selectedShape == 'aggregated_by_activity' %}checked{% endif %}> {{ 'lexware_sync.invoice.shape_aggregated'|trans }}
+                    <label class="form-check">
+                        <input class="form-check-input" type="radio" name="shape" value="aggregated_by_activity" {% if selectedShape == 'aggregated_by_activity' %}checked{% endif %}>
+                        <span class="form-check-label">{{ 'lexware_sync.invoice.shape_aggregated'|trans }}</span>
                     </label>
                 </div>
 
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" name="finalize" value="1"> {{ 'lexware_sync.invoice.finalize'|trans }}
+                <div class="mb-3">
+                    <label class="form-check">
+                        <input class="form-check-input" type="checkbox" name="finalize" value="1">
+                        <span class="form-check-label">{{ 'lexware_sync.invoice.finalize'|trans }}</span>
                     </label>
-                    <label>
-                        <input type="checkbox" name="mark_project_completed" value="1"> {{ 'lexware_sync.invoice.mark_project_completed'|trans }}
+                    <label class="form-check">
+                        <input class="form-check-input" type="checkbox" name="mark_project_completed" value="1">
+                        <span class="form-check-label">{{ 'lexware_sync.invoice.mark_project_completed'|trans }}</span>
                     </label>
                 </div>
 
@@ -86,6 +147,67 @@
                     <button type="submit" formaction="{{ path('lexware_sync_invoices_check_status', {id: trackedInvoice.id}) }}" class="btn btn-secondary">{{ 'lexware_sync.invoice.check_status'|trans }}</button>
                 {% endif %}
             </form>
+
+            <script>
+                (function () {
+                    var form = document.querySelector('[data-lexware-assign-form]');
+                    if (form === null) {
+                        return;
+                    }
+
+                    var locale = form.dataset.locale;
+                    var currency = form.dataset.currency;
+                    var originalTotal = parseFloat(form.dataset.originalTotal) || 0;
+                    var selectedTotalCell = form.querySelector('[data-lexware-selected-total]');
+                    var newTotalCell = form.querySelector('[data-lexware-new-invoice-total]');
+                    var warning = form.querySelector('[data-lexware-missing-rate-warning]');
+                    var warningCount = form.querySelector('[data-lexware-missing-rate-count]');
+                    var selectAll = form.querySelector('[data-lexware-select-all]');
+
+                    function formatMoney(value) {
+                        try {
+                            return value.toLocaleString(locale, {style: 'currency', currency: currency});
+                        } catch (error) {
+                            return value.toFixed(2) + ' ' + currency;
+                        }
+                    }
+
+                    function update() {
+                        var boxes = form.querySelectorAll('input[name="timesheets[]"]:checked');
+                        var total = 0;
+                        var missing = 0;
+
+                        boxes.forEach(function (box) {
+                            total += parseFloat(box.dataset.amount) || 0;
+                            if (box.dataset.missingRate === '1') {
+                                missing++;
+                            }
+                        });
+
+                        selectedTotalCell.textContent = formatMoney(total);
+                        newTotalCell.textContent = formatMoney(originalTotal + total);
+                        warningCount.textContent = String(missing);
+                        warning.style.display = missing === 0 ? 'none' : '';
+                    }
+
+                    form.addEventListener('change', function (event) {
+                        if (event.target.name === 'timesheets[]') {
+                            update();
+                        }
+                    });
+
+                    if (selectAll !== null) {
+                        selectAll.addEventListener('change', function () {
+                            form.querySelectorAll('input[name="timesheets[]"]').forEach(function (box) {
+                                box.checked = selectAll.checked;
+                            });
+                            update();
+                        });
+                    }
+
+                    update();
+                })();
+            </script>
         {% endblock %}
     {% endembed %}
 {% endblock %}

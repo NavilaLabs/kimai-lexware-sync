@@ -11,6 +11,10 @@ final class InvoiceLineBuilder
 {
     private const UNIT_NAME = 'Stunden';
 
+    public function __construct(private readonly TimesheetRateResolver $rateResolver)
+    {
+    }
+
     /**
      * @param Timesheet[] $timesheets
      * @return array<int, array<string, mixed>>
@@ -33,13 +37,12 @@ final class InvoiceLineBuilder
 
         foreach ($timesheets as $timesheet) {
             $activity = $timesheet->getActivity();
-            $hours = $this->hoursFor($timesheet);
 
             $lines[] = $this->buildLine(
                 $activity !== null ? (string) $activity->getName() : '',
                 $this->descriptionFor($timesheet),
-                $hours,
-                $this->unitPriceFor($timesheet, $hours),
+                $this->rateResolver->invoicedQuantityFor($timesheet),
+                $this->rateResolver->invoicedUnitPriceFor($timesheet),
                 $taxRatePercentage,
                 $currency,
             );
@@ -73,9 +76,9 @@ final class InvoiceLineBuilder
                 ];
             }
 
-            $hours = $this->hoursFor($timesheet);
+            $hours = $this->rateResolver->hoursFor($timesheet);
             $groups[$activityKey]['hours'] += $hours;
-            $groups[$activityKey]['amount'] += $hours * $this->unitPriceFor($timesheet, $hours);
+            $groups[$activityKey]['amount'] += $hours * $this->rateResolver->hourlyRateFor($timesheet);
         }
 
         $lines = [];
@@ -112,21 +115,6 @@ final class InvoiceLineBuilder
         }
 
         return $line;
-    }
-
-    private function unitPriceFor(Timesheet $timesheet, float $hours): float
-    {
-        $hourlyRate = $timesheet->getHourlyRate();
-        if ($hourlyRate !== null) {
-            return $hourlyRate;
-        }
-
-        return $hours > 0.0 ? $timesheet->getRate() / $hours : 0.0;
-    }
-
-    private function hoursFor(Timesheet $timesheet): float
-    {
-        return ($timesheet->getDuration() ?? 0) / 3600;
     }
 
     private function descriptionFor(Timesheet $timesheet): ?string
