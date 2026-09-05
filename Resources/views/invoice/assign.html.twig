@@ -25,7 +25,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for line in (trackedInvoice.rawPayload|json_decode(true)).lineItems|default([]) %}
+                    {% for line in originalLines %}
                         <tr>
                             <td>{{ line.name|default('') }}</td>
                             <td>{{ line.quantity|default('') }}</td>
@@ -50,7 +50,7 @@
                     <tbody>
                         {% for timesheet in timesheets %}
                             <tr>
-                                <td><input type="checkbox" name="timesheets[]" value="{{ timesheet.id }}"></td>
+                                <td><input type="checkbox" name="timesheets[]" value="{{ timesheet.id }}" {% if timesheet.id in selectedTimesheetIds %}checked{% endif %}></td>
                                 <td>{{ timesheet.begin ? timesheet.begin|date('Y-m-d') : '' }}</td>
                                 <td>{{ timesheet.activity ? timesheet.activity.name : '' }}</td>
                                 <td>{{ (timesheet.duration / 3600)|number_format(2) }}</td>
@@ -61,10 +61,10 @@
 
                 <div class="form-group">
                     <label>
-                        <input type="radio" name="shape" value="per_timesheet" checked> {{ 'lexware_sync.invoice.shape_per_timesheet'|trans }}
+                        <input type="radio" name="shape" value="per_timesheet" {% if selectedShape == 'per_timesheet' %}checked{% endif %}> {{ 'lexware_sync.invoice.shape_per_timesheet'|trans }}
                     </label>
                     <label>
-                        <input type="radio" name="shape" value="aggregated_by_activity"> {{ 'lexware_sync.invoice.shape_aggregated'|trans }}
+                        <input type="radio" name="shape" value="aggregated_by_activity" {% if selectedShape == 'aggregated_by_activity' %}checked{% endif %}> {{ 'lexware_sync.invoice.shape_aggregated'|trans }}
                     </label>
                 </div>
 

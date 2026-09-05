@@ -27,6 +27,36 @@ final class InvoiceLineBuilderTest extends TestCase
         return $timesheet;
     }
 
+    private function createFixedRateTimesheet(string $activityName, int $durationSeconds, float $rate, ?string $description = null): Timesheet
+    {
+        $activity = new Activity();
+        $activity->setName($activityName);
+
+        $timesheet = new Timesheet();
+        $timesheet->setActivity($activity);
+        $timesheet->setBegin(new \DateTime('2026-09-01 09:00:00'));
+        $timesheet->setDuration($durationSeconds);
+        $timesheet->setHourlyRate(null);
+        $timesheet->setRate($rate);
+        $timesheet->setDescription($description);
+
+        return $timesheet;
+    }
+
+    public function testFixedRateTimesheetIsBilledAtRateDividedByHours(): void
+    {
+        $builder = new InvoiceLineBuilder();
+        $timesheets = [
+            $this->createFixedRateTimesheet('Beratung', 7200, 300.0),
+        ];
+
+        $lines = $builder->buildLines($timesheets, InvoiceLineShape::PerTimesheet, 19, 'EUR');
+
+        self::assertCount(1, $lines);
+        self::assertSame(2.0, $lines[0]['quantity']);
+        self::assertSame(150.0, $lines[0]['unitPrice']['netAmount']);
+    }
+
     public function testPerTimesheetProducesOneLineEach(): void
     {
         $builder = new InvoiceLineBuilder();

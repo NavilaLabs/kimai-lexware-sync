@@ -166,6 +166,7 @@ class TrackedInvoice
         $this->status = InvoiceStatus::Rejected;
         $this->processedAt = new \DateTimeImmutable();
         $this->processedBy = $processedBy;
+        $this->creationAttemptedAt = null;
     }
 
     public function markSuperseded(): void
@@ -176,5 +177,8 @@ class TrackedInvoice
     public function reopen(): void
     {
         $this->status = InvoiceStatus::Pending;
+        $this->processedAt = null;
+        $this->processedBy = null;
+        $this->creationAttemptedAt = null;
     }
 }

@@ -9,6 +9,7 @@ use App\Entity\Project;
 use App\Entity\Timesheet;
 use App\Repository\Query\TimesheetQuery;
 use App\Repository\TimesheetRepository;
+use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedInvoice;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\InvoiceLineShape;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedInvoiceRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedInvoiceTimesheetRepository;
@@ -69,6 +70,9 @@ final class InvoiceAssignmentController extends AbstractController
             'trackedInvoice' => $trackedInvoice,
             'timesheets' => $this->findEligibleTimesheets($trackedInvoice->getRelatedOrderConfirmation()->getProject()),
             'plausibleMatch' => null,
+            'originalLines' => $this->originalLines($trackedInvoice),
+            'selectedTimesheetIds' => [],
+            'selectedShape' => InvoiceLineShape::PerTimesheet->value,
         ]);
     }
 
@@ -147,10 +151,27 @@ final class InvoiceAssignmentController extends AbstractController
             return $this->redirectToRoute('lexware_sync_invoices');
         }
 
+        $project = $trackedInvoice->getRelatedOrderConfirmation()->getProject();
+        $submittedIds = array_map('intval', (array) $request->request->all('timesheets'));
+        $timesheets = $this->resolveSelectedTimesheets($request, $project);
+        $shape = $request->request->get('shape') === InvoiceLineShape::AggregatedByActivity->value
+            ? InvoiceLineShape::AggregatedByActivity
+            : InvoiceLineShape::PerTimesheet;
+
+        try {
+            $plausibleMatch = $this->processor->findPlausibleMatch($trackedInvoice, $timesheets, $shape);
+        } catch (LexwareApiException $exception) {
+            $this->addFlash('error', 'lexware_sync.invoice.check_status_failed');
+            $plausibleMatch = null;
+        }
+
         return $this->render('@KimaiLexwareSync/invoice/assign.html.twig', [
             'trackedInvoice' => $trackedInvoice,
-            'timesheets' => $this->findEligibleTimesheets($trackedInvoice->getRelatedOrderConfirmation()->getProject()),
-            'plausibleMatch' => $this->processor->findPlausibleMatch($trackedInvoice),
+            'timesheets' => $this->findEligibleTimesheets($project),
+            'plausibleMatch' => $plausibleMatch,
+            'originalLines' => $this->originalLines($trackedInvoice),
+            'selectedTimesheetIds' => $submittedIds,
+            'selectedShape' => $shape->value,
         ]);
     }
 
@@ -174,9 +195,26 @@ final class InvoiceAssignmentController extends AbstractController
         $project = $trackedInvoice->getRelatedOrderConfirmation()->getProject();
         $submittedIds = array_map('intval', (array) $request->request->all('timesheets'));
         $timesheets = $this->resolveSelectedTimesheets($request, $project);
+        $shape = $request->request->get('shape') === InvoiceLineShape::AggregatedByActivity->value
+            ? InvoiceLineShape::AggregatedByActivity
+            : InvoiceLineShape::PerTimesheet;
 
         if (\count($timesheets) < \count($submittedIds)) {
             $this->addFlash('warning', 'lexware_sync.invoice.timesheets_dropped');
+        }
+
+        try {
+            $freshMatch = $this->processor->findPlausibleMatch($trackedInvoice, $timesheets, $shape);
+        } catch (LexwareApiException $exception) {
+            $this->addFlash('error', 'lexware_sync.invoice.check_status_failed');
+
+            return $this->redirectToRoute('lexware_sync_invoices_assign', ['id' => $id]);
+        }
+
+        if ($freshMatch === null || (string) ($freshMatch['id'] ?? '') !== $existingLexwareInvoiceId) {
+            $this->addFlash('error', 'lexware_sync.invoice.confirm_existing_mismatch');
+
+            return $this->redirectToRoute('lexware_sync_invoices_assign', ['id' => $id]);
         }
 
         try {
@@ -194,6 +232,17 @@ final class InvoiceAssignmentController extends AbstractController
         }
 
         return $this->redirectToRoute('lexware_sync_invoices', ['converted_voucher_number' => $trackedInvoice->getVoucherNumber()]);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function originalLines(TrackedInvoice $trackedInvoice): array
+    {
+        $payload = json_decode($trackedInvoice->getRawPayload(), true);
+        $lines = \is_array($payload) ? ($payload['lineItems'] ?? []) : [];
+
+        return \is_array($lines) ? $lines : [];
     }
 
     /**

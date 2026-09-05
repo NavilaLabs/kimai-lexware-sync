@@ -121,6 +121,10 @@ final class LexwareApiClient
             throw new LexwareApiException(\sprintf('Request to %s failed: %s', $path, $exception->getMessage()), 0, $exception);
         }
 
+        if ($statusCode >= 500 || $statusCode === 408) {
+            throw new AmbiguousLexwareRequestException(\sprintf('Lexware API returned status %d for %s, which may or may not have been applied: %s', $statusCode, $path, $content));
+        }
+
         if ($statusCode >= 400) {
             throw new LexwareApiException(\sprintf('Lexware API returned status %d for %s: %s', $statusCode, $path, $content));
         }

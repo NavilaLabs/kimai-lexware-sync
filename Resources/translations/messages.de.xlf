@@ -150,6 +150,14 @@
                 <source>lexware_sync.invoice.timesheets_dropped</source>
                 <target>Ein oder mehrere ausgewählte Timesheets waren nicht mehr wählbar und wurden weggelassen.</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.invoice.check_status_failed" resname="lexware_sync.invoice.check_status_failed">
+                <source>lexware_sync.invoice.check_status_failed</source>
+                <target>Lexware konnte nicht erreicht werden. Bitte erneut versuchen.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.confirm_existing_mismatch" resname="lexware_sync.invoice.confirm_existing_mismatch">
+                <source>lexware_sync.invoice.confirm_existing_mismatch</source>
+                <target>Diese Rechnung konnte nicht erneut bestätigt werden. Bitte den Status erneut prüfen.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

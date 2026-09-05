@@ -101,9 +101,10 @@ Send a `POST` request to `https://api.lexware.io/v1/event-subscriptions`, authen
 Lexware API key as a bearer token, with an `eventType` of `order-confirmation.changed` and a
 `callbackUrl` pointing at this instance's `/webhook/lexware/order-confirmation` route.
 
-Register a second event subscription the same way, with an `eventType` of `invoice.changed` and
-a `callbackUrl` pointing at this instance's `/webhook/lexware/invoice` route, so invoice drafts
-pursued from a tracked order confirmation are picked up the same way order confirmations
+Register a second event subscription the same way, once for each of `invoice.created`,
+`invoice.changed` and `invoice.status.changed`, all with a `callbackUrl` pointing at this
+instance's `/webhook/lexware/invoice` route, so an invoice draft pursued from a tracked order
+confirmation, and any later change to its status, is picked up the same way order confirmations
 themselves are.
 
 ## Permissions

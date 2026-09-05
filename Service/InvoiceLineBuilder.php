@@ -33,12 +33,13 @@ final class InvoiceLineBuilder
 
         foreach ($timesheets as $timesheet) {
             $activity = $timesheet->getActivity();
+            $hours = $this->hoursFor($timesheet);
 
             $lines[] = $this->buildLine(
                 $activity !== null ? (string) $activity->getName() : '',
                 $this->descriptionFor($timesheet),
-                $this->hoursFor($timesheet),
-                (float) ($timesheet->getHourlyRate() ?? 0.0),
+                $hours,
+                $this->unitPriceFor($timesheet, $hours),
                 $taxRatePercentage,
                 $currency,
             );
@@ -74,7 +75,7 @@ final class InvoiceLineBuilder
 
             $hours = $this->hoursFor($timesheet);
             $groups[$activityKey]['hours'] += $hours;
-            $groups[$activityKey]['amount'] += $hours * (float) ($timesheet->getHourlyRate() ?? 0.0);
+            $groups[$activityKey]['amount'] += $hours * $this->unitPriceFor($timesheet, $hours);
         }
 
         $lines = [];
@@ -111,6 +112,16 @@ final class InvoiceLineBuilder
         }
 
         return $line;
+    }
+
+    private function unitPriceFor(Timesheet $timesheet, float $hours): float
+    {
+        $hourlyRate = $timesheet->getHourlyRate();
+        if ($hourlyRate !== null) {
+            return $hourlyRate;
+        }
+
+        return $hours > 0.0 ? $timesheet->getRate() / $hours : 0.0;
     }
 
     private function hoursFor(Timesheet $timesheet): float

@@ -60,7 +60,12 @@ final class InvoiceProcessor
             throw $exception;
         }
 
-        $this->recordConversion($trackedInvoice, (string) ($response['id'] ?? ''), $timesheets, $markProjectCompleted, $processedBy);
+        $newInvoiceId = (string) ($response['id'] ?? '');
+        if ($newInvoiceId === '') {
+            throw new LexwareApiException('Lexware did not return an id for the newly created invoice.');
+        }
+
+        $this->recordConversion($trackedInvoice, $newInvoiceId, $timesheets, $markProjectCompleted, $processedBy);
     }
 
     /**
@@ -79,9 +84,10 @@ final class InvoiceProcessor
     }
 
     /**
+     * @param Timesheet[] $timesheets
      * @return array<string, mixed>|null
      */
-    public function findPlausibleMatch(TrackedInvoice $trackedInvoice): ?array
+    public function findPlausibleMatch(TrackedInvoice $trackedInvoice, array $timesheets, InvoiceLineShape $shape): ?array
     {
         $creationAttemptedAt = $trackedInvoice->getCreationAttemptedAt();
         if ($creationAttemptedAt === null) {
@@ -96,10 +102,23 @@ final class InvoiceProcessor
             return null;
         }
 
+        $expectedTotal = $this->calculateExpectedGrossTotal($trackedInvoice, $timesheets, $shape);
+
         foreach ($this->client->findInvoices($contactId, $creationAttemptedAt) as $candidate) {
-            if (\is_array($candidate) && ($candidate['id'] ?? null) !== null) {
-                return $candidate;
+            if (!\is_array($candidate)) {
+                continue;
             }
+
+            $candidateId = $candidate['id'] ?? null;
+            if (!\is_string($candidateId) || $candidateId === '' || $candidateId === $trackedInvoice->getLexwareId()) {
+                continue;
+            }
+
+            if (!isset($candidate['totalAmount']) || abs((float) $candidate['totalAmount'] - $expectedTotal) > 0.01) {
+                continue;
+            }
+
+            return $candidate;
         }
 
         return null;
@@ -116,14 +135,21 @@ final class InvoiceProcessor
         $originalLines = $payload['lineItems'] ?? [];
         $originalLines = \is_array($originalLines) ? $originalLines : [];
 
-        $firstLine = \is_array($originalLines[0] ?? null) ? $originalLines[0] : [];
-        $unitPrice = \is_array($firstLine['unitPrice'] ?? null) ? $firstLine['unitPrice'] : [];
-        $currency = (string) ($unitPrice['currency'] ?? 'EUR');
-        $taxRatePercentage = (int) ($unitPrice['taxRatePercentage'] ?? 19);
+        $currency = (string) ($payload['totalPrice']['currency'] ?? 'EUR');
+        $taxRatePercentage = 19;
+
+        foreach ($originalLines as $line) {
+            $unitPrice = \is_array($line['unitPrice'] ?? null) ? $line['unitPrice'] : null;
+            if ($unitPrice !== null) {
+                $currency = (string) ($unitPrice['currency'] ?? $currency);
+                $taxRatePercentage = (int) ($unitPrice['taxRatePercentage'] ?? $taxRatePercentage);
+                break;
+            }
+        }
 
         $newLines = $this->lineBuilder->buildLines($timesheets, $shape, $taxRatePercentage, $currency);
 
-        return [
+        $requestBody = [
             'voucherDate' => (new \DateTimeImmutable())->format('Y-m-d\TH:i:s.vP'),
             'address' => $payload['address'] ?? [],
             'lineItems' => array_merge($originalLines, $newLines),
@@ -134,6 +160,38 @@ final class InvoiceProcessor
             ],
             'totalPrice' => ['currency' => $currency],
         ];
+
+        foreach (['title', 'introduction', 'remark', 'paymentConditions', 'language'] as $carriedField) {
+            if (isset($payload[$carriedField])) {
+                $requestBody[$carriedField] = $payload[$carriedField];
+            }
+        }
+
+        return $requestBody;
+    }
+
+    /**
+     * @param Timesheet[] $timesheets
+     */
+    private function calculateExpectedGrossTotal(TrackedInvoice $trackedInvoice, array $timesheets, InvoiceLineShape $shape): float
+    {
+        $requestBody = $this->buildRequestBody($trackedInvoice, $timesheets, $shape);
+        $total = 0.0;
+
+        foreach ($requestBody['lineItems'] as $line) {
+            if (!\is_array($line)) {
+                continue;
+            }
+
+            $unitPrice = \is_array($line['unitPrice'] ?? null) ? $line['unitPrice'] : [];
+            $quantity = (float) ($line['quantity'] ?? 0);
+            $netAmount = (float) ($unitPrice['netAmount'] ?? 0);
+            $taxRatePercentage = (float) ($unitPrice['taxRatePercentage'] ?? 0);
+
+            $total += $quantity * $netAmount * (1 + $taxRatePercentage / 100);
+        }
+
+        return round($total, 2);
     }
 
     /**

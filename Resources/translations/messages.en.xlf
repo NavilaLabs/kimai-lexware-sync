@@ -150,6 +150,14 @@
                 <source>lexware_sync.invoice.timesheets_dropped</source>
                 <target>One or more selected timesheets were no longer eligible and were left out.</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.invoice.check_status_failed" resname="lexware_sync.invoice.check_status_failed">
+                <source>lexware_sync.invoice.check_status_failed</source>
+                <target>Could not reach Lexware to check. Try again.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.confirm_existing_mismatch" resname="lexware_sync.invoice.confirm_existing_mismatch">
+                <source>lexware_sync.invoice.confirm_existing_mismatch</source>
+                <target>That invoice could not be confirmed again. Try checking status once more.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>
