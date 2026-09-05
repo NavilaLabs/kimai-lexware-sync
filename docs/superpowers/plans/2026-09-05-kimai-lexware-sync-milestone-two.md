@@ -1208,7 +1208,7 @@ final class InvoiceLineBuilder
 
         foreach ($timesheets as $timesheet) {
             $activity = $timesheet->getActivity();
-            $activityId = $activity?->getId() ?? 0;
+            $activityId = $activity !== null ? ($activity->getId() ?? 'name:' . $activity->getName()) : 0;
 
             if (!isset($groups[$activityId])) {
                 $groups[$activityId] = [
