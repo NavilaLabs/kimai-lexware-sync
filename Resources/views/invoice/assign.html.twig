@@ -1,0 +1,91 @@
+{% extends 'base.html.twig' %}
+
+{% block main %}
+    {% embed '@theme/embeds/card.html.twig' %}
+        {% block box_title %}{{ 'lexware_sync.invoice.assign_title'|trans }} {{ trackedInvoice.voucherNumber }}{% endblock %}
+        {% block box_body %}
+            {% if plausibleMatch is not null %}
+                <div class="alert alert-warning">
+                    {{ 'lexware_sync.invoice.plausible_match_found'|trans }}
+                    <strong>{{ plausibleMatch.voucherNumber|default('?') }}</strong>
+                    ({{ plausibleMatch.voucherDate|default('') }})
+                </div>
+            {% elseif trackedInvoice.creationAttemptedAt is not null %}
+                <div class="alert alert-warning">
+                    {{ 'lexware_sync.invoice.ambiguous_failure'|trans }}
+                </div>
+            {% endif %}
+
+            <h4>{{ 'lexware_sync.invoice.original_lines'|trans }}</h4>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>{{ 'lexware_sync.invoice.line_name'|trans }}</th>
+                        <th>{{ 'lexware_sync.invoice.line_quantity'|trans }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for line in (trackedInvoice.rawPayload|json_decode(true)).lineItems|default([]) %}
+                        <tr>
+                            <td>{{ line.name|default('') }}</td>
+                            <td>{{ line.quantity|default('') }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <form method="post" action="{{ path('lexware_sync_invoices_convert', {id: trackedInvoice.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('lexware_sync_invoices') }}">
+
+                <h4>{{ 'lexware_sync.invoice.select_timesheets'|trans }}</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>{{ 'lexware_sync.invoice.timesheet_date'|trans }}</th>
+                            <th>{{ 'lexware_sync.invoice.timesheet_activity'|trans }}</th>
+                            <th>{{ 'lexware_sync.invoice.timesheet_duration'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for timesheet in timesheets %}
+                            <tr>
+                                <td><input type="checkbox" name="timesheets[]" value="{{ timesheet.id }}"></td>
+                                <td>{{ timesheet.begin ? timesheet.begin|date('Y-m-d') : '' }}</td>
+                                <td>{{ timesheet.activity ? timesheet.activity.name : '' }}</td>
+                                <td>{{ (timesheet.duration / 3600)|number_format(2) }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <div class="form-group">
+                    <label>
+                        <input type="radio" name="shape" value="per_timesheet" checked> {{ 'lexware_sync.invoice.shape_per_timesheet'|trans }}
+                    </label>
+                    <label>
+                        <input type="radio" name="shape" value="aggregated_by_activity"> {{ 'lexware_sync.invoice.shape_aggregated'|trans }}
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="finalize" value="1"> {{ 'lexware_sync.invoice.finalize'|trans }}
+                    </label>
+                    <label>
+                        <input type="checkbox" name="mark_project_completed" value="1"> {{ 'lexware_sync.invoice.mark_project_completed'|trans }}
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary">{{ 'lexware_sync.invoice.submit'|trans }}</button>
+
+                {% if plausibleMatch is not null %}
+                    <input type="hidden" name="existing_lexware_invoice_id" value="{{ plausibleMatch.id }}">
+                    <button type="submit" formaction="{{ path('lexware_sync_invoices_confirm_existing', {id: trackedInvoice.id}) }}" class="btn btn-warning">{{ 'lexware_sync.invoice.confirm_existing'|trans }}</button>
+                {% elseif trackedInvoice.creationAttemptedAt is not null %}
+                    <button type="submit" formaction="{{ path('lexware_sync_invoices_check_status', {id: trackedInvoice.id}) }}" class="btn btn-secondary">{{ 'lexware_sync.invoice.check_status'|trans }}</button>
+                {% endif %}
+            </form>
+        {% endblock %}
+    {% endembed %}
+{% endblock %}

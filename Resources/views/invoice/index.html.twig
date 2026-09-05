@@ -1,0 +1,70 @@
+{% extends 'base.html.twig' %}
+
+{% block main %}
+    {% if convertedVoucherNumber %}
+        <div class="alert alert-success">
+            {{ 'lexware_sync.invoice.converted'|trans }}
+            <a href="{{ lexwareVoucherListUrl ~ convertedVoucherNumber|url_encode }}" target="_blank" rel="noopener">{{ 'lexware_sync.invoice.delete_original_hint'|trans }}</a>
+        </div>
+    {% endif %}
+
+    {% embed '@theme/embeds/card.html.twig' %}
+        {% block box_title %}{{ 'lexware_sync.invoice.title'|trans }}{% endblock %}
+        {% block box_body %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>{{ 'lexware_sync.invoice.voucher_number'|trans }}</th>
+                        <th>{{ 'lexware_sync.invoice.voucher_date'|trans }}</th>
+                        <th>{{ 'lexware_sync.invoice.project'|trans }}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for trackedInvoice in pendingInvoices %}
+                        <tr>
+                            <td>{{ trackedInvoice.voucherNumber }}</td>
+                            <td>{{ trackedInvoice.voucherDate|date('Y-m-d') }}</td>
+                            <td>{{ trackedInvoice.relatedOrderConfirmation.project ? trackedInvoice.relatedOrderConfirmation.project.name : '' }}</td>
+                            <td>
+                                <a href="{{ path('lexware_sync_invoices_assign', {id: trackedInvoice.id}) }}" class="btn btn-sm btn-primary">{{ 'lexware_sync.invoice.assign'|trans }}</a>
+                                <form method="post" action="{{ path('lexware_sync_invoices_reject', {id: trackedInvoice.id}) }}" style="display: inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('lexware_sync_invoices') }}">
+                                    <button type="submit" class="btn btn-sm btn-secondary">{{ 'lexware_sync.invoice.reject'|trans }}</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endblock %}
+    {% endembed %}
+
+    {% embed '@theme/embeds/card.html.twig' %}
+        {% block box_title %}{{ 'lexware_sync.invoice.recently_converted'|trans }}{% endblock %}
+        {% block box_body %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>{{ 'lexware_sync.invoice.voucher_number'|trans }}</th>
+                        <th>{{ 'lexware_sync.invoice.voucher_date'|trans }}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for trackedInvoice in recentlyConverted %}
+                        <tr>
+                            <td>{{ trackedInvoice.voucherNumber }}</td>
+                            <td>{{ trackedInvoice.voucherDate|date('Y-m-d') }}</td>
+                            <td>
+                                {% if warnings[trackedInvoice.id] %}
+                                    <i class="fas fa-exclamation-triangle text-warning" data-toggle="tooltip" data-placement="top" title="{{ 'lexware_sync.invoice.modified_after_export'|trans }}"></i>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endblock %}
+    {% endembed %}
+{% endblock %}

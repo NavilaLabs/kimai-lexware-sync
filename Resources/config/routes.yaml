@@ -10,3 +10,12 @@ lexware_sync_triage:
         _locale: '%app_locales%'
     defaults:
         _locale: '%locale%'
+
+lexware_sync_invoices:
+    resource: '@KimaiLexwareSyncBundle/Controller/InvoiceAssignmentController.php'
+    type: attribute
+    prefix: /{_locale}
+    requirements:
+        _locale: '%app_locales%'
+    defaults:
+        _locale: '%locale%'

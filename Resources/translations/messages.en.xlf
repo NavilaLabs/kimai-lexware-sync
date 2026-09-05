@@ -34,6 +34,122 @@
                 <source>lexware_sync.origin</source>
                 <target>Lexware order confirmation</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.invoice.title" resname="lexware_sync.invoice.title">
+                <source>lexware_sync.invoice.title</source>
+                <target>Pending invoice drafts</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.action" resname="lexware_sync.invoice.action">
+                <source>lexware_sync.invoice.action</source>
+                <target>Pending invoice drafts</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.voucher_number" resname="lexware_sync.invoice.voucher_number">
+                <source>lexware_sync.invoice.voucher_number</source>
+                <target>Voucher number</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.voucher_date" resname="lexware_sync.invoice.voucher_date">
+                <source>lexware_sync.invoice.voucher_date</source>
+                <target>Date</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.project" resname="lexware_sync.invoice.project">
+                <source>lexware_sync.invoice.project</source>
+                <target>Project</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.assign" resname="lexware_sync.invoice.assign">
+                <source>lexware_sync.invoice.assign</source>
+                <target>Assign timesheets</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.reject" resname="lexware_sync.invoice.reject">
+                <source>lexware_sync.invoice.reject</source>
+                <target>Reject</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.recently_converted" resname="lexware_sync.invoice.recently_converted">
+                <source>lexware_sync.invoice.recently_converted</source>
+                <target>Recently converted</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.modified_after_export" resname="lexware_sync.invoice.modified_after_export">
+                <source>lexware_sync.invoice.modified_after_export</source>
+                <target>A timesheet in this invoice was edited after it was created</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.assign_title" resname="lexware_sync.invoice.assign_title">
+                <source>lexware_sync.invoice.assign_title</source>
+                <target>Assign timesheets to</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.original_lines" resname="lexware_sync.invoice.original_lines">
+                <source>lexware_sync.invoice.original_lines</source>
+                <target>Original lines from the draft</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.line_name" resname="lexware_sync.invoice.line_name">
+                <source>lexware_sync.invoice.line_name</source>
+                <target>Name</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.line_quantity" resname="lexware_sync.invoice.line_quantity">
+                <source>lexware_sync.invoice.line_quantity</source>
+                <target>Quantity</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.select_timesheets" resname="lexware_sync.invoice.select_timesheets">
+                <source>lexware_sync.invoice.select_timesheets</source>
+                <target>Select timesheets to add</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.timesheet_date" resname="lexware_sync.invoice.timesheet_date">
+                <source>lexware_sync.invoice.timesheet_date</source>
+                <target>Date</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.timesheet_activity" resname="lexware_sync.invoice.timesheet_activity">
+                <source>lexware_sync.invoice.timesheet_activity</source>
+                <target>Activity</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.timesheet_duration" resname="lexware_sync.invoice.timesheet_duration">
+                <source>lexware_sync.invoice.timesheet_duration</source>
+                <target>Hours</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.shape_per_timesheet" resname="lexware_sync.invoice.shape_per_timesheet">
+                <source>lexware_sync.invoice.shape_per_timesheet</source>
+                <target>One line per timesheet</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.shape_aggregated" resname="lexware_sync.invoice.shape_aggregated">
+                <source>lexware_sync.invoice.shape_aggregated</source>
+                <target>One aggregated line per activity</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.finalize" resname="lexware_sync.invoice.finalize">
+                <source>lexware_sync.invoice.finalize</source>
+                <target>Finalize the new invoice immediately</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.mark_project_completed" resname="lexware_sync.invoice.mark_project_completed">
+                <source>lexware_sync.invoice.mark_project_completed</source>
+                <target>Mark the project completed</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.submit" resname="lexware_sync.invoice.submit">
+                <source>lexware_sync.invoice.submit</source>
+                <target>Create combined invoice</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.plausible_match_found" resname="lexware_sync.invoice.plausible_match_found">
+                <source>lexware_sync.invoice.plausible_match_found</source>
+                <target>A possibly matching invoice was already found in Lexware:</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.ambiguous_failure" resname="lexware_sync.invoice.ambiguous_failure">
+                <source>lexware_sync.invoice.ambiguous_failure</source>
+                <target>The previous attempt could not be confirmed. Check Lexware before retrying.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.confirm_existing" resname="lexware_sync.invoice.confirm_existing">
+                <source>lexware_sync.invoice.confirm_existing</source>
+                <target>Yes, this is it, mark resolved</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.check_status" resname="lexware_sync.invoice.check_status">
+                <source>lexware_sync.invoice.check_status</source>
+                <target>Check Lexware for a matching invoice</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.converted" resname="lexware_sync.invoice.converted">
+                <source>lexware_sync.invoice.converted</source>
+                <target>The combined invoice was created.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.delete_original_hint" resname="lexware_sync.invoice.delete_original_hint">
+                <source>lexware_sync.invoice.delete_original_hint</source>
+                <target>Delete the original draft in Lexware</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.timesheets_dropped" resname="lexware_sync.invoice.timesheets_dropped">
+                <source>lexware_sync.invoice.timesheets_dropped</source>
+                <target>One or more selected timesheets were no longer eligible and were left out.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>
