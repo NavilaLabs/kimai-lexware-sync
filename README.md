@@ -20,10 +20,13 @@ stays out of the way.
    since the row stays in the list until a decision is made.
 3. Time is booked in Kimai exactly as it always is. This plugin does not add a timesheet screen
    of its own.
-4. Planned, not yet implemented. See the roadmap section below. Once a Lexware invoice linked to
-   a converted order confirmation appears, it will surface as an action on that project.
-   Assigning booked timesheets to it will produce a new, combined invoice that gets pushed back
-   to Lexware.
+4. Once a person pursues a tracked order confirmation into an invoice draft inside Lexware, the
+   plugin picks it up the same way, through a webhook with a reconciliation poll as a safety
+   net, and lists it in a second screen. Assigning open, not yet exported timesheets to it, in
+   either one line per timesheet or one aggregated line per activity, produces a new invoice
+   containing both the draft's original lines and the new timesheet lines, pushed back to
+   Lexware. Since Lexware offers no update or deletion endpoint for invoices, the original draft
+   stays in Lexware afterward; the screen links directly to it so a person can delete it by hand.
 
 ## Status
 
@@ -31,9 +34,8 @@ stays out of the way.
   creation, is in development. The full design is written down in the specification linked
   below.
 - **Milestone two**, invoice ingestion followed by timesheet assignment and an outbound
-  invoice, is described only at the roadmap level for now. A dedicated design pass will happen
-  once milestone one is in use. See the specification for exactly which parts of milestone two
-  are already decided and which parts are still open questions.
+  invoice, is in development. The full design is written down in the specification linked
+  below, sections 12 through 18.
 
 Full design: [`docs/superpowers/specs/2026-09-04-kimai-lexware-sync-design.md`](docs/superpowers/specs/2026-09-04-kimai-lexware-sync-design.md).
 
@@ -66,6 +68,8 @@ screen.
 | `lexware_sync.read_lines_enabled` | Read order confirmation line items and create a matching Kimai activity for each one. | `false` |
 | `lexware_sync.line_regex` | Regular expression checked against each line's name and description. An empty value matches every line that is not purely informational. | empty |
 | `lexware_sync.reconcile_interval_minutes` | How often an administrator should schedule the reconciliation poll to run. The plugin does not enforce this interval itself, it only reads it back as documentation for the cron entry described below. | `30` |
+| `lexware_sync.invoice_title_regex` | Regular expression checked against an invoice draft's title, applied on top of its `relatedVouchers` link to a tracked order confirmation. An empty value matches every title. | empty |
+| `lexware_sync.project_completion_mode` | What marking a project completed, offered when converting a tracked invoice, actually does: `end_date` sets an end date on the project, `hidden` hides its visibility. | `end_date` |
 
 Every regular expression field is optional. Leaving it empty means it matches everything,
 never that it matches nothing. This rule is applied consistently across the whole plugin.
@@ -87,6 +91,9 @@ First, two console commands need a cron entry, since the plugin has no scheduler
   authenticates. Schedule it about once a week, well ahead of the key's twenty four month
   expiry, so an administrator notices a key that needs renewing instead of finding out when
   synchronization silently stops.
+- `bin/console kimai:lexware-sync:reconcile-invoices` polls Lexware for invoice drafts that a
+  webhook delivery might have missed, on the same interval as the order confirmation
+  reconciliation poll above.
 
 Second, the real Lexware webhook subscription has to be registered by hand, once this Kimai
 instance is reachable at the public HTTPS endpoint described in the Requirements section above.
@@ -94,11 +101,17 @@ Send a `POST` request to `https://api.lexware.io/v1/event-subscriptions`, authen
 Lexware API key as a bearer token, with an `eventType` of `order-confirmation.changed` and a
 `callbackUrl` pointing at this instance's `/webhook/lexware/order-confirmation` route.
 
+Register a second event subscription the same way, with an `eventType` of `invoice.changed` and
+a `callbackUrl` pointing at this instance's `/webhook/lexware/invoice` route, so invoice drafts
+pursued from a tracked order confirmation are picked up the same way order confirmations
+themselves are.
+
 ## Permissions
 
-A dedicated `triage_lexware_sync` permission gates the manual triage screen. It is kept separate
-from Kimai's general project management permissions, so it can be granted only to the roles
-that should decide which order confirmations become projects.
+A dedicated `manage_lexware_sync` permission gates both the order confirmation triage screen and
+the invoice assignment screen. It is kept separate from Kimai's general project management
+permissions, so it can be granted only to the roles that should decide which order confirmations
+become projects and which invoice drafts get their combined invoice created.
 
 ## Design principles worth knowing before touching the code
 
