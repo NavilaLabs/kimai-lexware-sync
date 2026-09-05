@@ -2,10 +2,41 @@
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="Tests/bootstrap.php"
-         colors="true">
+         cacheDirectory=".phpunit.cache"
+         colors="true"
+         failOnWarning="true"
+         failOnRisky="true">
     <testsuites>
-        <testsuite name="KimaiLexwareSyncBundle">
-            <directory>Tests</directory>
+        <testsuite name="unit">
+            <directory>Tests/Service</directory>
+        </testsuite>
+        <testsuite name="functional">
+            <directory>Tests/Functional</directory>
+        </testsuite>
+        <testsuite name="migration">
+            <directory>Tests/Migration</directory>
+        </testsuite>
+        <testsuite name="contract">
+            <directory>Tests/Contract</directory>
         </testsuite>
     </testsuites>
+
+    <extensions>
+        <bootstrap class="DAMA\DoctrineTestBundle\PHPUnit\PHPUnitExtension"/>
+    </extensions>
+
+    <source>
+        <include>
+            <directory>Command</directory>
+            <directory>Configuration</directory>
+            <directory>Controller</directory>
+            <directory>Entity</directory>
+            <directory>Enum</directory>
+            <directory>EventSubscriber</directory>
+            <directory>Form</directory>
+            <directory>Repository</directory>
+            <directory>Service</directory>
+            <directory>Twig</directory>
+        </include>
+    </source>
 </phpunit>

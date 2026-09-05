@@ -1,0 +1,91 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    name: Kimai ${{ matrix.kimai }}
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.kimai == 'main' }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # The pinned version is the promise this plugin makes to its customers and has to stay
+        # green. Kimai's main branch is an early warning: it may fail without failing the run,
+        # so that a breaking change shows up here weeks before it reaches a release.
+        kimai: ['2.65.0', 'main']
+
+    services:
+      database:
+        image: mysql:8.3
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+
+    env:
+      TEST_DATABASE_HOST: 127.0.0.1
+      TEST_DATABASE_PORT: '3306'
+      TEST_DATABASE_NAME: kimai_test
+      TEST_DATABASE_USER: root
+      TEST_DATABASE_PASSWORD: root
+      TEST_DATABASE_ADMIN_USER: root
+      TEST_DATABASE_ADMIN_PASSWORD: root
+      TEST_DATABASE_URL: 'mysql://root:root@127.0.0.1:3306/kimai_test?charset=utf8mb4&serverVersion=8.3.0'
+      KIMAI_DIRECTORY: ${{ github.workspace }}/kimai
+
+    steps:
+      - name: Check out Kimai
+        uses: actions/checkout@v4
+        with:
+          repository: kimai/kimai
+          ref: ${{ matrix.kimai }}
+          path: kimai
+
+      - name: Check out the plugin
+        uses: actions/checkout@v4
+        with:
+          path: kimai/var/plugins/KimaiLexwareSyncBundle
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: intl, pdo_mysql, zip, gd
+          coverage: pcov
+
+      - name: Install Kimai dependencies
+        working-directory: kimai
+        run: composer install --no-interaction --no-progress
+
+      - name: Install the plugin's development tooling
+        working-directory: kimai/var/plugins/KimaiLexwareSyncBundle
+        run: composer install --no-interaction --no-progress
+
+      - name: Prepare the test database
+        working-directory: kimai/var/plugins/KimaiLexwareSyncBundle
+        run: Tests/prepare-database.sh
+
+      - name: Check code style
+        working-directory: kimai/var/plugins/KimaiLexwareSyncBundle
+        run: composer codestyle
+
+      - name: Run unit and functional tests
+        working-directory: kimai/var/plugins/KimaiLexwareSyncBundle
+        run: vendor/bin/phpunit --testsuite unit,functional --coverage-text
+
+      - name: Run migration tests
+        working-directory: kimai/var/plugins/KimaiLexwareSyncBundle
+        run: vendor/bin/phpunit --testsuite migration
+
+      - name: Run static analysis
+        working-directory: kimai/var/plugins/KimaiLexwareSyncBundle
+        run: composer phpstan

@@ -7,6 +7,13 @@ includes:
 
 parameters:
   level: 9
+  # These packages are development dependencies of Kimai, not of this plugin. They are used
+  # only by the test suite, which runs against Kimai's autoloader, so they are made known to
+  # static analysis from there rather than installed a second time.
+  scanDirectories:
+    - ../../../vendor/symfony/browser-kit
+    - ../../../vendor/symfony/dom-crawler
+    - ../../../vendor/dama/doctrine-test-bundle
   excludePaths:
     - vendor/(?)
   treatPhpDocTypesAsCertain: false
