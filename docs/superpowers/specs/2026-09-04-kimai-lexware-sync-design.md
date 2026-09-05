@@ -524,11 +524,16 @@ documentation alone.
 
 ## 18. Open items carried into milestone two implementation
 
-Whether a Lexware invoice created through `POST /v1/invoices` can itself carry an explicit
-`relatedVouchers` entry back to the originating order confirmation, the way an invoice created
-through Lexware's own "pursue" flow does, was not confirmed during this design and needs the
-spike named in section 17 to settle, since it can only be answered by inspecting a real created
-invoice's response.
+Resolved during implementation, by a live spike against the sandbox account on 2026-09-05: a
+Lexware invoice created through `POST /v1/invoices` cannot carry an explicit `relatedVouchers`
+entry of its own; one included in the request body is silently dropped. Only an invoice created
+through Lexware's own "pursue" flow carries that entry, confirmed by a fresh pursue action during
+the same spike. The same spike also found that `GET /v1/invoices` has no bare list endpoint, the
+way order confirmations already didn't, and that creating an invoice requires a `shippingConditions`
+object milestone one's order confirmations never needed. See the implementation plan's Task 4 and
+Task 9 for the corrected client and processor code these findings produced.
 
 The exact field used to detect and warn about a timesheet edited after its invoice was created,
-noted as an open detail in section 13, is left to the implementation plan.
+noted as an open detail in section 13, was settled in the implementation plan: a dedicated
+`TrackedInvoiceTimesheet` join row per included timesheet, storing a snapshot of its modification
+timestamp at the moment of inclusion.

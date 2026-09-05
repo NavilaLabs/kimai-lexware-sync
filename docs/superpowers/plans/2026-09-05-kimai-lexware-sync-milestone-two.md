@@ -34,7 +34,7 @@
 - The Lexware API base URL is `https://api.lexware.io`, rate limited to two requests per second, authenticated with `Authorization: Bearer <key>`, read from the `LEXWARE_API_KEY` environment variable.
 - Confirmed Lexware invoice `voucherStatus` values: `draft`, then, once left, `open`, `paidoff`, `voided`. An invoice never returns to `draft` once it has left that status.
 - The Lexware filtered voucher list deep link for a superseded draft's voucher number is `https://app.lexware.de/vouchers#!/VoucherList/?filter=invoice&sort=sortByVoucherDate&sortDirection=desc&query={voucherNumber}`, confirmed directly against the live account during this milestone's brainstorming.
-- Two open items from the spec are not yet confirmed against a live account and are called out explicitly in the tasks that touch them: whether a newly created Lexware invoice can itself carry an explicit `relatedVouchers` entry, and the exact shape of `GET /v1/invoices?...` list filtering. Both need the manual spike in Task 4 before the code that depends on them is trusted.
+- The two open items the spec carried into this plan, whether a newly created Lexware invoice can itself carry an explicit `relatedVouchers` entry, and the exact shape of Lexware's list filtering for invoices, were both settled by a live spike against the sandbox account on 2026-09-05 (see Task 4): no, an outgoing `relatedVouchers` is silently dropped; and there is no bare `GET /v1/invoices` list endpoint at all, `GET /v1/voucherlist?voucherType=invoice&...` is the correct one, exactly mirroring how order confirmations are listed. The same spike found a third, previously unknown requirement: Lexware requires a `shippingConditions` object on every invoice, which Task 9 now sends.
 
 ---
 
@@ -753,7 +753,11 @@ git commit -m "Add the milestone two configuration keys for the invoice title fi
 **Interfaces:**
 - Produces: `LexwareApiClient::getInvoice(string $lexwareId): array`, `LexwareApiClient::listInvoiceVoucherPage(int $page): array`, `LexwareApiClient::createInvoice(array $payload, bool $finalize): array`, `LexwareApiClient::findInvoices(string $contactId, \DateTimeImmutable $voucherDateFrom): array`. `AmbiguousLexwareRequestException extends LexwareApiException`, thrown instead of the plain exception whenever the underlying HTTP call could not be confirmed to have reached Lexware at all, as opposed to reaching it and getting a clear error response. Task 6, Task 7 and Task 9 consume these four methods; Task 9 is the one that distinguishes the two exception types.
 
-This task carries the one open item this plan cannot resolve by reading documentation alone: whether a newly created invoice can itself carry an explicit `relatedVouchers` entry back to its order confirmation, and the exact filter parameters `GET /v1/invoices?...` actually accepts. Do the manual spike in Step 3 before trusting `createInvoice()` or `findInvoices()` in later tasks; if the real account disagrees with the shapes below, correct this file and record what changed, the same way milestone one's plan was corrected mid-implementation whenever a review found the plan's own code wrong.
+This task originally carried two open items this plan could not resolve by reading documentation alone. Both were settled by a live spike against the sandbox account on 2026-09-05, run by the controller directly once the already-present `LEXWARE_API_KEY` in this plugin's own `.env` was found (an earlier belief that no key was available in this sandbox was a controller error, corrected during Task 4's review):
+
+- A newly created invoice cannot carry an explicit `relatedVouchers` entry: sending one in the `POST /v1/invoices` body is silently ignored, confirmed by creating a real test invoice with `relatedVouchers` set and reading it back with an empty array. `createInvoice()` below never attempts to send one.
+- `GET /v1/invoices?...` as a bare list endpoint does not exist at all (confirmed 404). Filtering by contact and date instead goes through `GET /v1/voucherlist?voucherType=invoice&voucherStatus=draft&contactId=...&voucherDateFrom=...`, confirmed to work and to return the same `content` envelope shape as everywhere else `voucherlist` is used in this plugin. `findInvoices()` below uses this corrected shape.
+- As a byproduct of the same spike: a real invoice pursued from a tracked order confirmation does carry a correct `relatedVouchers` entry pointing at it (confirmed with a fresh, live pursue action during the same spike, after an earlier, differently-created invoice draft in the sandbox showed an empty array and briefly cast doubt on the whole mechanism), and creating an invoice through the API requires a `shippingConditions` object that milestone one's order confirmations never needed; Task 9 was corrected to send one, see its own text.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -815,13 +819,14 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Service\AmbiguousLexwareRequestException;
 
 Expected: FAIL, `Call to undefined method KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiClient::createInvoice()`.
 
-- [ ] **Step 3: Manual spike against the sandbox account, before writing the implementation**
+- [ ] **Step 3: Manual spike against the sandbox account — already completed by the controller on 2026-09-05, findings below**
 
-Using a short throwaway script or `bin/console` one-off, authenticated with the sandbox `LEXWARE_API_KEY`:
+This step already ran, directly by the controller against the real sandbox account, once it was discovered that `LEXWARE_API_KEY` was in fact present in this plugin's own `.env` (the belief that it was missing was a controller search error, corrected during this task's review). If you are implementing this task fresh and the credential is genuinely unavailable, treat these findings as trustworthy and skip re-running the spike; if you have reason to distrust them, re-run the three checks below before proceeding.
 
-1. Send a real `POST https://api.lexware.io/v1/invoices` with a minimal body (one `custom` line item, an `address.contactId` of a real contact from the sandbox account, `taxConditions: {"taxType": "net"}`). Inspect the raw JSON response and confirm it carries an `id` field, and check whether it carries a `relatedVouchers` field at all. If a real order confirmation's `id` was passed anywhere in the request and Lexware echoes a `relatedVouchers` entry back referencing it, record the field name and shape actually used; if not, `createInvoice()` in Step 4 below stays as written, with no `relatedVouchers` in the outgoing payload, and Task 18 of the design spec's open items stays open exactly as written.
-2. Send a real `GET https://api.lexware.io/v1/invoices?contactId={id}` for that same contact and inspect whether the response accepts `contactId` as a filter and returns a `content` envelope the same shape as `/v1/voucherlist`. If the real parameter name differs, or the response is a bare array instead of a `content` envelope, adjust `findInvoices()` in Step 4 to match, and update this step's text to describe what was actually confirmed.
-3. Delete or void the invoice created in the first step through the Lexware web interface, since it was created only to observe the response shape.
+1. `POST https://api.lexware.io/v1/invoices` with a minimal body needs more than the fields milestone one's order confirmations ever needed: a `taxConditions` object and a `shippingConditions` object are both mandatory (confirmed by a `406 Not Acceptable` "shipping conditions must not be null" response when it was omitted), and the target contact needs at least one billing address on file (confirmed by a second `406` when the sandbox contact had none; a minimal `addresses.billing` entry was added to the sandbox contact by `PUT /v1/contacts/{id}` to unblock the spike). A `relatedVouchers` entry included in the request body is silently dropped: a real created invoice was read back afterward with `relatedVouchers: []` despite one having been sent. `createInvoice()` below sends no `relatedVouchers`, matching this.
+2. `GET https://api.lexware.io/v1/invoices?contactId={id}` does not exist as a list endpoint at all (`404 Not Found`), the same way milestone one already found no bare list endpoint for order confirmations. `GET /v1/voucherlist?voucherType=invoice&voucherStatus=draft&contactId={id}&voucherDateFrom={date}` does work, confirmed to return the same `content` envelope shape used everywhere else in this plugin, and confirmed to actually filter by the given contact. `findInvoices()` below uses this endpoint instead.
+3. As a byproduct: fetching an existing sandbox invoice draft that predated this spike showed an empty `relatedVouchers`, briefly casting doubt on the whole correlation mechanism Task 6 depends on. A fresh, live "pursue" action performed on the sandbox order confirmation during this same spike produced a new draft whose `relatedVouchers` correctly contained an entry with the order confirmation's own Lexware id and `voucherType: "orderconfirmation"`, confirming the mechanism works for a genuine pursue and that the earlier empty one was an unrelated anomaly, not a sign the design is wrong.
+4. The test invoice created in check 1 was left in the sandbox account as a real draft, since Lexware has no deletion or void endpoint; it needs deleting by hand in the Lexware web interface, exactly as the finished screen in Task 10 will later ask a person to do for every superseded draft.
 
 Record what was actually observed directly in this file before moving on, the same way milestone one's webhook signature spike was written up before the verifier code was trusted.
 
@@ -909,12 +914,14 @@ final class LexwareApiClient
      */
     public function findInvoices(string $contactId, \DateTimeImmutable $voucherDateFrom): array
     {
-        $result = $this->request('GET', '/v1/invoices', [
+        $result = $this->request('GET', '/v1/voucherlist', [
+            'voucherType' => 'invoice',
+            'voucherStatus' => 'draft',
             'contactId' => $contactId,
             'voucherDateFrom' => $voucherDateFrom->format('Y-m-d'),
         ]);
 
-        $content = $result['content'] ?? $result;
+        $content = $result['content'] ?? [];
 
         return \is_array($content) ? $content : [];
     }
@@ -1918,6 +1925,10 @@ final class InvoiceProcessor
             'address' => $payload['address'] ?? [],
             'lineItems' => array_merge($originalLines, $newLines),
             'taxConditions' => $payload['taxConditions'] ?? ['taxType' => 'net'],
+            'shippingConditions' => $payload['shippingConditions'] ?? [
+                'shippingType' => 'service',
+                'shippingDate' => (new \DateTimeImmutable())->format('Y-m-d\TH:i:s.vP'),
+            ],
             'totalPrice' => ['currency' => $currency],
         ];
     }
@@ -2011,6 +2022,8 @@ final class InvoiceProcessor
 `TimesheetRepository::setExported()` opens its own Doctrine transaction internally. Called from inside `recordConversion()`'s own outer transaction, Doctrine's connection only increments its nesting counter rather than issuing a second real `BEGIN`, so the bulk export still only takes effect if the outer transaction commits, exactly as intended.
 
 `assertCurrencyMatches()` reuses the same check milestone one's `OrderConfirmationProcessor` performs when resolving a customer, since the tracked order confirmation's customer was already resolved back then; a currency mismatch here can only happen if a contact mapping was later pointed at an existing customer by hand, exactly the scenario the spec's error handling section calls out.
+
+`shippingConditions` is required by Lexware for every invoice, confirmed during Task 4's live spike by a `406 Not Acceptable` response when it was omitted; milestone one's order confirmations never needed it, so nothing in this plugin built it before now. It is copied from the fetched draft's own value the same way `taxConditions` already is, since the draft is a real Lexware invoice and therefore already carries a valid one; the literal fallback only matters if a draft is ever missing the field entirely, which has not been observed.
 
 - [ ] **Step 2: Manual verification**
 
