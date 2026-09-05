@@ -22,6 +22,7 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Service\InvoiceProcessor;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareDeepLink;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareDocumentSummaryFactory;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\TimesheetRateResolver;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -102,7 +103,7 @@ final class InvoiceAssignmentController extends AbstractController
             return $this->redirectToIndex($listQuery);
         }
 
-        if (!$this->isCsrfTokenValid('lexware_sync_invoices', $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('lexware_sync_invoices', $request->request->getString('_token'))) {
             return $this->redirectToIndex($listQuery);
         }
 
@@ -122,7 +123,7 @@ final class InvoiceAssignmentController extends AbstractController
             return $this->redirectToIndex($listQuery);
         }
 
-        if (!$this->isCsrfTokenValid('lexware_sync_invoices', $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('lexware_sync_invoices', $request->request->getString('_token'))) {
             return $this->redirectToIndex($listQuery);
         }
 
@@ -140,12 +141,12 @@ final class InvoiceAssignmentController extends AbstractController
             return $this->redirectToRoute('lexware_sync_invoices');
         }
 
-        if (!$this->isCsrfTokenValid('lexware_sync_invoices', $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('lexware_sync_invoices', $request->request->getString('_token'))) {
             return $this->redirectToRoute('lexware_sync_invoices');
         }
 
         $project = $trackedInvoice->getRelatedOrderConfirmation()->getProject();
-        $submittedIds = array_map('intval', (array) $request->request->all('timesheets'));
+        $submittedIds = $this->submittedTimesheetIds($request);
         $timesheets = $this->resolveSelectedTimesheets($request, $project);
         $shape = $this->resolveShape($request);
 
@@ -183,12 +184,12 @@ final class InvoiceAssignmentController extends AbstractController
             return $this->redirectToRoute('lexware_sync_invoices');
         }
 
-        if (!$this->isCsrfTokenValid('lexware_sync_invoices', $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('lexware_sync_invoices', $request->request->getString('_token'))) {
             return $this->redirectToRoute('lexware_sync_invoices');
         }
 
         $project = $trackedInvoice->getRelatedOrderConfirmation()->getProject();
-        $submittedIds = array_map('intval', (array) $request->request->all('timesheets'));
+        $submittedIds = $this->submittedTimesheetIds($request);
         $timesheets = $this->resolveSelectedTimesheets($request, $project);
         $shape = $this->resolveShape($request);
 
@@ -210,7 +211,7 @@ final class InvoiceAssignmentController extends AbstractController
             return $this->redirectToRoute('lexware_sync_invoices');
         }
 
-        if (!$this->isCsrfTokenValid('lexware_sync_invoices', $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('lexware_sync_invoices', $request->request->getString('_token'))) {
             return $this->redirectToRoute('lexware_sync_invoices');
         }
 
@@ -220,7 +221,7 @@ final class InvoiceAssignmentController extends AbstractController
         }
 
         $project = $trackedInvoice->getRelatedOrderConfirmation()->getProject();
-        $submittedIds = array_map('intval', (array) $request->request->all('timesheets'));
+        $submittedIds = $this->submittedTimesheetIds($request);
         $timesheets = $this->resolveSelectedTimesheets($request, $project);
         $shape = $this->resolveShape($request);
 
@@ -236,7 +237,7 @@ final class InvoiceAssignmentController extends AbstractController
             return $this->redirectToRoute('lexware_sync_invoices_assign', ['id' => $id]);
         }
 
-        if ($freshMatch === null || (string) ($freshMatch['id'] ?? '') !== $existingLexwareInvoiceId) {
+        if ($freshMatch === null || $freshMatch->string('id') !== $existingLexwareInvoiceId) {
             $this->addFlash('error', 'lexware_sync.invoice.confirm_existing_mismatch');
 
             return $this->redirectToRoute('lexware_sync_invoices_assign', ['id' => $id]);
@@ -260,12 +261,11 @@ final class InvoiceAssignmentController extends AbstractController
     }
 
     /**
-     * @param array<string, mixed>|null $plausibleMatch
      * @param int[] $selectedTimesheetIds
      */
     private function renderAssignScreen(
         TrackedInvoice $trackedInvoice,
-        ?array $plausibleMatch,
+        ?LexwarePayload $plausibleMatch,
         array $selectedTimesheetIds,
         InvoiceLineShape $shape
     ): Response {
@@ -282,7 +282,7 @@ final class InvoiceAssignmentController extends AbstractController
             'timesheetRows' => $this->buildTimesheetRows(
                 $this->findEligibleTimesheets($trackedInvoice->getRelatedOrderConfirmation()->getProject()),
             ),
-            'plausibleMatch' => $plausibleMatch,
+            'plausibleMatch' => $plausibleMatch?->toArray(),
             'originalLines' => $originalLines,
             'originalLinesTotal' => $this->originalLinesTotal($originalLines),
             'selectedTimesheetIds' => $selectedTimesheetIds,
@@ -312,14 +312,30 @@ final class InvoiceAssignmentController extends AbstractController
     }
 
     /**
+     * A submitted form field carries whatever the browser sent, which is not necessarily a
+     * number and not necessarily a scalar. Anything that is not a number is dropped rather than
+     * forced into a zero, which would silently select the wrong record.
+     *
+     * @return list<int>
+     */
+    private function submittedTimesheetIds(Request $request): array
+    {
+        $identifiers = [];
+        foreach ($request->request->all('timesheets') as $submitted) {
+            if (is_numeric($submitted)) {
+                $identifiers[] = (int) $submitted;
+            }
+        }
+
+        return $identifiers;
+    }
+
+    /**
      * @return array<int, array<string, mixed>>
      */
     private function originalLines(TrackedInvoice $trackedInvoice): array
     {
-        $payload = json_decode($trackedInvoice->getRawPayload(), true);
-        $lines = \is_array($payload) ? ($payload['lineItems'] ?? []) : [];
-
-        return \is_array($lines) ? $lines : [];
+        return LexwarePayload::fromJson($trackedInvoice->getRawPayload())->rawList('lineItems');
     }
 
     /**
@@ -380,7 +396,7 @@ final class InvoiceAssignmentController extends AbstractController
      */
     private function resolveSelectedTimesheets(Request $request, ?Project $project): array
     {
-        $selectedIds = array_map('intval', (array) $request->request->all('timesheets'));
+        $selectedIds = $this->submittedTimesheetIds($request);
         if (\count($selectedIds) === 0) {
             return [];
         }

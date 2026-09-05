@@ -8,6 +8,7 @@ use App\Entity\Activity;
 use App\Entity\Timesheet;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\InvoiceLineShape;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\InvoiceLineBuilder;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\TimesheetRateResolver;
 use PHPUnit\Framework\TestCase;
 
@@ -55,7 +56,7 @@ final class InvoiceLineBuilderTest extends TestCase
 
         self::assertCount(1, $lines);
         self::assertSame(2.0, $lines[0]['quantity']);
-        self::assertSame(150.0, $lines[0]['unitPrice']['netAmount']);
+        self::assertSame(150.0, (new LexwarePayload($lines[0]))->nested('unitPrice')->float('netAmount'));
     }
 
     public function testPerTimesheetProducesOneLineEach(): void
@@ -71,9 +72,9 @@ final class InvoiceLineBuilderTest extends TestCase
         self::assertCount(2, $lines);
         self::assertSame('Beratung', $lines[0]['name']);
         self::assertSame(1.0, $lines[0]['quantity']);
-        self::assertSame(100.0, $lines[0]['unitPrice']['netAmount']);
-        self::assertSame(19, $lines[0]['unitPrice']['taxRatePercentage']);
-        self::assertSame('EUR', $lines[0]['unitPrice']['currency']);
+        self::assertSame(100.0, (new LexwarePayload($lines[0]))->nested('unitPrice')->float('netAmount'));
+        self::assertSame(19, (new LexwarePayload($lines[0]))->nested('unitPrice')->integer('taxRatePercentage'));
+        self::assertSame('EUR', (new LexwarePayload($lines[0]))->nested('unitPrice')->string('currency'));
         self::assertSame(2.0, $lines[1]['quantity']);
     }
 
@@ -90,7 +91,7 @@ final class InvoiceLineBuilderTest extends TestCase
         self::assertCount(1, $lines);
         self::assertSame('Beratung', $lines[0]['name']);
         self::assertSame(2.0, $lines[0]['quantity']);
-        self::assertSame(110.0, $lines[0]['unitPrice']['netAmount']);
+        self::assertSame(110.0, (new LexwarePayload($lines[0]))->nested('unitPrice')->float('netAmount'));
     }
 
     public function testAggregatedByActivityKeepsDifferentActivitiesSeparate(): void

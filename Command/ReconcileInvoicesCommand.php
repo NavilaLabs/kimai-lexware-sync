@@ -8,6 +8,7 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Repository\ContactMappingRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedInvoiceRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\InvoiceSynchronizer;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiClient;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -44,11 +45,10 @@ final class ReconcileInvoicesCommand extends Command
         $isLastPage = false;
 
         while (!$isLastPage) {
-            $result = $this->client->listInvoiceVoucherPage($page);
-            $content = $result['content'] ?? [];
+            $result = new LexwarePayload($this->client->listInvoiceVoucherPage($page));
 
-            foreach ($content as $voucher) {
-                $lexwareId = (string) ($voucher['id'] ?? '');
+            foreach ($result->nestedList('content') as $voucher) {
+                $lexwareId = $voucher->string('id');
                 if ($lexwareId === '') {
                     continue;
                 }
@@ -72,7 +72,7 @@ final class ReconcileInvoicesCommand extends Command
                 }
             }
 
-            $isLastPage = (bool) ($result['last'] ?? true);
+            $isLastPage = $result->boolean('last', true);
             $page++;
         }
 
@@ -87,17 +87,14 @@ final class ReconcileInvoicesCommand extends Command
         return $failed === 0 ? Command::SUCCESS : Command::FAILURE;
     }
 
-    /**
-     * @param array<string, mixed> $voucher
-     */
     private function needsSynchronization(
         string $lexwareId,
-        array $voucher,
+        LexwarePayload $voucher,
     ): bool {
         $existing = $this->repository->findByLexwareId($lexwareId);
 
         if ($existing === null) {
-            $contactId = (string) ($voucher['contactId'] ?? '');
+            $contactId = $voucher->string('contactId');
             if (
                 $contactId !== '' &&
                 $this->contactMappingRepository->findByLexwareContactId(
@@ -114,7 +111,7 @@ final class ReconcileInvoicesCommand extends Command
             return false;
         }
 
-        $updatedDate = $voucher['updatedDate'] ?? null;
+        $updatedDate = $voucher->dateTime('updatedDate');
         if ($updatedDate === null) {
             return true;
         }
@@ -124,6 +121,6 @@ final class ReconcileInvoicesCommand extends Command
             return true;
         }
 
-        return $remoteUpdatedAt < new \DateTimeImmutable((string) $updatedDate);
+        return $remoteUpdatedAt < $updatedDate;
     }
 }

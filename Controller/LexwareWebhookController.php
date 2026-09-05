@@ -7,6 +7,7 @@ namespace KimaiPlugin\KimaiLexwareSyncBundle\Controller;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\WebhookEvent;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\WebhookEventRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\InvoiceSynchronizer;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareWebhookVerifier;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\OrderConfirmationSynchronizer;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -47,18 +48,19 @@ final class LexwareWebhookController
         $headers = $request->headers->all();
         $signatureValid = $this->verifier->verify($rawBody, $headers);
 
-        $decoded = json_decode($rawBody, true);
-        $eventType = \is_array($decoded) ? (string) ($decoded['eventType'] ?? 'unknown') : 'unknown';
-        $resourceId = \is_array($decoded) ? ($decoded['resourceId'] ?? null) : null;
+        // Read only to know what to refetch. Nothing from here is ever processed as data.
+        $decoded = LexwarePayload::fromJson($rawBody);
+        $eventType = $decoded->string('eventType', 'unknown');
+        $resourceId = $decoded->nullableString('resourceId');
 
-        $webhookEvent = new WebhookEvent($eventType, \is_string($resourceId) ? $resourceId : null, $signatureValid);
+        $webhookEvent = new WebhookEvent($eventType, $resourceId, $signatureValid);
         $this->webhookEventRepository->save($webhookEvent);
 
         if (!$signatureValid) {
             return new JsonResponse(['message' => 'Invalid signature'], Response::HTTP_UNAUTHORIZED);
         }
 
-        if (!\is_string($resourceId) || $resourceId === '') {
+        if ($resourceId === null || $resourceId === '') {
             $webhookEvent->markFailed('Webhook payload carried no resource identifier');
             $this->webhookEventRepository->save($webhookEvent);
 

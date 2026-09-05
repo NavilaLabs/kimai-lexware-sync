@@ -28,12 +28,9 @@ final class OrderConfirmationProcessor
     ) {
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     */
     public function convert(
         TrackedOrderConfirmation $orderConfirmation,
-        array $payload,
+        LexwarePayload $payload,
         ?User $processedBy,
         string $lineRegex,
         bool $readLinesEnabled
@@ -46,9 +43,9 @@ final class OrderConfirmationProcessor
             ));
         }
 
-        $address = $payload['address'] ?? [];
-        $contactId = (string) ($address['contactId'] ?? '');
-        $contactName = (string) ($address['name'] ?? $orderConfirmation->getTitle());
+        $address = $payload->nested('address');
+        $contactId = $address->string('contactId');
+        $contactName = $address->string('name', $orderConfirmation->getTitle());
 
         $customer = $this->resolveCustomer($contactId, $contactName);
 
@@ -68,7 +65,7 @@ final class OrderConfirmationProcessor
         }
 
         if ($readLinesEnabled) {
-            $this->convertLines($orderConfirmation, $payload['lineItems'] ?? [], $project, $lineRegex);
+            $this->convertLines($orderConfirmation, $payload->nestedList('lineItems'), $project, $lineRegex);
         }
     }
 
@@ -100,14 +97,14 @@ final class OrderConfirmationProcessor
     }
 
     /**
-     * @param array<int, array<string, mixed>> $lineItems
+     * @param list<LexwarePayload> $lineItems
      */
     private function convertLines(TrackedOrderConfirmation $orderConfirmation, array $lineItems, Project $project, string $lineRegex): void
     {
         foreach ($lineItems as $position => $lineItem) {
-            $type = (string) ($lineItem['type'] ?? 'custom');
-            $name = (string) ($lineItem['name'] ?? '');
-            $description = isset($lineItem['description']) ? (string) $lineItem['description'] : null;
+            $type = $lineItem->string('type', 'custom');
+            $name = $lineItem->string('name');
+            $description = $lineItem->nullableString('description');
 
             $matched = $this->matchingRuleEvaluator->matchesLine($type, $name, $description, $lineRegex);
 

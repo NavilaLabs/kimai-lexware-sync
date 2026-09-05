@@ -20,7 +20,10 @@ final class LexwareWebhookVerifier
     }
 
     /**
-     * @param array<string, array<int, string>> $headers
+     * The shape Symfony's header bag actually hands over, entries included that are not
+     * strings, because a webhook body is never to be trusted and neither are its headers.
+     *
+     * @param array<string, list<string|null>> $headers
      */
     public function verify(string $rawBody, array $headers): bool
     {

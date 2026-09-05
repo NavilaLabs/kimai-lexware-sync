@@ -17,7 +17,7 @@ final class InvoiceLineBuilder
 
     /**
      * @param Timesheet[] $timesheets
-     * @return array<int, array<string, mixed>>
+     * @return list<array<string, mixed>>
      */
     public function buildLines(array $timesheets, InvoiceLineShape $shape, int $taxRatePercentage, string $currency): array
     {
@@ -29,7 +29,7 @@ final class InvoiceLineBuilder
 
     /**
      * @param Timesheet[] $timesheets
-     * @return array<int, array<string, mixed>>
+     * @return list<array<string, mixed>>
      */
     private function buildPerTimesheetLines(array $timesheets, int $taxRatePercentage, string $currency): array
     {
@@ -53,7 +53,7 @@ final class InvoiceLineBuilder
 
     /**
      * @param Timesheet[] $timesheets
-     * @return array<int|string, array<string, mixed>>
+     * @return list<array<string, mixed>>
      */
     private function buildAggregatedLines(array $timesheets, int $taxRatePercentage, string $currency): array
     {
@@ -117,7 +117,7 @@ final class InvoiceLineBuilder
         return $line;
     }
 
-    private function descriptionFor(Timesheet $timesheet): ?string
+    private function descriptionFor(Timesheet $timesheet): string
     {
         $begin = $timesheet->getBegin();
         $description = $timesheet->getDescription();

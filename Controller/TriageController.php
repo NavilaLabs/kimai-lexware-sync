@@ -14,6 +14,7 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Repository\Query\DocumentListQuery;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedOrderConfirmationRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\CustomerCurrencyMismatchException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareDocumentSummaryFactory;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\OrderConfirmationProcessor;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\UnprocessableOrderConfirmationException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -72,18 +73,16 @@ final class TriageController extends AbstractController
             return $this->redirectToTriage($listQuery);
         }
 
-        if (!$this->isCsrfTokenValid('lexware_sync_triage', $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('lexware_sync_triage', $request->request->getString('_token'))) {
             return $this->redirectToTriage($listQuery);
         }
-
-        $payload = json_decode($orderConfirmation->getRawPayload(), true);
 
         $this->entityManager->beginTransaction();
 
         try {
             $this->processor->convert(
                 $orderConfirmation,
-                \is_array($payload) ? $payload : [],
+                LexwarePayload::fromJson($orderConfirmation->getRawPayload()),
                 $this->getUser(),
                 $this->configuration->getLineRegex(),
                 $this->configuration->isReadLinesEnabled(),
@@ -114,7 +113,7 @@ final class TriageController extends AbstractController
             return $this->redirectToTriage($listQuery);
         }
 
-        if (!$this->isCsrfTokenValid('lexware_sync_triage', $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('lexware_sync_triage', $request->request->getString('_token'))) {
             return $this->redirectToTriage($listQuery);
         }
 

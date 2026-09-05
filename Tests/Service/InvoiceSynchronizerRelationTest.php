@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Service;
 
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\InvoiceSynchronizer;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
@@ -22,7 +23,7 @@ final class InvoiceSynchronizerRelationTest extends TestCase
             ],
         ];
 
-        self::assertSame(['unrelated-id', 'matching-id'], $method->invoke(null, $payload));
+        self::assertSame(['unrelated-id', 'matching-id'], $method->invoke(null, new LexwarePayload($payload)));
     }
 
     public function testMissingRelatedVouchersProducesAnEmptyList(): void
@@ -30,6 +31,6 @@ final class InvoiceSynchronizerRelationTest extends TestCase
         $method = new ReflectionMethod(InvoiceSynchronizer::class, 'extractRelatedVoucherIds');
         $method->setAccessible(true);
 
-        self::assertSame([], $method->invoke(null, []));
+        self::assertSame([], $method->invoke(null, new LexwarePayload()));
     }
 }

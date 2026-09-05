@@ -25,10 +25,10 @@ final class OrderConfirmationSynchronizer
 
     public function synchronize(string $lexwareId): void
     {
-        $payload = $this->client->getOrderConfirmation($lexwareId);
+        $payload = new LexwarePayload($this->client->getOrderConfirmation($lexwareId));
         $existing = $this->repository->findByLexwareId($lexwareId);
 
-        $remoteUpdatedAt = isset($payload['updatedDate']) ? new \DateTimeImmutable((string) $payload['updatedDate']) : null;
+        $remoteUpdatedAt = $payload->dateTime('updatedDate');
 
         if ($existing !== null && $remoteUpdatedAt !== null && $existing->getRemoteUpdatedAt() !== null) {
             if ($remoteUpdatedAt <= $existing->getRemoteUpdatedAt()) {
@@ -41,16 +41,15 @@ final class OrderConfirmationSynchronizer
         try {
             $orderConfirmation = $existing ?? new TrackedOrderConfirmation($lexwareId);
 
-            $address = \is_array($payload['address'] ?? null) ? $payload['address'] : [];
-            $contactName = $address['name'] ?? '';
+            $address = $payload->nested('address');
 
             $orderConfirmation->updateFromLexwarePayload(
-                (string) ($payload['voucherNumber'] ?? ''),
-                (string) ($payload['title'] ?? ''),
-                new \DateTimeImmutable((string) ($payload['voucherDate'] ?? 'now')),
-                (string) ($address['contactId'] ?? ''),
-                \is_string($contactName) ? $contactName : '',
-                json_encode($payload, \JSON_THROW_ON_ERROR),
+                $payload->string('voucherNumber'),
+                $payload->string('title'),
+                $payload->dateTime('voucherDate') ?? new \DateTimeImmutable(),
+                $address->string('contactId'),
+                $address->string('name'),
+                json_encode($payload->toArray(), \JSON_THROW_ON_ERROR),
                 $remoteUpdatedAt,
             );
 

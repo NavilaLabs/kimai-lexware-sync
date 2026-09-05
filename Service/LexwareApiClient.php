@@ -21,6 +21,7 @@ final class LexwareApiClient
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly LexwareSyncConfiguration $configuration,
+        private readonly float $minimumIntervalSeconds = self::MINIMUM_INTERVAL_SECONDS,
     ) {
     }
 
@@ -74,7 +75,7 @@ final class LexwareApiClient
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return list<array<string, mixed>>
      */
     public function findInvoices(string $contactId, \DateTimeImmutable $voucherDateFrom): array
     {
@@ -85,20 +86,21 @@ final class LexwareApiClient
             'voucherDateFrom' => $voucherDateFrom->format('Y-m-d'),
         ]);
 
-        $content = $result['content'] ?? [];
-
-        return \is_array($content) ? $content : [];
+        return (new LexwarePayload($result))->rawList('content');
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * Lexware has answered this one both wrapped in a content envelope and as a bare list, so
+     * both shapes are unwrapped here rather than at every call site.
+     *
+     * @return list<array<string, mixed>>
      */
     public function listEventSubscriptions(): array
     {
         $result = $this->request('GET', '/v1/event-subscriptions');
-        $content = $result['content'] ?? $result;
+        $payload = new LexwarePayload($result);
 
-        return \is_array($content) ? array_values($content) : [];
+        return $payload->has('content') ? $payload->rawList('content') : (new LexwarePayload(['content' => $result]))->rawList('content');
     }
 
     /**
@@ -135,7 +137,12 @@ final class LexwareApiClient
             throw new LexwareApiException(\sprintf('Lexware API returned a non-object response for %s', $path));
         }
 
-        return $decoded;
+        $fields = [];
+        foreach ($decoded as $name => $value) {
+            $fields[(string) $name] = $value;
+        }
+
+        return $fields;
     }
 
     /**
@@ -185,8 +192,8 @@ final class LexwareApiClient
         $now = microtime(true);
         $elapsed = $now - $this->lastRequestAt;
 
-        if ($this->lastRequestAt > 0.0 && $elapsed < self::MINIMUM_INTERVAL_SECONDS) {
-            usleep((int) ((self::MINIMUM_INTERVAL_SECONDS - $elapsed) * 1_000_000));
+        if ($this->lastRequestAt > 0.0 && $elapsed < $this->minimumIntervalSeconds) {
+            usleep((int) (($this->minimumIntervalSeconds - $elapsed) * 1_000_000));
         }
 
         $this->lastRequestAt = microtime(true);

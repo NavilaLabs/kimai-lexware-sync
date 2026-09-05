@@ -42,6 +42,7 @@ final class LexwareApiClientTest extends TestCase
         $result = $client->getOrderConfirmation('abc');
 
         self::assertSame('AB0001', $result['voucherNumber']);
+        self::assertNotNull($seenRequest, 'The client made no request at all.');
         self::assertSame('GET', $seenRequest[0]);
         self::assertStringContainsString('/v1/order-confirmations/abc', $seenRequest[1]);
         self::assertSame('Authorization: Bearer test-key', $seenRequest[2]['normalized_headers']['authorization'][0]);
@@ -69,6 +70,7 @@ final class LexwareApiClientTest extends TestCase
         $result = $client->createInvoice(['voucherDate' => '2026-09-05'], true);
 
         self::assertSame('new-invoice-id', $result['id']);
+        self::assertNotNull($seenRequest, 'The client made no request at all.');
         self::assertSame('POST', $seenRequest[0]);
         self::assertStringContainsString('/v1/invoices', $seenRequest[1]);
         self::assertStringContainsString('finalize=true', $seenRequest[1]);
@@ -110,6 +112,7 @@ final class LexwareApiClientTest extends TestCase
         $result = $client->findInvoices('contact-1', new \DateTimeImmutable('2026-01-01'));
 
         self::assertSame([['id' => 'invoice-1']], $result);
+        self::assertNotNull($seenRequest, 'The client made no request at all.');
         self::assertSame('GET', $seenRequest[0]);
         self::assertStringContainsString('/v1/voucherlist', $seenRequest[1]);
         self::assertStringContainsString('voucherType=invoice', $seenRequest[1]);
@@ -146,6 +149,7 @@ final class LexwareApiClientTest extends TestCase
         $result = $client->listEventSubscriptions();
 
         self::assertSame([['id' => 'sub-1', 'eventType' => 'invoice.changed']], $result);
+        self::assertNotNull($seenRequest, 'The client made no request at all.');
         self::assertSame('GET', $seenRequest[0]);
         self::assertStringContainsString('/v1/event-subscriptions', $seenRequest[1]);
     }
@@ -163,6 +167,7 @@ final class LexwareApiClientTest extends TestCase
         $result = $client->createEventSubscription('order-confirmation.changed', 'https://example.test/webhook/lexware/order-confirmation');
 
         self::assertSame('sub-1', $result['id']);
+        self::assertNotNull($seenRequest, 'The client made no request at all.');
         self::assertSame('POST', $seenRequest[0]);
         self::assertStringContainsString('/v1/event-subscriptions', $seenRequest[1]);
         self::assertSame(

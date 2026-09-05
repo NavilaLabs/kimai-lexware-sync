@@ -26,14 +26,14 @@ final class InvoiceSynchronizer
 
     public function synchronize(string $lexwareId): void
     {
-        $payload = $this->client->getInvoice($lexwareId);
+        $payload = new LexwarePayload($this->client->getInvoice($lexwareId));
         $existing = $this->repository->findByLexwareId($lexwareId);
 
         if ($existing !== null && $existing->getStatus()->isTerminal()) {
             return;
         }
 
-        $remoteUpdatedAt = isset($payload['updatedDate']) ? new \DateTimeImmutable((string) $payload['updatedDate']) : null;
+        $remoteUpdatedAt = $payload->dateTime('updatedDate');
 
         if ($existing !== null && $remoteUpdatedAt !== null && $existing->getRemoteUpdatedAt() !== null) {
             if ($remoteUpdatedAt <= $existing->getRemoteUpdatedAt()) {
@@ -41,7 +41,7 @@ final class InvoiceSynchronizer
             }
         }
 
-        $voucherStatus = (string) ($payload['voucherStatus'] ?? '');
+        $voucherStatus = $payload->string('voucherStatus');
 
         if ($voucherStatus !== self::DRAFT_STATUS) {
             if ($existing !== null) {
@@ -57,7 +57,7 @@ final class InvoiceSynchronizer
             return;
         }
 
-        $title = (string) ($payload['title'] ?? '');
+        $title = $payload->string('title');
         if (!$this->matchingRuleEvaluator->matchesTitle($title, $this->configuration->getInvoiceTitleRegex())) {
             return;
         }
@@ -68,24 +68,18 @@ final class InvoiceSynchronizer
             $trackedInvoice->reopen();
         }
 
-        $address = \is_array($payload['address'] ?? null) ? $payload['address'] : [];
-        $contactName = $address['name'] ?? '';
-
         $trackedInvoice->updateFromLexwarePayload(
-            (string) ($payload['voucherNumber'] ?? ''),
-            new \DateTimeImmutable((string) ($payload['voucherDate'] ?? 'now')),
-            \is_string($contactName) ? $contactName : '',
-            json_encode($payload, \JSON_THROW_ON_ERROR),
+            $payload->string('voucherNumber'),
+            $payload->dateTime('voucherDate') ?? new \DateTimeImmutable(),
+            $payload->nested('address')->string('name'),
+            json_encode($payload->toArray(), \JSON_THROW_ON_ERROR),
             $remoteUpdatedAt,
         );
 
         $this->repository->save($trackedInvoice);
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     */
-    private function resolveRelatedOrderConfirmation(array $payload): ?TrackedOrderConfirmation
+    private function resolveRelatedOrderConfirmation(LexwarePayload $payload): ?TrackedOrderConfirmation
     {
         foreach (self::extractRelatedVoucherIds($payload) as $relatedId) {
             $orderConfirmation = $this->orderConfirmationRepository->findByLexwareId($relatedId);
@@ -98,24 +92,14 @@ final class InvoiceSynchronizer
     }
 
     /**
-     * @param array<string, mixed> $payload
-     * @return string[]
+     * @return list<string>
      */
-    private static function extractRelatedVoucherIds(array $payload): array
+    private static function extractRelatedVoucherIds(LexwarePayload $payload): array
     {
-        $relatedVouchers = $payload['relatedVouchers'] ?? [];
-        if (!\is_array($relatedVouchers)) {
-            return [];
-        }
-
         $ids = [];
 
-        foreach ($relatedVouchers as $relatedVoucher) {
-            if (!\is_array($relatedVoucher)) {
-                continue;
-            }
-
-            $id = (string) ($relatedVoucher['id'] ?? '');
+        foreach ($payload->nestedList('relatedVouchers') as $relatedVoucher) {
+            $id = $relatedVoucher->string('id');
             if ($id !== '') {
                 $ids[] = $id;
             }
