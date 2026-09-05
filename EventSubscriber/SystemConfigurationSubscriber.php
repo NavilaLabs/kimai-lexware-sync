@@ -7,8 +7,10 @@ namespace KimaiPlugin\KimaiLexwareSyncBundle\EventSubscriber;
 use App\Event\SystemConfigurationEvent;
 use App\Form\Model\Configuration;
 use App\Form\Model\SystemConfiguration as SystemConfigurationModel;
+use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Validator\Constraints\Callback;
@@ -48,6 +50,21 @@ final class SystemConfigurationSubscriber implements EventSubscriberInterface
                         ->setTranslationDomain('system-configuration')
                         ->setType(IntegerType::class)
                         ->setRequired(false),
+                    (new Configuration('lexware_sync.invoice_title_regex'))
+                        ->setTranslationDomain('system-configuration')
+                        ->setType(TextType::class)
+                        ->setRequired(false)
+                        ->setConstraints([$this->createRegexConstraint()]),
+                    (new Configuration('lexware_sync.project_completion_mode'))
+                        ->setTranslationDomain('system-configuration')
+                        ->setType(ChoiceType::class)
+                        ->setRequired(false)
+                        ->setOptions([
+                            'choices' => [
+                                'End date' => LexwareSyncConfiguration::PROJECT_COMPLETION_END_DATE,
+                                'Hidden' => LexwareSyncConfiguration::PROJECT_COMPLETION_HIDDEN,
+                            ],
+                        ]),
                 ])
         );
     }

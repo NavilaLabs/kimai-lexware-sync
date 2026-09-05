@@ -22,6 +22,14 @@
                 <source>lexware_sync.reconcile_interval_minutes</source>
                 <target>Minuten zwischen den Abgleichläufen</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.invoice_title_regex" resname="lexware_sync.invoice_title_regex">
+                <source>lexware_sync.invoice_title_regex</source>
+                <target>Titelmuster, das ein Rechnungsentwurf erfüllen muss, um erfasst zu werden, leer bedeutet jeder Titel passt</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.project_completion_mode" resname="lexware_sync.project_completion_mode">
+                <source>lexware_sync.project_completion_mode</source>
+                <target>Was das Markieren eines Projekts als abgeschlossen bewirkt: ein Enddatum setzen oder die Sichtbarkeit verstecken</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

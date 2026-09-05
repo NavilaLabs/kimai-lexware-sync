@@ -22,6 +22,14 @@
                 <source>lexware_sync.reconcile_interval_minutes</source>
                 <target>Minutes between reconciliation polls</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.invoice_title_regex" resname="lexware_sync.invoice_title_regex">
+                <source>lexware_sync.invoice_title_regex</source>
+                <target>Title pattern an invoice draft must match to be tracked, empty matches every title</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.project_completion_mode" resname="lexware_sync.project_completion_mode">
+                <source>lexware_sync.project_completion_mode</source>
+                <target>What marking a project completed does: set an end date, or hide its visibility</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>
