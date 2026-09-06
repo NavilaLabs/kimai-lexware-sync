@@ -25,6 +25,27 @@
         <bootstrap class="DAMA\DoctrineTestBundle\PHPUnit\PHPUnitExtension"/>
     </extensions>
 
+    <php>
+        <!--
+            A run with a cold cache compiles two full Kimai containers in one process, one for
+            the ordinary test kernel and one for the kernel that checks the shipped wiring, and
+            PHP's default limit of 128 megabytes is not enough for the second. With a warm cache
+            nothing is compiled and the run stays far below it, which is why this looked like an
+            intermittent failure for a long time rather than the reproducible one it is.
+        -->
+        <ini name="memory_limit" value="512M"/>
+
+        <!--
+            Kimai's autoloader activates Symfony's PHPUnit bridge, which fails a run on
+            deprecation notices even when every test passed, and prints nothing but a count.
+            Compiling the container raises notices from Kimai's own dependencies, so an
+            otherwise identical run went red with a cold cache and green with a warm one. A
+            deprecation this plugin causes is a failure worth stopping for; one raised inside
+            Kimai or its dependencies is reported and tolerated, because we cannot act on it.
+        -->
+        <env name="SYMFONY_DEPRECATIONS_HELPER" value="max[self]=0&amp;max[direct]=0&amp;max[indirect]=999999"/>
+    </php>
+
     <source>
         <include>
             <directory>Command</directory>
