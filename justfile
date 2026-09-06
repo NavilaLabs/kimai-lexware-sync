@@ -31,9 +31,14 @@ reconcile: reconcile-orders reconcile-invoices
 check-api-key:
     {{kimai}}/bin/console kimai:lexware-sync:check-api-key
 
-# Run this bundle's automated test suite.
+# Run the three local test suites: unit, functional and migration.
+#
+# The contract suite is deliberately not part of this. It talks to a real Lexware account and
+# creates documents there that Lexware cannot delete again, and it accepts the LEXWARE_API_KEY
+# from the plugin's own .env, so a shell that has sourced .env would write real documents on an
+# otherwise routine `just check`. Run it on purpose with `just test-contract`.
 test *args:
-    vendor/bin/phpunit --display-warnings {{args}}
+    vendor/bin/phpunit --display-warnings --testsuite unit,functional,migration {{args}}
 
 # Check code style without modifying files.
 codestyle:
@@ -70,6 +75,6 @@ test-migration *args:
 test-contract *args:
     vendor/bin/phpunit --display-warnings --testsuite contract {{args}}
 
-# Run the test suite with a coverage report in var/coverage.
+# Run the local test suites with a coverage report in var/coverage.
 test-coverage *args:
-    XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-html var/coverage --coverage-text {{args}}
+    XDEBUG_MODE=coverage vendor/bin/phpunit --testsuite unit,functional,migration --coverage-html var/coverage --coverage-text {{args}}
