@@ -73,6 +73,52 @@ first question is whether it should have.
 
 `recordedRequests()` returns what was sent, including `decodedBody()` for a request body.
 
+## The license check is enforced in the test container
+
+The plugin ships wired to `AlwaysLicensedGate`, which agrees to everything, so that the check does
+nothing until the licensing service exists. The test container does not use that wiring.
+`Tests/config/license_enforcement.yaml`, one of the two files `TestKernel` loads, points
+`LicenseGate` at `ServiceBackedLicenseGate`, the real implementation, and gives it a `LicenseClient`
+backed by a second fake HTTP client rather than the shipped, disabled one.
+
+This means the functional suite tests the check as it will actually behave once the alias in
+`Resources/config/services.yaml` is switched on, not the switched off state a customer currently
+gets. The consequence lands on every test that performs a conversion: `OrderConfirmationProcessor`
+calls `convert()`, and `InvoiceProcessor` calls either `convert()` or `confirmExisting()`, and all
+three consult the real gate first. A functional test that reaches one of them without arranging a
+license fails with `LicenseRequiredException`, because the test container has nothing stored and no
+license key configured, the same as a fresh installation.
+
+A test that needs the conversion to actually happen therefore has to say so. Add
+`use SignsLicenseArtefacts;` from `Tests\Support\SignsLicenseArtefacts` to the test class and call
+`$this->givenAConfirmedLicense();` before converting, as `OrderConfirmationProcessorTest` and
+`ServiceBackedLicenseGateTest` do. It sets `lexware_sync.license_key` to a fixed test value and
+stores a validly signed artefact through `LicenseStore` for that key, signed with a key pair the
+trait commits for exactly this purpose; the public half is repeated in
+`Tests/config/license_enforcement.yaml`, because a YAML file cannot read a PHP constant, and the
+two are kept in sync by hand.
+
+This is deliberately a call you have to make, not something `FunctionalTestCase` arranges for
+every test. Licensing every test by default would mean the one test that is supposed to prove the
+check actually refuses something, `ConversionRequiresALicenseTest`, would be testing a gate that
+had already been talked past, and a future test that forgets to arrange a license would silently
+pass instead of failing with a clear exception naming exactly what is missing.
+
+`FakeLicenseHttpClient` is the second strict double alongside `FakeLexwareHttpClient`, both built
+on the same `RecordingHttpClient` base described above. Reach it with `licenseService()`, also
+defined on the `SignsLicenseArtefacts` trait, the way `lexware()` reaches the Lexware one; an
+unstubbed request to the licensing service fails the test the same way an unstubbed Lexware
+request does.
+
+`Tests/ShippedWiringKernel.php` is a `TestKernel` subclass that loads only
+`Tests/config/test_environment.yaml`, leaving out the enforcement override. Boot it directly
+through `KernelTestCase` rather than through `FunctionalTestCase`, which always boots the
+enforcing `TestKernel`, whenever a test needs to assert what a customer installation is actually
+wired to: `ShippedLicenseWiringTest` uses it to confirm that `LicenseGate` resolves to
+`AlwaysLicensedGate` and that a conversion succeeds with no license key and no stored artefact
+at all, which is the one thing that would silently break if the shipped alias ever changed by
+accident.
+
 ## Traps that cost time, all of them already paid for
 
 - **Kimai does not register plugins in the `test` environment.** `App\Kernel::registerBundles()`
@@ -118,8 +164,13 @@ not disable the isolation for a test that merely commits.
    insert a row that the new migration has to survive, migrate to `latest`, assert the row is
    still there and correct. The existing upgrade test is the template.
 
-The fresh installation test asserts the full list of tables. A new table means adding it there,
-which is also the guard for the mandatory `kimai2_ext_` prefix.
+The fresh installation test does not guard the mandatory `kimai2_ext_` prefix by asserting a
+fixed list of tables against a pattern that already carries the prefix; a table created without
+the prefix would simply not match that pattern and would pass unnoticed. It records every table
+name before migrating, migrates, records every table name again, and asserts that everything the
+migrations added is present in that pattern's result, so a table added later without the prefix
+fails the comparison instead of silently disappearing from what gets checked. A new table needs
+no separate entry for this guard to catch it.
 
 ## After using a new Lexware endpoint
 
