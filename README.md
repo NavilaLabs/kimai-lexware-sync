@@ -43,6 +43,9 @@ stays out of the way.
 - **Milestone two**, invoice ingestion followed by timesheet assignment and an outbound
   invoice, is in development. The full design is written down in the specification linked
   below, sections 12 through 18.
+- The **license check** is present but switched off until the licensing service exists. The one
+  place that switches it on is the `KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseGate`
+  alias in `Resources/config/services.yaml`.
 
 Full design: [`docs/superpowers/specs/2026-09-04-kimai-lexware-sync-design.md`](docs/superpowers/specs/2026-09-04-kimai-lexware-sync-design.md).
 
@@ -68,6 +71,7 @@ screen.
 
 | Key | Meaning | Default |
 |---|---|---|
+| `lexware_sync.license_key` | The license key from the purchase confirmation. Without it no order confirmation is converted into a project and no invoice is written back to Lexware. Rendered as a password field the same way as the API key below. | empty |
 | `lexware_sync.api_key` | The Lexware Public API key used to authenticate every request. Rendered as a password field that always displays blank; leaving it blank on save keeps the currently stored key, entering a value replaces it. | empty |
 | `lexware_sync.public_base_url` | The public base URL Lexware should call, used by the "Connect webhooks" button below the API key field. Empty uses this Kimai instance's own configured URL, which is right in production behind a real domain but wrong in local development, where this should be set to a tunnel's public HTTPS URL (see "Running it" below). | empty |
 | `lexware_sync.auto_convert_enabled` | Automatically convert an order confirmation into a project when the title rule matches. | `false` |
@@ -87,7 +91,7 @@ Installing the plugin, with `bin/console kimai:reload -n` followed by
 `bin/console kimai:bundle:lexware-sync:install`, only makes its code and database tables
 available. Two further steps are needed before it actually keeps Kimai and Lexware in sync.
 
-First, two console commands need a cron entry, since the plugin has no scheduler of its own:
+First, four console commands need a cron entry, since the plugin has no scheduler of its own:
 
 - `bin/console kimai:lexware-sync:reconcile` polls Lexware for order confirmations that a
   webhook delivery might have missed. Schedule it to run as often as the
@@ -101,6 +105,10 @@ First, two console commands need a cron entry, since the plugin has no scheduler
 - `bin/console kimai:lexware-sync:reconcile-invoices` polls Lexware for invoice drafts that a
   webhook delivery might have missed, on the same interval as the order confirmation
   reconciliation poll above.
+- `bin/console kimai:lexware-sync:check-license` confirms the configured license with the
+  licensing service. Schedule it once a day. It usually does nothing, because it only asks again
+  when the stored confirmation says it is time. It exits with a failure code when the license is
+  refused, so that a cron mail or a monitoring system notices before a user does.
 
 Second, the real Lexware webhook subscriptions have to be registered, once this Kimai instance is
 reachable at the public HTTPS endpoint described in the Requirements section above. Click
@@ -129,6 +137,23 @@ permissions, so it can be granted only to the roles that should decide which ord
 become projects and which invoice drafts get their combined invoice created. The Lexware
 entry in the main menu, including the badge that counts the open documents of each screen, is
 only rendered for users who hold that permission.
+
+## The license signing key
+
+The license check verifies a signed artefact against a fixed list of Ed25519 public keys,
+`lexware_sync.license_public_keys` in `Resources/config/services.yaml`, which ships empty because
+the check is switched off and the licensing service does not exist yet. Once that service is
+ready to sign real licenses, generate its key pair with:
+
+```bash
+php -r '$pair = sodium_crypto_sign_keypair(); echo "public: ", base64_encode(sodium_crypto_sign_publickey($pair)), PHP_EOL, "secret: ", base64_encode(sodium_crypto_sign_secretkey($pair)), PHP_EOL;'
+```
+
+Put the printed public key into `lexware_sync.license_public_keys` here. The printed secret key
+belongs to the licensing service project, never to this repository: whoever holds it can sign a
+license. Run the command somewhere its output does not end up in a stored transcript, such as a
+local shell rather than an assistant session or a logged terminal, and move the secret key
+straight into the licensing service's own configuration.
 
 ## Design principles worth knowing before touching the code
 

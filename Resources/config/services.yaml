@@ -1,5 +1,9 @@
 parameters:
     lexware_sync.license_service_url: 'https://licensing.navilalabs.com/v1/check'
+    # The base64 encoded Ed25519 public keys accepted for a license artefact's signature. This
+    # stays empty until the licensing service exists and its signing key pair has been generated,
+    # since the check is switched off until then anyway. See the README for how to generate the
+    # pair once the service is ready to go live.
     lexware_sync.license_public_keys: []
 
 services:
