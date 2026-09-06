@@ -71,7 +71,7 @@ screen.
 
 | Key | Meaning | Default |
 |---|---|---|
-| `lexware_sync.license_key` | The license key from the purchase confirmation. Without it no order confirmation is converted into a project and no invoice is written back to Lexware. Rendered as a password field the same way as the API key below. | empty |
+| `lexware_sync.license_key` | The license key from the purchase confirmation. Once the license check described below is switched on, an order confirmation without a confirmed license is not converted into a project and an invoice is not written back to Lexware. Shipped with the check switched off, so an empty value here changes nothing yet. Rendered as a password field the same way as the API key below. | empty |
 | `lexware_sync.api_key` | The Lexware Public API key used to authenticate every request. Rendered as a password field that always displays blank; leaving it blank on save keeps the currently stored key, entering a value replaces it. | empty |
 | `lexware_sync.public_base_url` | The public base URL Lexware should call, used by the "Connect webhooks" button below the API key field. Empty uses this Kimai instance's own configured URL, which is right in production behind a real domain but wrong in local development, where this should be set to a tunnel's public HTTPS URL (see "Running it" below). | empty |
 | `lexware_sync.auto_convert_enabled` | Automatically convert an order confirmation into a project when the title rule matches. | `false` |
@@ -91,7 +91,9 @@ Installing the plugin, with `bin/console kimai:reload -n` followed by
 `bin/console kimai:bundle:lexware-sync:install`, only makes its code and database tables
 available. Two further steps are needed before it actually keeps Kimai and Lexware in sync.
 
-First, four console commands need a cron entry, since the plugin has no scheduler of its own:
+First, three console commands need a cron entry, since the plugin has no scheduler of its own,
+and a fourth joins them once the license check described in the Status section above is switched
+on:
 
 - `bin/console kimai:lexware-sync:reconcile` polls Lexware for order confirmations that a
   webhook delivery might have missed. Schedule it to run as often as the
@@ -106,9 +108,12 @@ First, four console commands need a cron entry, since the plugin has no schedule
   webhook delivery might have missed, on the same interval as the order confirmation
   reconciliation poll above.
 - `bin/console kimai:lexware-sync:check-license` confirms the configured license with the
-  licensing service. Schedule it once a day. It usually does nothing, because it only asks again
-  when the stored confirmation says it is time. It exits with a failure code when the license is
-  refused, so that a cron mail or a monitoring system notices before a user does.
+  licensing service, but only once the license check is switched on: shipped, nobody has a
+  license key, and running this command daily against the shipped state means a cron entry that
+  fails every day and a daily error mail for nothing. Schedule it once a day, and only from the
+  day the check is switched on. It usually does nothing, because it only asks again when the
+  stored confirmation says it is time. It exits with a failure code when the license is refused,
+  so that a cron mail or a monitoring system notices before a user does.
 
 Second, the real Lexware webhook subscriptions have to be registered, once this Kimai instance is
 reachable at the public HTTPS endpoint described in the Requirements section above. Click
