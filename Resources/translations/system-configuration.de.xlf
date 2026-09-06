@@ -8,7 +8,7 @@
             </trans-unit>
             <trans-unit id="lexware_sync.license_key_help" resname="lexware_sync.license_key_help">
                 <source>lexware_sync.license_key_help</source>
-                <target>Der Lizenzschlüssel aus Ihrer Kaufbestätigung. Ohne ihn wird keine Auftragsbestätigung in ein Projekt umgewandelt und keine Rechnung an Lexware zurückgeschrieben.</target>
+                <target>Der Lizenzschlüssel aus Ihrer Kaufbestätigung. In dieser Version ist die Lizenzprüfung noch abgeschaltet, ein leeres Feld ändert also vorerst nichts. Sobald sie eingeschaltet ist, wandelt eine Installation ohne bestätigte Lizenz keine Auftragsbestätigung mehr in ein Projekt um und schreibt auch keine Rechnung an Lexware zurück.</target>
             </trans-unit>
             <trans-unit id="lexware_sync.api_key" resname="lexware_sync.api_key">
                 <source>lexware_sync.api_key</source>

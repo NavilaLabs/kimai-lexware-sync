@@ -8,7 +8,7 @@
             </trans-unit>
             <trans-unit id="lexware_sync.license_key_help" resname="lexware_sync.license_key_help">
                 <source>lexware_sync.license_key_help</source>
-                <target>The license key from your purchase confirmation. Without it no order confirmation is converted into a project and no invoice is written back to Lexware.</target>
+                <target>The license key from your purchase confirmation. This version ships with the license check switched off, so leaving the field empty changes nothing yet. Once the check is switched on, an installation without a confirmed license converts no order confirmation into a project and writes no invoice back to Lexware.</target>
             </trans-unit>
             <trans-unit id="lexware_sync.api_key" resname="lexware_sync.api_key">
                 <source>lexware_sync.api_key</source>
