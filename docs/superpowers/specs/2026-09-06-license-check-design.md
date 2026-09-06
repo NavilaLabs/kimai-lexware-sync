@@ -30,17 +30,22 @@ obfuscation.
 
 ## 3. Where the check sits
 
-Inside `OrderConfirmationProcessor::convert()` and `InvoiceProcessor::convert()`, not in the
-controllers.
+Inside `OrderConfirmationProcessor::convert()`, `InvoiceProcessor::convert()` and
+`InvoiceProcessor::confirmExisting()`, not in the controllers.
 
-Those two methods are the only way an order confirmation becomes a Kimai project or a set of
-timesheets becomes a Lexware invoice. Every route into them, the triage screen, the automatic
-conversion inside `OrderConfirmationSynchronizer`, and the invoice assignment screen, passes
-through one of the two. A check placed there cannot be bypassed by any existing caller, and a
-caller added later is covered without anyone remembering to cover it.
+An earlier version of this section named only the two `convert()` methods and claimed they were
+the only way a conversion happens. That was wrong: `InvoiceProcessor::confirmExisting()` records
+a conversion for an invoice that was already created directly in Lexware, without ever calling
+`convert()` and without any Lexware request of its own, so it is a third entry point rather than
+a caller of one of the other two. All three methods are the only way an order confirmation
+becomes a Kimai project or a set of timesheets becomes a recorded Lexware invoice. Every route
+into them, the triage screen, the automatic conversion inside `OrderConfirmationSynchronizer`,
+and the invoice assignment screen, passes through one of the three. A check placed in all three
+cannot be bypassed by any existing caller, and a caller added later is covered without anyone
+remembering to cover it.
 
-Both throw `LicenseRequiredException`, carrying the verdict so the caller can say why. All three
-callers already catch domain exceptions of this kind and turn them into a message or a log
+All three throw `LicenseRequiredException`, carrying the verdict so the caller can say why. Every
+caller already catches domain exceptions of this kind and turns them into a message or a log
 entry, so the change at each call site is one more class in a catch list.
 
 Everything else keeps working. Webhooks are received and stored, both reconciliation polls run,
@@ -66,19 +71,34 @@ nothing piles up unseen, and the moment they renew they are working again.
 | `LicenseServiceUnavailable` | Thrown when the service cannot be reached or answers unusably |
 | `LicenseStore` | Reads and writes the artefact in Kimai's system configuration |
 | `CheckLicenseCommand` | The scheduled refresh, sibling of the existing key check command |
-| `LicenseRequiredException` | Thrown by both processors, carries the verdict |
+| `LicenseRequiredException` | Thrown by all three entry points listed in section 3, carries the verdict |
+| `LicenseVerdictMessageFormatter` | Turns a verdict's state and reason into the translated sentence shown to a person |
+| `LicenseVerdictPresenter` | Reduces a verdict to the plain array a controller hands to its template for the banner |
 
-Which gate implementation is wired is decided by a container parameter, so the switched off state
-is a configuration value rather than a branch inside the logic, and is therefore testable in its
-own right.
+`LicenseVerdictMessageFormatter` and `LicenseVerdictPresenter` were not anticipated when this
+table was first written. Both exist because the banner described in section 8 needed something
+between the raw `LicenseVerdict` and the Twig template, one to produce the sentence and one to
+produce the data structure the template renders; splitting the two kept each responsible for one
+thing rather than growing a single class that both formats text and shapes template data.
+
+Which gate implementation is wired is decided by an alias, not a container parameter carrying a
+value, so the switched off state is a configuration value rather than a branch inside the logic,
+and is therefore testable in its own right. Section 10 describes what else has to be set for the
+switched on state to actually work.
 
 ## 5. The protocol
 
 **Request.** A POST carrying exactly two fields: the license key the customer entered, and the
 plugin's own version, read from its `composer.json` through Kimai's `PluginMetadata`. Nothing
 else. No instance identifier, no host name, no Kimai version. The service therefore cannot tell
-where a license is running, which keeps this out of data protection territory entirely, and the
-cost is accepted: a key used on fifty instances looks the same as a key used on one.
+one installation from another by anything inside the request body, and the cost is accepted: a
+key used on fifty instances looks the same as a key used on one. This does not keep the request
+out of data protection territory entirely: making the connection at all discloses the customer's
+server address to the licensing service, the way any outbound HTTP request does, and an IP
+address is personal data under the General Data Protection Regulation regardless of what the
+body carries. The body is deliberately minimal; the connection itself is not anonymous. Anyone
+writing the privacy policy for the sales site from this section should write it against that
+narrower claim.
 
 **The address of the service is a constant**, exposed as a container parameter whose default is
 the production URL. It is deliberately not a system configuration field. A configurable address
@@ -201,10 +221,25 @@ and only then used for signing. The cost now is one line.
 a condition inside the logic, so nothing in the checking code is dead or untested while the
 switch is off.
 
-There is exactly one place to touch: the alias in `Resources/config/services.yaml` that binds
-`LicenseGate` to one of the two implementations. Not an environment variable, not a system
-configuration field a customer could see, and no branch anywhere in the checking code. Switching
-the mechanism on means pointing that one alias at `ServiceBackedLicenseGate`.
+There are two places to touch, in this order, not the one this section originally claimed.
+
+First, the alias in `Resources/config/services.yaml` that binds `LicenseGate` to one of the two
+implementations. Not an environment variable, not a system configuration field a customer could
+see, and no branch anywhere in the checking code. Switching the mechanism on means pointing that
+alias at `ServiceBackedLicenseGate`.
+
+Second, the `lexware_sync.license_public_keys` parameter, also in `Resources/config/services.yaml`,
+which ships as an empty list because the licensing service's real signing key does not exist yet.
+Forgetting this one is not a no-op: `ServiceBackedLicenseGate` fetches a token from the real
+service, hands it to `LicenseSignatureVerifier`, and an empty accepted key list makes every
+signature check fail, genuine license included. The gate then treats the fetch as unusable,
+logs an error, remembers the failure for fifteen minutes and reports `Unreachable`. A customer
+with a perfectly valid license sees exactly what someone behind a broken firewall would see,
+and nothing in the logs says why beyond the one error line, because as far as the checking code
+is concerned the service handed back an artefact it cannot use. The public key generated at the
+end of the implementation, described in section 13, has to be in this parameter before the alias
+above is switched, or the switch achieves nothing but a confusing failure mode for every
+customer.
 
 Removing the switch afterwards means deleting three things: the alias, the
 `AlwaysLicensedGate` class, and its test. One implementation is then left, and the interface can
@@ -222,12 +257,29 @@ the existing webhook signature test already does for RSA. Covered: a valid signa
 body, a modified signature, a signature from a foreign key, a key absent from the accepted list.
 Then parsing the artefact: wrong number of parts, broken base64, broken JSON. Then deriving the
 verdict: version mismatch, expired `valid_until`, each of the four rejection reasons, and the
-licensed case.
+licensed case. Two more classes ended up with unit tests that this section did not originally
+call for: `LicenseClientTest` covers that only the key and the version are sent and that a missing
+artefact, an error status and a non JSON body all count as unavailable, and
+`LicenseVerdictMessageFormatterTest` covers that the state and the reason each produce a distinct
+translated message. Both belong at this level for the same reason as the rest: neither needs a
+kernel or a database to be meaningful.
 
-**Functional**, with kernel and database. The blunt one matters most: both processors refuse to
-convert without a license and go through with one. Then the command, which stores an artefact and
-exits with a failure code when unlicensed. Then the emergency path, attempted exactly once and
-not again for fifteen minutes. Then one test per screen for the banner and the disabled buttons.
+**Functional**, with kernel and database. The blunt one matters most: all three entry points
+named in section 3, not only the two `convert()` methods this section originally named, refuse to
+proceed without a license and go through with one, in `ConversionRequiresALicenseTest`. Then the
+command, which stores an artefact and exits with a failure code when unlicensed, in
+`CheckLicenseCommandTest`. Then the emergency path, attempted exactly once and not again for
+fifteen minutes, in `ServiceBackedLicenseGateTest`, which also covers the read path directly
+against the gate rather than only through a screen. Then one test file per concern on the
+screens, `LicenseBannerTest`, covering the banner and the disabled buttons on both the triage
+screen and the invoice assignment screen. Three further functional tests exist that this section
+did not anticipate: `LicenseConfigurationTest`, asserting the license key is registered as a
+system configuration field ahead of the API key, `LicenseStoreTest`, covering storage and
+retrieval of the artefact including what happens when the configured key changes, and
+`ShippedLicenseWiringTest`, which is the test section 10 promises for the switched off state: it
+asserts both that `LicenseGate` resolves to `AlwaysLicensedGate` in a kernel booted from the
+shipped configuration and that a conversion through that kernel succeeds with no license key and
+no stored artefact at all.
 
 This needs a fake for a second service. Rather than write a second fake, the recording and
 stubbing logic moves out of `FakeLexwareHttpClient` into something both can use. That is test
