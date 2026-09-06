@@ -1,6 +1,15 @@
 {% extends 'base.html.twig' %}
 
 {% block main %}
+    {% if licenseVerdict.state != 'licensed' %}
+        <div class="alert alert-warning" data-license-state="{{ licenseVerdict.state }}">
+            {{ ('lexware_sync.license.' ~ licenseVerdict.state)|trans }}
+            {% if licenseVerdict.reason %}
+                {{ ('lexware_sync.license.reason.' ~ licenseVerdict.reason)|trans }}
+            {% endif %}
+        </div>
+    {% endif %}
+
     {% embed '@theme/embeds/card.html.twig' %}
         {% block box_title %}{{ 'lexware_sync.invoice.assign_title'|trans }} {{ trackedInvoice.voucherNumber }}{% endblock %}
         {% block box_tools %}
@@ -138,11 +147,11 @@
                     </label>
                 </div>
 
-                <button type="submit" class="btn btn-primary">{{ 'lexware_sync.invoice.submit'|trans }}</button>
+                <button type="submit" class="btn btn-primary" {% if licenseVerdict.state != 'licensed' %}disabled{% endif %}>{{ 'lexware_sync.invoice.submit'|trans }}</button>
 
                 {% if plausibleMatch is not null %}
                     <input type="hidden" name="existing_lexware_invoice_id" value="{{ plausibleMatch.id }}">
-                    <button type="submit" formaction="{{ path('lexware_sync_invoices_confirm_existing', {id: trackedInvoice.id}) }}" class="btn btn-warning">{{ 'lexware_sync.invoice.confirm_existing'|trans }}</button>
+                    <button type="submit" formaction="{{ path('lexware_sync_invoices_confirm_existing', {id: trackedInvoice.id}) }}" class="btn btn-warning" {% if licenseVerdict.state != 'licensed' %}disabled{% endif %}>{{ 'lexware_sync.invoice.confirm_existing'|trans }}</button>
                 {% elseif trackedInvoice.creationAttemptedAt is not null %}
                     <button type="submit" formaction="{{ path('lexware_sync_invoices_check_status', {id: trackedInvoice.id}) }}" class="btn btn-secondary">{{ 'lexware_sync.invoice.check_status'|trans }}</button>
                 {% endif %}

@@ -326,6 +326,38 @@
                 <source>lexware_sync.invoice.confirm_existing_mismatch</source>
                 <target>This invoice could not be confirmed again. Please check the status once more.</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.license.no_key_configured" resname="lexware_sync.license.no_key_configured">
+                <source>lexware_sync.license.no_key_configured</source>
+                <target>No license key is configured, so nothing can be converted. Enter the license key on the Lexware Sync system configuration screen.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.license.rejected" resname="lexware_sync.license.rejected">
+                <source>lexware_sync.license.rejected</source>
+                <target>The license for this installation was rejected, so nothing can be converted.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.license.unreachable" resname="lexware_sync.license.unreachable">
+                <source>lexware_sync.license.unreachable</source>
+                <target>The licensing service could not be reached, so the license cannot be confirmed. Check whether this server is allowed to reach the internet.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.license.version_not_covered" resname="lexware_sync.license.version_not_covered">
+                <source>lexware_sync.license.version_not_covered</source>
+                <target>This installation's license does not cover the version of the plugin that is currently running, so nothing can be converted.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.license.reason.expired" resname="lexware_sync.license.reason.expired">
+                <source>lexware_sync.license.reason.expired</source>
+                <target>The subscription has expired. Renew it to convert again.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.license.reason.revoked" resname="lexware_sync.license.reason.revoked">
+                <source>lexware_sync.license.reason.revoked</source>
+                <target>The subscription was revoked.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.license.reason.unknown_key" resname="lexware_sync.license.reason.unknown_key">
+                <source>lexware_sync.license.reason.unknown_key</source>
+                <target>This license key is not recognized by the licensing service.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.license.reason.version_not_covered" resname="lexware_sync.license.reason.version_not_covered">
+                <source>lexware_sync.license.reason.version_not_covered</source>
+                <target>This plugin version is newer than what the subscription covers. Upgrade the subscription or use an earlier, covered version.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

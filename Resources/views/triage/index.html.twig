@@ -15,6 +15,15 @@
 {% endset %}
 
 {% block main %}
+    {% if licenseVerdict.state != 'licensed' %}
+        <div class="alert alert-warning" data-license-state="{{ licenseVerdict.state }}">
+            {{ ('lexware_sync.license.' ~ licenseVerdict.state)|trans }}
+            {% if licenseVerdict.reason %}
+                {{ ('lexware_sync.license.reason.' ~ licenseVerdict.reason)|trans }}
+            {% endif %}
+        </div>
+    {% endif %}
+
     {% embed '@theme/embeds/card.html.twig' %}
         {% block box_title %}{{ 'lexware_sync.triage.title'|trans }}{% endblock %}
         {% block box_tools %}
@@ -75,7 +84,7 @@
                                     <form method="post" action="{{ path('lexware_sync_triage_convert', {id: orderConfirmation.id}) }}" class="d-inline">
                                         <input type="hidden" name="_token" value="{{ csrf_token('lexware_sync_triage') }}">
                                         {{ listStateFields }}
-                                        <button type="submit" class="btn btn-sm btn-primary">
+                                        <button type="submit" class="btn btn-sm btn-primary" {% if licenseVerdict.state != 'licensed' %}disabled{% endif %}>
                                             {{ (orderConfirmation.status.isRejected ? 'lexware_sync.triage.convert_anyway' : 'lexware_sync.triage.convert')|trans }}
                                         </button>
                                     </form>

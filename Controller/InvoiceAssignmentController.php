@@ -23,7 +23,10 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareDeepLink;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareDocumentSummaryFactory;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseGate;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseRequiredException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseVerdictMessageFormatter;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseVerdictPresenter;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\TimesheetRateResolver;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -43,6 +46,9 @@ final class InvoiceAssignmentController extends AbstractController
         private readonly LexwareDocumentSummaryFactory $summaryFactory,
         private readonly TimesheetRateResolver $rateResolver,
         private readonly LexwareDeepLink $deepLink,
+        private readonly LicenseGate $licenseGate,
+        private readonly LicenseVerdictPresenter $licenseVerdictPresenter,
+        private readonly LicenseVerdictMessageFormatter $licenseVerdictMessageFormatter,
     ) {
     }
 
@@ -80,6 +86,7 @@ final class InvoiceAssignmentController extends AbstractController
             'counts' => $this->countByStatus($listQuery),
             'convertedVoucherNumber' => $convertedVoucherNumber,
             'convertedVoucherUrl' => $convertedVoucherNumber !== null ? $this->deepLink->forInvoice($convertedVoucherNumber) : null,
+            'licenseVerdict' => $this->licenseVerdictPresenter->present($this->licenseGate->verdict()),
         ]);
     }
 
@@ -168,7 +175,11 @@ final class InvoiceAssignmentController extends AbstractController
             $this->addFlash('error', 'lexware_sync.invoice.ambiguous_failure');
 
             return $this->redirectToRoute('lexware_sync_invoices_assign', ['id' => $id]);
-        } catch (CustomerCurrencyMismatchException | LexwareApiException | LicenseRequiredException $exception) {
+        } catch (LicenseRequiredException $exception) {
+            $this->addFlash('error', $this->licenseVerdictMessageFormatter->format($exception->verdict()));
+
+            return $this->redirectToRoute('lexware_sync_invoices_assign', ['id' => $id]);
+        } catch (CustomerCurrencyMismatchException | LexwareApiException $exception) {
             $this->addFlash('error', $exception->getMessage());
 
             return $this->redirectToRoute('lexware_sync_invoices_assign', ['id' => $id]);
@@ -289,6 +300,7 @@ final class InvoiceAssignmentController extends AbstractController
             'selectedTimesheetIds' => $selectedTimesheetIds,
             'selectedShape' => $shape->value,
             'draftUrl' => $this->deepLink->forInvoice($trackedInvoice->getVoucherNumber()),
+            'licenseVerdict' => $this->licenseVerdictPresenter->present($this->licenseGate->verdict()),
         ]);
     }
 

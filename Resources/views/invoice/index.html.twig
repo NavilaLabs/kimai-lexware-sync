@@ -15,6 +15,15 @@
 {% endset %}
 
 {% block main %}
+    {% if licenseVerdict.state != 'licensed' %}
+        <div class="alert alert-warning" data-license-state="{{ licenseVerdict.state }}">
+            {{ ('lexware_sync.license.' ~ licenseVerdict.state)|trans }}
+            {% if licenseVerdict.reason %}
+                {{ ('lexware_sync.license.reason.' ~ licenseVerdict.reason)|trans }}
+            {% endif %}
+        </div>
+    {% endif %}
+
     {% if convertedVoucherNumber %}
         <div class="alert alert-success">
             {{ 'lexware_sync.invoice.converted'|trans }}

@@ -11,4 +11,15 @@ enum LicenseState
     case Rejected;
     case Unreachable;
     case VersionNotCovered;
+
+    public function key(): string
+    {
+        return match ($this) {
+            self::Licensed => 'licensed',
+            self::NoKeyConfigured => 'no_key_configured',
+            self::Rejected => 'rejected',
+            self::Unreachable => 'unreachable',
+            self::VersionNotCovered => 'version_not_covered',
+        };
+    }
 }

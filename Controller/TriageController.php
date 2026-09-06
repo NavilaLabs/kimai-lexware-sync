@@ -15,7 +15,10 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedOrderConfirmationReposi
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\CustomerCurrencyMismatchException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareDocumentSummaryFactory;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseGate;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseRequiredException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseVerdictMessageFormatter;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseVerdictPresenter;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\OrderConfirmationProcessor;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\UnprocessableOrderConfirmationException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -34,6 +37,9 @@ final class TriageController extends AbstractController
         private readonly LexwareSyncConfiguration $configuration,
         private readonly LexwareDocumentSummaryFactory $summaryFactory,
         private readonly EntityManagerInterface $entityManager,
+        private readonly LicenseGate $licenseGate,
+        private readonly LicenseVerdictPresenter $licenseVerdictPresenter,
+        private readonly LicenseVerdictMessageFormatter $licenseVerdictMessageFormatter,
     ) {
     }
 
@@ -61,6 +67,7 @@ final class TriageController extends AbstractController
             'searchTerm' => $listQuery->searchTerm,
             'listRouteParameters' => $listQuery->toRouteParameters(),
             'counts' => $this->countByStatus($listQuery),
+            'licenseVerdict' => $this->licenseVerdictPresenter->present($this->licenseGate->verdict()),
         ]);
     }
 
@@ -91,7 +98,11 @@ final class TriageController extends AbstractController
             $this->repository->save($orderConfirmation);
 
             $this->entityManager->commit();
-        } catch (CustomerCurrencyMismatchException | LicenseRequiredException | UnprocessableOrderConfirmationException $exception) {
+        } catch (LicenseRequiredException $exception) {
+            $this->entityManager->rollback();
+
+            $this->addFlash('error', $this->licenseVerdictMessageFormatter->format($exception->verdict()));
+        } catch (CustomerCurrencyMismatchException | UnprocessableOrderConfirmationException $exception) {
             $this->entityManager->rollback();
 
             $this->addFlash('error', $exception->getMessage());
