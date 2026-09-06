@@ -61,7 +61,7 @@ nothing piles up unseen, and the moment they renew they are working again.
 | `ServiceBackedLicenseGate` | The real implementation: reads storage, verifies, falls back to the emergency fetch |
 | `AlwaysLicensedGate` | Agrees to everything. Wired while the service does not exist, see section 10 |
 | `LicenseVerdict` | Value object: state, customer name, time of the last confirmation |
-| `LicenseState` | Enum: `Licensed`, `NoKeyConfigured`, `Rejected`, `Unreachable`, `VersionNotCovered` |
+| `LicenseState` | Enum: `Licensed`, `NoKeyConfigured`, `NoSigningKeyConfigured`, `Rejected`, `SignatureInvalid`, `Unreachable`, `VersionNotCovered` |
 | `LicenseToken` | Parses and holds the signed artefact, exposes its fields |
 | `MalformedLicenseToken` | Thrown when a string is not a license artefact at all |
 | `LicenseSignatureVerifier` | Ed25519 verification against the list of accepted public keys |
@@ -73,13 +73,21 @@ nothing piles up unseen, and the moment they renew they are working again.
 | `CheckLicenseCommand` | The scheduled refresh, sibling of the existing key check command |
 | `LicenseRequiredException` | Thrown by all three entry points listed in section 3, carries the verdict |
 | `LicenseVerdictMessageFormatter` | Turns a verdict's state and reason into the translated sentence shown to a person |
-| `LicenseVerdictPresenter` | Reduces a verdict to the plain array a controller hands to its template for the banner |
+`LicenseVerdictMessageFormatter` was not anticipated when this table was first written. It exists
+because the banner in section 8 and the message a caller shows after a refusal are the same
+sentence, and building it in one place keeps the call sites from drifting apart.
 
-`LicenseVerdictMessageFormatter` and `LicenseVerdictPresenter` were not anticipated when this
-table was first written. Both exist because the banner described in section 8 needed something
-between the raw `LicenseVerdict` and the Twig template, one to produce the sentence and one to
-produce the data structure the template renders; splitting the two kept each responsible for one
-thing rather than growing a single class that both formats text and shapes template data.
+A second class, `LicenseVerdictPresenter`, was written alongside it and then removed before this
+branch merged. It reduced a verdict to an array so that a Twig template could rebuild the very
+translation keys the formatter already builds, which meant the same mapping existed twice. The
+templates now receive the formatted sentence and the state, and share one included partial for
+the banner itself.
+
+Two of the states in the table above were added late, for cases the first draft of section 8 had
+lumped in with an unreachable service: a stored artefact whose signature does not verify, and an
+installation with no accepted signing key configured at all. Both were reported to the user as a
+network problem, which sent them to look at their firewall for a fault that was nothing of the
+kind.
 
 Which gate implementation is wired is decided by an alias, not a container parameter carrying a
 value, so the switched off state is a configuration value rather than a branch inside the logic,

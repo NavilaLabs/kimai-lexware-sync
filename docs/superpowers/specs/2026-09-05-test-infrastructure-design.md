@@ -232,10 +232,13 @@ same payload; nothing about the design below prevents adding them later.
 
 Functional tests must never reach the real Lexware API. The plugin's API client takes a Symfony
 HTTP client through its constructor, so a test only needs to replace that one service with a
-`MockHttpClient` configured with the recorded responses. This happens through a test only
-service definition file that the test kernel does not load and the test case does instead,
-which keeps the fake out of any child process such as the install command, which has no
-business talking to Lexware anyway.
+`MockHttpClient` configured with the recorded responses. This happens through test only service
+definition files that the test kernel loads itself, in `TestKernel::testConfigurationFiles()`.
+
+An earlier version of this section said the test case loaded them rather than the kernel. The
+outcome it described still holds, but for a different reason than it gave: the fake stays out of
+a child process such as the install command because that process boots Kimai's own `App\Kernel`
+directly and never sees the test kernel's configuration at all.
 
 The mock is strict: an unexpected request fails the test rather than returning an empty
 response. A silent extra call to Lexware is exactly the kind of defect this level of testing
