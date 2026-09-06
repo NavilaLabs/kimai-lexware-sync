@@ -21,7 +21,7 @@ final class ServiceBackedLicenseGateTest extends FunctionalTestCase
 {
     use SignsLicenseArtefacts;
 
-    public function testTheCommittedPublicKeyMatchesWhatTheTestContainerAccepts(): void
+    public function testTheTestKeyPairMatchesTheKeyTheTestContainerAccepts(): void
     {
         self::assertSame([$this->testPublicKey()], $this->container()->getParameter('lexware_sync.license_public_keys'));
     }
