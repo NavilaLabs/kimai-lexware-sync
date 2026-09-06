@@ -35,6 +35,17 @@ final class LicenseEvaluator
         return $validUntil !== null && $validUntil < $now ? null : $token;
     }
 
+    public function hasBrokenSignature(string $rawToken): bool
+    {
+        try {
+            $token = LicenseToken::parse($rawToken);
+        } catch (MalformedLicenseToken) {
+            return false;
+        }
+
+        return !$this->verifier->isSignatureValid($token);
+    }
+
     public function verdictFor(LicenseToken $token): LicenseVerdict
     {
         if ($token->isLicensed()) {

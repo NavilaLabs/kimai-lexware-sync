@@ -63,6 +63,27 @@ final class ServiceBackedLicenseGateTest extends FunctionalTestCase
         self::assertSame(1, $this->licenseService()->requestCount());
     }
 
+    public function testAnArtefactSignedWithAForeignKeyIsToldApartFromAnOutage(): void
+    {
+        $this->configure('lexware_sync.license_key', 'key-one');
+        $this->licenseService()->willRespondWith('POST', '/v1/check', ['license' => $this->approvalSignedWithAForeignKey()]);
+
+        $gate = $this->service(ServiceBackedLicenseGate::class);
+
+        self::assertSame(LicenseState::SignatureInvalid, $gate->verdict()->state);
+        self::assertSame(LicenseState::SignatureInvalid, $gate->verdict()->state, 'The remembered failure has to keep saying the same thing.');
+        self::assertSame(1, $this->licenseService()->requestCount());
+        self::assertNull($this->service(LicenseStore::class)->storedToken('key-one'), 'An artefact nobody could verify may not be kept.');
+    }
+
+    public function testAnAnswerThatIsNoArtefactAtAllStaysUnreachable(): void
+    {
+        $this->configure('lexware_sync.license_key', 'key-one');
+        $this->licenseService()->willRespondWith('POST', '/v1/check', ['license' => 'this-is-not-an-artefact']);
+
+        self::assertSame(LicenseState::Unreachable, $this->service(ServiceBackedLicenseGate::class)->verdict()->state);
+    }
+
     public function testARefusalIsKeptSoThatClickingAgainDoesNotAskAgain(): void
     {
         $this->configure('lexware_sync.license_key', 'key-one');
@@ -73,5 +94,17 @@ final class ServiceBackedLicenseGateTest extends FunctionalTestCase
         self::assertSame(LicenseState::Rejected, $gate->verdict()->state);
         self::assertSame('expired', $gate->verdict()->reason);
         self::assertSame(1, $this->licenseService()->requestCount());
+    }
+
+    private function approvalSignedWithAForeignKey(): string
+    {
+        $foreignPair = sodium_crypto_sign_keypair();
+        $body = self::encodePart(json_encode([
+            'licensed' => true,
+            'customer' => 'Example GmbH',
+            'version' => $this->installedVersion(),
+        ], JSON_THROW_ON_ERROR));
+
+        return $body . '.' . self::encodePart(sodium_crypto_sign_detached($body, sodium_crypto_sign_secretkey($foreignPair)));
     }
 }

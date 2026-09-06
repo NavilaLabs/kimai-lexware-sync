@@ -40,25 +40,30 @@ final class ServiceBackedLicenseGate implements LicenseGate
             return $this->evaluator->verdictFor($token);
         }
 
-        if ($this->fetchFailedRecently()) {
-            return LicenseVerdict::refused(LicenseState::Unreachable);
+        $remembered = $this->rememberedFailure();
+        if ($remembered !== null) {
+            return LicenseVerdict::refused($remembered);
         }
 
         try {
             $raw = $this->client->fetch($licenseKey, $version);
         } catch (LicenseServiceUnavailable $exception) {
             $this->logger->warning('The licensing service could not be reached: ' . $exception->getMessage());
-            $this->rememberFailure();
 
-            return LicenseVerdict::refused(LicenseState::Unreachable);
+            return $this->rememberFailure(LicenseState::Unreachable);
         }
 
         $fresh = $this->evaluator->usableToken($raw, $version, $now);
         if ($fresh === null) {
-            $this->logger->error('The licensing service answered with an artefact this installation cannot use.');
-            $this->rememberFailure();
+            if ($this->evaluator->hasBrokenSignature($raw)) {
+                $this->logger->error('The signature of the license artefact could not be verified against any accepted signing key. Either the artefact was tampered with, or the licensing service signs with a key this plugin does not accept.');
 
-            return LicenseVerdict::refused(LicenseState::Unreachable);
+                return $this->rememberFailure(LicenseState::SignatureInvalid);
+            }
+
+            $this->logger->error('The licensing service answered with an artefact this installation cannot use.');
+
+            return $this->rememberFailure(LicenseState::Unreachable);
         }
 
         $this->store->store($licenseKey, $raw);
@@ -66,24 +71,29 @@ final class ServiceBackedLicenseGate implements LicenseGate
         return $this->evaluator->verdictFor($fresh);
     }
 
-    private function fetchFailedRecently(): bool
+    private function rememberedFailure(): ?LicenseState
     {
-        return $this->cache->get(self::FAILURE_MEMORY_KEY, static function (ItemInterface $item): bool {
+        /** @var mixed $remembered */
+        $remembered = $this->cache->get(self::FAILURE_MEMORY_KEY, static function (ItemInterface $item): ?LicenseState {
             // Nothing is remembered, so nothing failed. The entry expires straight away rather
             // than leaving a permanent negative answer behind.
             $item->expiresAfter(1);
 
-            return false;
-        }) === true;
+            return null;
+        });
+
+        return $remembered instanceof LicenseState ? $remembered : null;
     }
 
-    private function rememberFailure(): void
+    private function rememberFailure(LicenseState $state): LicenseVerdict
     {
         $this->cache->delete(self::FAILURE_MEMORY_KEY);
-        $this->cache->get(self::FAILURE_MEMORY_KEY, static function (ItemInterface $item): bool {
+        $this->cache->get(self::FAILURE_MEMORY_KEY, static function (ItemInterface $item) use ($state): LicenseState {
             $item->expiresAfter(self::FAILURE_MEMORY_SECONDS);
 
-            return true;
+            return $state;
         });
+
+        return LicenseVerdict::refused($state);
     }
 }

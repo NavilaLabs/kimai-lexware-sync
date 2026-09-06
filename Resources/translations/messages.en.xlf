@@ -334,6 +334,10 @@
                 <source>lexware_sync.license.rejected</source>
                 <target>The license for this installation was rejected, so nothing can be converted.</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.license.signature_invalid" resname="lexware_sync.license.signature_invalid">
+                <source>lexware_sync.license.signature_invalid</source>
+                <target>The license could not be verified, so nothing can be converted. Either the stored license is damaged, or it was signed with a key this plugin does not accept. Entering the license key again on the Lexware Sync system configuration screen is the first thing to try.</target>
+            </trans-unit>
             <trans-unit id="lexware_sync.license.unreachable" resname="lexware_sync.license.unreachable">
                 <source>lexware_sync.license.unreachable</source>
                 <target>The licensing service could not be reached, so the license cannot be confirmed. Check whether this server is allowed to reach the internet.</target>

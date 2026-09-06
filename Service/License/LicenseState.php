@@ -9,6 +9,7 @@ enum LicenseState
     case Licensed;
     case NoKeyConfigured;
     case Rejected;
+    case SignatureInvalid;
     case Unreachable;
     case VersionNotCovered;
 
@@ -18,6 +19,7 @@ enum LicenseState
             self::Licensed => 'licensed',
             self::NoKeyConfigured => 'no_key_configured',
             self::Rejected => 'rejected',
+            self::SignatureInvalid => 'signature_invalid',
             self::Unreachable => 'unreachable',
             self::VersionNotCovered => 'version_not_covered',
         };

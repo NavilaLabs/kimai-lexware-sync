@@ -52,6 +52,24 @@ final class LicenseEvaluatorTest extends TestCase
         self::assertNull($this->evaluator->usableToken($tampered, '1.0.0', $this->now()));
     }
 
+    public function testATamperedTokenIsReportedAsABrokenSignature(): void
+    {
+        $signedForARefusal = $this->sign(['licensed' => false, 'version' => '1.0.0']);
+        $tampered = self::encode('{"licensed":true,"version":"1.0.0"}') . '.' . explode('.', $signedForARefusal)[1];
+
+        self::assertTrue($this->evaluator->hasBrokenSignature($tampered));
+    }
+
+    public function testAGenuineTokenIsNotReportedAsABrokenSignature(): void
+    {
+        self::assertFalse($this->evaluator->hasBrokenSignature($this->sign(['licensed' => true, 'version' => '1.0.0'])));
+    }
+
+    public function testSomethingThatIsNoTokenAtAllHasNoSignatureToBreak(): void
+    {
+        self::assertFalse($this->evaluator->hasBrokenSignature('nonsense'));
+    }
+
     public function testATokenIssuedForAnotherVersionIsNotUsable(): void
     {
         $raw = $this->sign(['licensed' => true, 'version' => '1.0.0']);
