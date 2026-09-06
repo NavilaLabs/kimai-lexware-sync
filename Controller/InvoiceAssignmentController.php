@@ -263,6 +263,10 @@ final class InvoiceAssignmentController extends AbstractController
                 $request->request->getBoolean('mark_project_completed'),
                 $this->getUser(),
             );
+        } catch (LicenseRequiredException $exception) {
+            $this->addFlash('error', $this->licenseVerdictMessageFormatter->format($exception->verdict()));
+
+            return $this->redirectToRoute('lexware_sync_invoices_assign', ['id' => $id]);
         } catch (CustomerCurrencyMismatchException $exception) {
             $this->addFlash('error', $exception->getMessage());
 

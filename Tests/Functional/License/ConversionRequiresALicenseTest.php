@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Functional\License;
 
+use App\Entity\Timesheet;
+use App\Entity\User;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedInvoice;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedOrderConfirmation;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\InvoiceLineShape;
+use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedInvoiceTimesheetRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\InvoiceProcessor;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseRequiredException;
@@ -41,6 +44,59 @@ final class ConversionRequiresALicenseTest extends FunctionalTestCase
     {
         $this->configure('lexware_sync.license_key', '');
 
+        [$trackedInvoice, $timesheet, $user] = $this->pendingInvoiceWithOneTimesheet();
+
+        try {
+            $this->service(InvoiceProcessor::class)->convert(
+                $trackedInvoice,
+                [$timesheet],
+                InvoiceLineShape::PerTimesheet,
+                false,
+                false,
+                $user
+            );
+            self::fail('The invoice should not have been written back.');
+        } catch (LicenseRequiredException $exception) {
+            self::assertSame(LicenseState::NoKeyConfigured, $exception->verdict()->state);
+        }
+
+        self::assertSame(0, $this->lexware()->requestCount(), 'Nothing may reach Lexware while unlicensed.');
+    }
+
+    public function testAnInvoiceThatAlreadyExistsInLexwareIsNotConfirmedWithoutALicense(): void
+    {
+        $this->configure('lexware_sync.license_key', '');
+
+        [$trackedInvoice, $timesheet, $user] = $this->pendingInvoiceWithOneTimesheet();
+
+        try {
+            $this->service(InvoiceProcessor::class)->confirmExisting(
+                $trackedInvoice,
+                'lexware-invoice-created-elsewhere',
+                [$timesheet],
+                true,
+                $user
+            );
+            self::fail('Confirming an existing invoice should have been refused.');
+        } catch (LicenseRequiredException $exception) {
+            self::assertSame(LicenseState::NoKeyConfigured, $exception->verdict()->state);
+        }
+
+        self::assertTrue($trackedInvoice->getStatus()->isPending(), 'The tracked invoice may not be marked converted.');
+        self::assertNull($trackedInvoice->getCreatedInvoiceLexwareId());
+        self::assertFalse($timesheet->isExported(), 'The timesheets may not be flagged exported.');
+        self::assertSame(
+            [],
+            $this->service(TrackedInvoiceTimesheetRepository::class)->findBy(['trackedInvoice' => $trackedInvoice]),
+            'No timesheet may be linked to the tracked invoice.'
+        );
+    }
+
+    /**
+     * @return array{TrackedInvoice, Timesheet, User}
+     */
+    private function pendingInvoiceWithOneTimesheet(): array
+    {
         $orderConfirmation = $this->trackedOrderConfirmation();
         $customer = $this->factory()->createCustomer('Contact GmbH');
         $project = $this->factory()->createProject($customer);
@@ -60,23 +116,8 @@ final class ConversionRequiresALicenseTest extends FunctionalTestCase
 
         $activity = $this->factory()->createActivity($project);
         $user = $this->factory()->createUser('converter');
-        $timesheet = $this->factory()->createTimesheet($project, $activity, $user);
 
-        try {
-            $this->service(InvoiceProcessor::class)->convert(
-                $trackedInvoice,
-                [$timesheet],
-                InvoiceLineShape::PerTimesheet,
-                false,
-                false,
-                $user
-            );
-            self::fail('The invoice should not have been written back.');
-        } catch (LicenseRequiredException $exception) {
-            self::assertSame(LicenseState::NoKeyConfigured, $exception->verdict()->state);
-        }
-
-        self::assertSame(0, $this->lexware()->requestCount(), 'Nothing may reach Lexware while unlicensed.');
+        return [$trackedInvoice, $this->factory()->createTimesheet($project, $activity, $user), $user];
     }
 
     /**

@@ -45,11 +45,7 @@ final class InvoiceProcessor
         bool $markProjectCompleted,
         User $processedBy,
     ): void {
-        $verdict = $this->licenseGate->verdict();
-        if (!$verdict->allowsConversion()) {
-            throw new LicenseRequiredException($verdict);
-        }
-
+        $this->assertLicenseAllowsConversion();
         $this->assertCurrencyMatches($trackedInvoice);
 
         $requestBody = $this->buildRequestBody($trackedInvoice, $timesheets, $shape);
@@ -86,6 +82,7 @@ final class InvoiceProcessor
         bool $markProjectCompleted,
         User $processedBy,
     ): void {
+        $this->assertLicenseAllowsConversion();
         $this->assertCurrencyMatches($trackedInvoice);
 
         $this->recordConversion($trackedInvoice, $existingLexwareInvoiceId, $timesheets, $markProjectCompleted, $processedBy);
@@ -238,6 +235,14 @@ final class InvoiceProcessor
             $this->entityManager->rollback();
 
             throw $exception;
+        }
+    }
+
+    private function assertLicenseAllowsConversion(): void
+    {
+        $verdict = $this->licenseGate->verdict();
+        if (!$verdict->allowsConversion()) {
+            throw new LicenseRequiredException($verdict);
         }
     }
 

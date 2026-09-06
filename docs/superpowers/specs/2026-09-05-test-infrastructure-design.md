@@ -75,9 +75,10 @@ and was verified to work. The single thing it does not fix is the plugin's insta
 process through `PhpSubprocess`, and that child boots Kimai's real kernel with the ambient
 environment, where the override does not apply. Exercising the install command itself therefore
 only works where `tests/_data` genuinely exists, which is the case in every continuous
-integration checkout and not in the development container. That one test skips itself locally
-with an explicit message, and the migrations it would have triggered are covered directly, as
-section 12 describes.
+integration checkout and not in the development container. The plan at the time was for one test
+exercising the install command to skip itself locally with an explicit message and run only in
+continuous integration. That test was never written; section 12 describes what was built
+instead.
 
 **Only one Doctrine migration configuration can be used per PHP process.** Running Kimai's
 migrations and then the plugin's migrations in the same process fails with "The dependencies
@@ -158,11 +159,14 @@ A single class, `Tests/TestKernel.php`, extending `App\Kernel`:
   the tests need is already in Kimai's own `when@test` blocks, and every line we add here is a
   line that has to be maintained against future Kimai releases.
 
-Two base test case classes build on it, both thin:
+Two base test case classes build on it, both thin. They live in `Tests/Support`, not in
+`Tests/Functional` as an earlier draft of this section placed them, because they are shared
+infrastructure that the functional suite depends on rather than a test belonging to that suite
+itself:
 
-- `Tests/Functional/FunctionalTestCase`, extending Symfony's `KernelTestCase` with the test
+- `Tests/Support/FunctionalTestCase`, extending Symfony's `KernelTestCase` with the test
   kernel, for processors, synchronizers, repositories and commands.
-- `Tests/Functional/WebTestCase`, extending Symfony's `WebTestCase`, for the six controllers.
+- `Tests/Support/WebTestCase`, extending Symfony's `WebTestCase`, for the six controllers.
   Because it goes through the real HTTP kernel, it also renders the Twig templates, which
   covers the templates without any separate browser tooling.
 
@@ -171,19 +175,30 @@ Two base test case classes build on it, both thin:
 Name: `kimai_test`, on the existing `sqldb` service. No new container service, so no rebuild is
 needed for this part.
 
-Setting it up is a two stage process, because paying 38 seconds of Kimai migrations before
-every test run is not acceptable:
+This section originally planned a two stage process built around a schema dump: a preparation
+step would write the migrated schema to `var/test-schema.sql`, the PHPUnit bootstrap would import
+that dump into an empty database in about a second, and a continuous integration cache keyed on
+the Kimai version and on a hash of the plugin's own migration files would mean the 38 seconds of
+Kimai migrations were paid once per cache key rather than on every run.
 
-1. A preparation step creates the database, runs Kimai's migrations, runs the plugin's
-   migrations, and then writes the resulting schema to `var/test-schema.sql`, which is not
-   committed. Because a single process can only carry one migration configuration, the two
-   migration runs are two separate `bin/console` invocations, and both run in the development
-   environment, which keeps this step independent of the test environment's data directory.
-   This is a `just` recipe locally and a cached step in continuous integration, keyed on the
-   Kimai version and on a hash of the plugin's own migration files, so it re-runs exactly when
-   one of those changes.
-2. The PHPUnit bootstrap imports that dump into an empty database if the schema is not already
-   present, which takes about a second.
+None of that dump or cache was built. What exists instead:
+
+1. `Tests/prepare-database.sh` creates the database, then migrates it directly: Kimai's
+   migrations and then the plugin's migrations, as two separate `bin/console` invocations in the
+   development environment, because a single process can only carry one migration configuration.
+   It is a `just` recipe locally and a plain step in continuous integration, with no caching, so
+   both matrix entries pay the full migration time on every run.
+2. `Tests/bootstrap.php` does not prepare anything. It only checks that
+   `kimai2_ext_lexware_order_confirmation` exists in the configured database and throws a
+   `RuntimeException` naming `just test-database` as the fix if it does not. A contributor who
+   never ran that recipe gets a clear message instead of a confusing failure deeper in the suite,
+   but nothing runs the migration for them.
+
+The dump and cache idea is still worth doing. Continuous integration currently spends the full
+migration time on every push against every matrix entry, which is exactly the cost this section
+set out to avoid. It was left out of the first implementation pass rather than abandoned; an
+implementation plan reintroducing it should key the cache on the Kimai version and on a hash of
+the plugin's migration files, as originally planned here.
 
 Isolation between tests comes from `dama/doctrine-test-bundle`, which Kimai already registers
 in the test environment. It wraps every test in a transaction and rolls it back afterwards, so
@@ -198,16 +213,20 @@ processor code actually does.
 
 Kimai's own fixtures live in its `tests` directory and are not shipped in the package, so they
 are unavailable to us. Rather than pulling in Kimai's development fixtures by checking out its
-source, the plugin gets its own small set of factories under `Tests/Fixtures`, building the
-Kimai entities a test needs: a user with a given role, a customer, a project, an activity, a
-timesheet with or without an hourly rate. Plain classes with named constructors, no fixtures
-bundle, no Faker, no randomness. A test that needs a timesheet without a rate asks for exactly
-that, and the reader of the test sees why it matters.
+source, the plugin gets its own small set of factories, `Tests/Support/KimaiEntityFactory`,
+building the Kimai entities a test needs: a user with a given role, a customer, a project, an
+activity, a timesheet with or without an hourly rate. A plain class with named constructors, no
+fixtures bundle, no Faker, no randomness. A test that needs a timesheet without a rate asks for
+exactly that, and the reader of the test sees why it matters.
 
-Lexware payloads are the other half of the test data. The recorded responses that the existing
-unit tests already use move into `Tests/Fixtures/Lexware` as named JSON files, one per
-scenario, so the same recorded order confirmation can drive a unit test of the summary factory
-and a functional test of the whole conversion.
+This section originally planned a second half of test data: the recorded Lexware responses moving
+into a `Tests/Fixtures/Lexware` directory as named JSON files, one per scenario, so the same
+recorded order confirmation could drive both a unit test of the summary factory and a functional
+test of the whole conversion. That directory was never created. Every test that needs a Lexware
+payload builds it as an inline array in the test itself, and the sharing this section anticipated
+between the unit and functional level has not happened: the two levels each construct their own
+payload. Named fixture files remain worth doing once a third or fourth test wants to share the
+same payload; nothing about the design below prevents adding them later.
 
 ## 8. Faking Lexware in functional tests
 
@@ -234,11 +253,13 @@ the test kernel can point it somewhere writable. Schema preparation, the one par
 run outside the test environment because it uses `bin/console`, does not need the test
 environment at all and runs in the development one.
 
-What remains is a single behavioural difference between a developer's machine and continuous
-integration: the test that exercises the install command through its real child process runs
-only where `tests/_data` exists, which means in continuous integration. It skips locally with a
-message saying so. Everything else, including the migrations that command triggers, runs
-identically in both places.
+The plan at the time was that a single behavioural difference would remain between a developer's
+machine and continuous integration: a test exercising the install command through its real child
+process, running only where `tests/_data` exists and skipping locally with a message saying so.
+That test was never written. What runs identically in both places instead is `Tests/Migration/`,
+described in section 12, which migrates directly rather than through the install command, so
+there is currently no behavioural difference between the two environments to describe, and no
+coverage of the install command's own child process anywhere in the suite.
 
 ## 10. Continuous integration
 
@@ -257,8 +278,10 @@ Kimai versions:
 Each matrix entry checks out Kimai at its version, installs Kimai's dependencies including the
 development ones, places this plugin into `var/plugins/KimaiLexwareSyncBundle`, installs the
 plugin's own tooling, and then runs code style, static analysis, and the unit, functional and
-migration suites. Coverage is collected and attached to the run summary. No threshold is
-enforced: the number is there to show which classes are still uncovered, not to be gamed. Static
+migration suites. Coverage is collected with `--coverage-text` and appears in the step's log,
+rather than attached to the run summary as an earlier draft of this section planned; nothing
+currently parses or surfaces that number outside the log. No threshold is enforced: the number is
+there to show which classes are still uncovered, not to be gamed. Static
 analysis blocks the build, because the findings that predated this work were cleared on
 2026-09-05 by introducing `LexwarePayload`, a typed reader for Lexware responses, so anything
 new is a regression.
@@ -304,11 +327,14 @@ run in their own process against a scratch database, because a process that has 
 one migration configuration cannot load another, and because these tests deliberately change
 the schema rather than rolling their changes back.
 
-- A fresh installation: on an empty database, the plugin's migrations run, and afterwards every
-  table the entities expect exists with the `kimai2_ext_` prefix. This also guards the prefix
-  convention itself, which is easy to violate by accident when a new entity is added. A second,
-  continuous integration only variant of this test goes through the actual install command, so
-  that the child process path is covered somewhere.
+- A fresh installation: on an empty database, the plugin's migrations run directly through
+  `doctrine:migrations:migrate` in a child process, the same way `Tests/prepare-database.sh`
+  does it, and afterwards every table the migrations created carries the `kimai2_ext_` prefix.
+  This section originally planned a second, continuous integration only variant of this test that
+  went through the actual install command, `AbstractBundleInstallerCommand`, so that its own child
+  process path was covered somewhere. That variant was never written. The install command's child
+  process invocation of the migration command is therefore not exercised by any test today; only
+  the migration itself is.
 - The upgrade path: starting from the schema of an earlier released version, all newer
   migrations run in order, and the data that was present beforehand is still present and
   correct afterwards. This is where a customer loses data during a plugin update, and it cannot
