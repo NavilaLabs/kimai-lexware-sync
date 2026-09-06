@@ -73,4 +73,11 @@ final class LexwareSyncConfiguration
 
         return $value === self::PROJECT_COMPLETION_HIDDEN ? self::PROJECT_COMPLETION_HIDDEN : self::PROJECT_COMPLETION_END_DATE;
     }
+
+    public function getLicenseKey(): string
+    {
+        $value = $this->configuration->find('lexware_sync.license_key');
+
+        return \is_string($value) ? $value : '';
+    }
 }

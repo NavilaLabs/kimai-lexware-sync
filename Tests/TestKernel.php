@@ -9,7 +9,7 @@ use KimaiPlugin\KimaiLexwareSyncBundle\KimaiLexwareSyncBundle;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
-final class TestKernel extends Kernel
+class TestKernel extends Kernel
 {
     private ?string $kimaiDirectory = null;
 
@@ -42,7 +42,21 @@ final class TestKernel extends Kernel
     protected function configureContainer(ContainerBuilder $container, LoaderInterface $loader): void
     {
         parent::configureContainer($container, $loader);
-        $loader->load(__DIR__ . '/config/test_environment.yaml');
+
+        foreach ($this->testConfigurationFiles() as $file) {
+            $loader->load($file);
+        }
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function testConfigurationFiles(): array
+    {
+        return [
+            __DIR__ . '/config/test_environment.yaml',
+            __DIR__ . '/config/license_enforcement.yaml',
+        ];
     }
 
     private function locateKimaiDirectory(): string
