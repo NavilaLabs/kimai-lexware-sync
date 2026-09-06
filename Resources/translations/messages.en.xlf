@@ -348,7 +348,7 @@
             </trans-unit>
             <trans-unit id="lexware_sync.license.reason.revoked" resname="lexware_sync.license.reason.revoked">
                 <source>lexware_sync.license.reason.revoked</source>
-                <target>The subscription was withdrawn. Get in touch with whoever sold you this plugin to sort it out.</target>
+                <target>The subscription was revoked. Get in touch with whoever sold you this plugin to sort it out.</target>
             </trans-unit>
             <trans-unit id="lexware_sync.license.reason.unknown_key" resname="lexware_sync.license.reason.unknown_key">
                 <source>lexware_sync.license.reason.unknown_key</source>
