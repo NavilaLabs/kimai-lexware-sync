@@ -88,6 +88,22 @@ final class LicenseBannerTest extends WebTestCase
         self::assertNull($convertButton->attr('disabled'));
     }
 
+    public function testTheTriageScreenExplainsAnExpiredLicenseWithItsOwnDistinctState(): void
+    {
+        $browser = $this->browserLoggedInAs('administrator', [User::ROLE_SUPER_ADMIN]);
+        $this->configure('lexware_sync.license_key', 'key-one');
+        $this->service(LicenseStore::class)->store('key-one', $this->refusal('expired'));
+
+        $crawler = $browser->request('GET', $this->url('lexware_sync_triage'));
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('[data-license-state="no_key_configured"]'));
+
+        $banner = $crawler->filter('[data-license-state="rejected"]');
+        self::assertCount(1, $banner);
+        self::assertStringContainsString('subscription has expired', $banner->text());
+    }
+
     public function testConvertingAnOrderConfirmationWithoutALicenseFlashesWhereToEnterTheKey(): void
     {
         $browser = $this->browserLoggedInAs('administrator', [User::ROLE_SUPER_ADMIN]);

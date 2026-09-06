@@ -348,11 +348,11 @@
             </trans-unit>
             <trans-unit id="lexware_sync.license.reason.revoked" resname="lexware_sync.license.reason.revoked">
                 <source>lexware_sync.license.reason.revoked</source>
-                <target>The subscription was revoked.</target>
+                <target>The subscription was withdrawn. Get in touch with whoever sold you this plugin to sort it out.</target>
             </trans-unit>
             <trans-unit id="lexware_sync.license.reason.unknown_key" resname="lexware_sync.license.reason.unknown_key">
                 <source>lexware_sync.license.reason.unknown_key</source>
-                <target>This license key is not recognized by the licensing service.</target>
+                <target>The licensing service does not know this license key. Check whether it was copied in full from the purchase confirmation, and get in touch with whoever sold you this plugin if it was.</target>
             </trans-unit>
             <trans-unit id="lexware_sync.license.reason.version_not_covered" resname="lexware_sync.license.reason.version_not_covered">
                 <source>lexware_sync.license.reason.version_not_covered</source>
