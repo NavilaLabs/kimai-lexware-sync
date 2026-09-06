@@ -326,6 +326,10 @@
                 <source>lexware_sync.invoice.confirm_existing_mismatch</source>
                 <target>Diese Rechnung konnte nicht erneut bestätigt werden. Bitte den Status erneut prüfen.</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.license.licensed" resname="lexware_sync.license.licensed">
+                <source>lexware_sync.license.licensed</source>
+                <target>Die Lizenz dieser Installation ist bestätigt.</target>
+            </trans-unit>
             <trans-unit id="lexware_sync.license.no_key_configured" resname="lexware_sync.license.no_key_configured">
                 <source>lexware_sync.license.no_key_configured</source>
                 <target>Es ist kein Lizenzschlüssel hinterlegt, daher kann nichts umgewandelt werden. Den Lizenzschlüssel in der Systemkonfiguration von Lexware Sync eintragen.</target>

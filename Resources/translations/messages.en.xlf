@@ -326,6 +326,10 @@
                 <source>lexware_sync.invoice.confirm_existing_mismatch</source>
                 <target>This invoice could not be confirmed again. Please check the status once more.</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.license.licensed" resname="lexware_sync.license.licensed">
+                <source>lexware_sync.license.licensed</source>
+                <target>The license for this installation is confirmed.</target>
+            </trans-unit>
             <trans-unit id="lexware_sync.license.no_key_configured" resname="lexware_sync.license.no_key_configured">
                 <source>lexware_sync.license.no_key_configured</source>
                 <target>No license key is configured, so nothing can be converted. Enter the license key on the Lexware Sync system configuration screen.</target>

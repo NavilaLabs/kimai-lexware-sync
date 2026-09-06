@@ -26,7 +26,6 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseGate;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseRequiredException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseVerdictMessageFormatter;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseVerdictPresenter;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\TimesheetRateResolver;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -47,7 +46,6 @@ final class InvoiceAssignmentController extends AbstractController
         private readonly TimesheetRateResolver $rateResolver,
         private readonly LexwareDeepLink $deepLink,
         private readonly LicenseGate $licenseGate,
-        private readonly LicenseVerdictPresenter $licenseVerdictPresenter,
         private readonly LicenseVerdictMessageFormatter $licenseVerdictMessageFormatter,
     ) {
     }
@@ -75,6 +73,8 @@ final class InvoiceAssignmentController extends AbstractController
         $pageSetup = new PageSetup('lexware_sync.invoice.title');
         $pageSetup->setTranslationDomain('messages');
 
+        $verdict = $this->licenseGate->verdict();
+
         return $this->render('@KimaiLexwareSync/invoice/index.html.twig', [
             'page_setup' => $pageSetup,
             'trackedInvoices' => $trackedInvoices,
@@ -86,7 +86,8 @@ final class InvoiceAssignmentController extends AbstractController
             'counts' => $this->countByStatus($listQuery),
             'convertedVoucherNumber' => $convertedVoucherNumber,
             'convertedVoucherUrl' => $convertedVoucherNumber !== null ? $this->deepLink->forInvoice($convertedVoucherNumber) : null,
-            'licenseVerdict' => $this->licenseVerdictPresenter->present($this->licenseGate->verdict()),
+            'licenseState' => $verdict->state->key(),
+            'licenseMessage' => $this->licenseVerdictMessageFormatter->format($verdict),
         ]);
     }
 
@@ -291,6 +292,8 @@ final class InvoiceAssignmentController extends AbstractController
         $page = new PageSetup('lexware_sync.invoice.assign_title');
         $page->setTranslationDomain('messages');
 
+        $verdict = $this->licenseGate->verdict();
+
         return $this->render('@KimaiLexwareSync/invoice/assign.html.twig', [
             'page_setup' => $page,
             'trackedInvoice' => $trackedInvoice,
@@ -304,7 +307,8 @@ final class InvoiceAssignmentController extends AbstractController
             'selectedTimesheetIds' => $selectedTimesheetIds,
             'selectedShape' => $shape->value,
             'draftUrl' => $this->deepLink->forInvoice($trackedInvoice->getVoucherNumber()),
-            'licenseVerdict' => $this->licenseVerdictPresenter->present($this->licenseGate->verdict()),
+            'licenseState' => $verdict->state->key(),
+            'licenseMessage' => $this->licenseVerdictMessageFormatter->format($verdict),
         ]);
     }
 

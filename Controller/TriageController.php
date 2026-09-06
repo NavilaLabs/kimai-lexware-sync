@@ -18,7 +18,6 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseGate;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseRequiredException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseVerdictMessageFormatter;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseVerdictPresenter;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\OrderConfirmationProcessor;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\UnprocessableOrderConfirmationException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -38,7 +37,6 @@ final class TriageController extends AbstractController
         private readonly LexwareDocumentSummaryFactory $summaryFactory,
         private readonly EntityManagerInterface $entityManager,
         private readonly LicenseGate $licenseGate,
-        private readonly LicenseVerdictPresenter $licenseVerdictPresenter,
         private readonly LicenseVerdictMessageFormatter $licenseVerdictMessageFormatter,
     ) {
     }
@@ -59,6 +57,8 @@ final class TriageController extends AbstractController
         $pageSetup = new PageSetup('lexware_sync.triage.title');
         $pageSetup->setTranslationDomain('messages');
 
+        $verdict = $this->licenseGate->verdict();
+
         return $this->render('@KimaiLexwareSync/triage/index.html.twig', [
             'page_setup' => $pageSetup,
             'orderConfirmations' => $orderConfirmations,
@@ -67,7 +67,8 @@ final class TriageController extends AbstractController
             'searchTerm' => $listQuery->searchTerm,
             'listRouteParameters' => $listQuery->toRouteParameters(),
             'counts' => $this->countByStatus($listQuery),
-            'licenseVerdict' => $this->licenseVerdictPresenter->present($this->licenseGate->verdict()),
+            'licenseState' => $verdict->state->key(),
+            'licenseMessage' => $this->licenseVerdictMessageFormatter->format($verdict),
         ]);
     }
 

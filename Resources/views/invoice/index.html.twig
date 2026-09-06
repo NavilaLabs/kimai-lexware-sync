@@ -15,14 +15,7 @@
 {% endset %}
 
 {% block main %}
-    {% if licenseVerdict.state != 'licensed' %}
-        <div class="alert alert-warning" data-license-state="{{ licenseVerdict.state }}">
-            {{ ('lexware_sync.license.' ~ licenseVerdict.state)|trans }}
-            {% if licenseVerdict.reason %}
-                {{ ('lexware_sync.license.reason.' ~ licenseVerdict.reason)|trans }}
-            {% endif %}
-        </div>
-    {% endif %}
+    {{ include('@KimaiLexwareSync/license/banner.html.twig') }}
 
     {% if convertedVoucherNumber %}
         <div class="alert alert-success">
