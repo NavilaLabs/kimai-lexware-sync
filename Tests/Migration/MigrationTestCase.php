@@ -105,14 +105,35 @@ abstract class MigrationTestCase extends TestCase
     /**
      * @return list<string>
      */
-    protected function tableNames(string $pattern): array
+    protected function tableNames(?string $pattern = null): array
     {
-        $statement = $this->connection->query("SHOW TABLES LIKE '" . $pattern . "'");
+        $statement = $this->connection->query($pattern === null ? 'SHOW TABLES' : "SHOW TABLES LIKE '" . $pattern . "'");
         if ($statement === false) {
             return [];
         }
 
-        return array_values(array_map(strval(...), $statement->fetchAll(\PDO::FETCH_COLUMN)));
+        $names = array_values(array_map(strval(...), $statement->fetchAll(\PDO::FETCH_COLUMN)));
+        sort($names);
+
+        return $names;
+    }
+
+    /**
+     * Doctrine writes its own bookkeeping table when it runs the plugin's migrations for the
+     * first time. It is created by the migration machinery rather than by a migration, and its
+     * name follows Kimai's convention for a plugin, so it is not part of what a table name
+     * assertion is about.
+     *
+     * @param list<string> $before
+     *
+     * @return list<string>
+     */
+    protected function tablesCreatedSince(array $before): array
+    {
+        $created = array_values(array_diff($this->tableNames(), $before, ['bundle_migration_lexware_sync']));
+        sort($created);
+
+        return $created;
     }
 
     /**

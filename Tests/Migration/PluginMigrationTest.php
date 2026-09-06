@@ -10,10 +10,19 @@ final class PluginMigrationTest extends MigrationTestCase
     {
         self::assertSame([], $this->tableNames('kimai2_ext_lexware_%'), 'The scratch database was not clean before migrating.');
 
+        $before = $this->tableNames();
+
         $this->migrate();
 
-        $tables = $this->tableNames('kimai2_ext_lexware_%');
-        sort($tables);
+        $created = $this->tablesCreatedSince($before);
+
+        foreach ($created as $table) {
+            self::assertStringStartsWith(
+                'kimai2_ext_',
+                $table,
+                'Kimai requires every table a plugin creates to carry the kimai2_ext_ prefix, and ' . $table . ' does not.'
+            );
+        }
 
         self::assertSame([
             'kimai2_ext_lexware_contact_mapping',
@@ -22,7 +31,7 @@ final class PluginMigrationTest extends MigrationTestCase
             'kimai2_ext_lexware_order_confirmation',
             'kimai2_ext_lexware_order_confirmation_line',
             'kimai2_ext_lexware_webhook_event',
-        ], $tables);
+        ], $created);
     }
 
     public function testUpgradingAnInstallationThatAlreadyHoldsDataKeepsThatData(): void
