@@ -63,17 +63,6 @@ abstract class RecordingHttpClient implements HttpClientInterface
         return \count($this->recordedRequests);
     }
 
-    public function hasUnusedStubs(): bool
-    {
-        foreach ($this->stubs as $stub) {
-            if (!$stub['used']) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     /**
      * @param mixed[] $options
      */

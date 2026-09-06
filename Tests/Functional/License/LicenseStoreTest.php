@@ -39,12 +39,4 @@ final class LicenseStoreTest extends FunctionalTestCase
         self::assertSame('second.signature', $store->storedToken('key-one'));
     }
 
-    public function testForgettingRemovesTheArtefact(): void
-    {
-        $store = $this->service(LicenseStore::class);
-        $store->store('key-one', 'body.signature');
-        $store->forget();
-
-        self::assertNull($store->storedToken('key-one'));
-    }
 }

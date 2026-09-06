@@ -49,18 +49,6 @@ final class LicenseStore
         $this->configuration->set(self::CONFIGURATION_KEY, $stored->getValue());
     }
 
-    public function forget(): void
-    {
-        $stored = $this->repository->findOneBy(['name' => self::CONFIGURATION_KEY]);
-        if ($stored === null) {
-            return;
-        }
-
-        $stored->setValue('');
-        $this->repository->saveConfiguration($stored);
-        $this->configuration->set(self::CONFIGURATION_KEY, '');
-    }
-
     private function fingerprint(string $licenseKey): string
     {
         return hash('sha256', $licenseKey);
