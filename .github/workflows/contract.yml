@@ -73,4 +73,4 @@ jobs:
         working-directory: kimai/var/plugins/KimaiLexwareSyncBundle
         env:
           LEXWARE_TEST_API_KEY: ${{ secrets.LEXWARE_TEST_API_KEY }}
-        run: vendor/bin/phpunit --testsuite contract
+        run: vendor/bin/phpunit --display-warnings --testsuite contract

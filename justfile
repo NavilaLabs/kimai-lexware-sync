@@ -33,7 +33,7 @@ check-api-key:
 
 # Run this bundle's automated test suite.
 test *args:
-    vendor/bin/phpunit {{args}}
+    vendor/bin/phpunit --display-warnings {{args}}
 
 # Check code style without modifying files.
 codestyle:
@@ -56,19 +56,19 @@ test-database *args:
 
 # Run only the fast tests that need neither kernel nor database.
 test-unit *args:
-    vendor/bin/phpunit --testsuite unit {{args}}
+    vendor/bin/phpunit --display-warnings --testsuite unit {{args}}
 
 # Run the tests that boot Kimai against the test database.
 test-functional *args:
-    vendor/bin/phpunit --testsuite functional {{args}}
+    vendor/bin/phpunit --display-warnings --testsuite functional {{args}}
 
 # Run the database migration tests.
 test-migration *args:
-    vendor/bin/phpunit --testsuite migration {{args}}
+    vendor/bin/phpunit --display-warnings --testsuite migration {{args}}
 
 # Run the tests that talk to the real Lexware test account.
 test-contract *args:
-    vendor/bin/phpunit --testsuite contract {{args}}
+    vendor/bin/phpunit --display-warnings --testsuite contract {{args}}
 
 # Run the test suite with a coverage report in var/coverage.
 test-coverage *args:

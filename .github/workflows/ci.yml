@@ -80,11 +80,11 @@ jobs:
 
       - name: Run unit and functional tests
         working-directory: kimai/var/plugins/KimaiLexwareSyncBundle
-        run: vendor/bin/phpunit --testsuite unit,functional --coverage-text
+        run: vendor/bin/phpunit --display-warnings --testsuite unit,functional --coverage-text
 
       - name: Run migration tests
         working-directory: kimai/var/plugins/KimaiLexwareSyncBundle
-        run: vendor/bin/phpunit --testsuite migration
+        run: vendor/bin/phpunit --display-warnings --testsuite migration
 
       - name: Run static analysis
         working-directory: kimai/var/plugins/KimaiLexwareSyncBundle
