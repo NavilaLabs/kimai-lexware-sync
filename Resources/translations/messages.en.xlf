@@ -330,6 +330,10 @@
                 <source>lexware_sync.license.no_key_configured</source>
                 <target>No license key is configured, so nothing can be converted. Enter the license key on the Lexware Sync system configuration screen.</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.license.no_signing_key_configured" resname="lexware_sync.license.no_signing_key_configured">
+                <source>lexware_sync.license.no_signing_key_configured</source>
+                <target>This copy of the plugin carries no license signing key, so no license can be verified and nothing can be converted. That is a fault in the installed package rather than something to fix here: get in touch with whoever supplied this plugin.</target>
+            </trans-unit>
             <trans-unit id="lexware_sync.license.rejected" resname="lexware_sync.license.rejected">
                 <source>lexware_sync.license.rejected</source>
                 <target>The license for this installation was rejected, so nothing can be converted.</target>

@@ -10,6 +10,11 @@ final class LicenseEvaluator
     {
     }
 
+    public function canVerifySignatures(): bool
+    {
+        return $this->verifier->acceptsAnySigningKey();
+    }
+
     public function usableToken(?string $rawToken, string $installedVersion, \DateTimeImmutable $now): ?LicenseToken
     {
         if ($rawToken === null || $rawToken === '') {

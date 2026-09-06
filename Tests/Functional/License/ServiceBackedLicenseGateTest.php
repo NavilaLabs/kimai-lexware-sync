@@ -4,11 +4,18 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Functional\License;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseClient;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseEvaluator;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseSignatureVerifier;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseState;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseStore;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\PluginVersion;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\ServiceBackedLicenseGate;
 use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\FunctionalTestCase;
 use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\SignsLicenseArtefacts;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
 final class ServiceBackedLicenseGateTest extends FunctionalTestCase
 {
@@ -17,6 +24,30 @@ final class ServiceBackedLicenseGateTest extends FunctionalTestCase
     public function testTheCommittedPublicKeyMatchesWhatTheTestContainerAccepts(): void
     {
         self::assertSame([$this->testPublicKey()], $this->container()->getParameter('lexware_sync.license_public_keys'));
+    }
+
+    public function testWithoutAnAcceptedSigningKeyTheInstallationFaultIsNamedRatherThanAnOutage(): void
+    {
+        $this->configure('lexware_sync.license_key', 'key-one');
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error');
+
+        $gate = new ServiceBackedLicenseGate(
+            $this->service(LexwareSyncConfiguration::class),
+            $this->service(LicenseStore::class),
+            new LicenseEvaluator(new LicenseSignatureVerifier([])),
+            $this->service(LicenseClient::class),
+            $this->service(PluginVersion::class),
+            new ArrayAdapter(),
+            $logger,
+        );
+
+        $verdict = $gate->verdict();
+
+        self::assertSame(LicenseState::NoSigningKeyConfigured, $verdict->state);
+        self::assertFalse($verdict->allowsConversion());
+        self::assertSame(0, $this->licenseService()->requestCount(), 'Nothing can be verified, so nothing is worth asking.');
     }
 
     public function testWithoutAKeyNothingIsAskedAndNothingIsAllowed(): void

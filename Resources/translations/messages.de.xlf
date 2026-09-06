@@ -330,6 +330,10 @@
                 <source>lexware_sync.license.no_key_configured</source>
                 <target>Es ist kein Lizenzschlüssel hinterlegt, daher kann nichts umgewandelt werden. Den Lizenzschlüssel in der Systemkonfiguration von Lexware Sync eintragen.</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.license.no_signing_key_configured" resname="lexware_sync.license.no_signing_key_configured">
+                <source>lexware_sync.license.no_signing_key_configured</source>
+                <target>Diese Kopie des Plugins enthält keinen Signaturschlüssel für Lizenzen, daher lässt sich keine Lizenz prüfen und es kann nichts umgewandelt werden. Das ist ein Fehler im installierten Paket und lässt sich hier nicht beheben: Bitte beim Verkäufer dieses Plugins melden.</target>
+            </trans-unit>
             <trans-unit id="lexware_sync.license.rejected" resname="lexware_sync.license.rejected">
                 <source>lexware_sync.license.rejected</source>
                 <target>Die Lizenz dieser Installation wurde abgelehnt, daher kann nichts umgewandelt werden.</target>

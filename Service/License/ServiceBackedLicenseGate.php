@@ -27,6 +27,12 @@ final class ServiceBackedLicenseGate implements LicenseGate
 
     public function verdict(): LicenseVerdict
     {
+        if (!$this->evaluator->canVerifySignatures()) {
+            $this->logger->error('This build of the plugin accepts no license signing key, so no license can ever be verified. Whoever packaged it has to ship the accepted public keys.');
+
+            return LicenseVerdict::refused(LicenseState::NoSigningKeyConfigured);
+        }
+
         $licenseKey = $this->configuration->getLicenseKey();
         if ($licenseKey === '') {
             return LicenseVerdict::refused(LicenseState::NoKeyConfigured);

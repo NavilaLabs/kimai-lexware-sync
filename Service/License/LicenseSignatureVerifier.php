@@ -27,6 +27,11 @@ final class LicenseSignatureVerifier
         $this->publicKeys = $keys;
     }
 
+    public function acceptsAnySigningKey(): bool
+    {
+        return $this->publicKeys !== [];
+    }
+
     public function isSignatureValid(LicenseToken $token): bool
     {
         if (\strlen($token->signature) !== SODIUM_CRYPTO_SIGN_BYTES) {

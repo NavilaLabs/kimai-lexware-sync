@@ -72,6 +72,13 @@ final class LicenseSignatureVerifierTest extends TestCase
         self::assertFalse($verifier->isSignatureValid($this->sign(['licensed' => true], $this->secretKey)));
     }
 
+    public function testAVerifierSaysWhetherItAcceptsAnySigningKeyAtAll(): void
+    {
+        self::assertFalse((new LicenseSignatureVerifier([]))->acceptsAnySigningKey());
+        self::assertFalse((new LicenseSignatureVerifier(['not base64 at all']))->acceptsAnySigningKey());
+        self::assertTrue((new LicenseSignatureVerifier([base64_encode($this->publicKey)]))->acceptsAnySigningKey());
+    }
+
     /**
      * @param array<string, mixed> $body
      */
