@@ -53,6 +53,17 @@ trait SignsLicenseArtefacts
         ]);
     }
 
+    protected function refusalRecheckedAfter(string $reason, string $recheckAfter): string
+    {
+        return $this->signArtefact([
+            'licensed' => false,
+            'customer' => 'Example GmbH',
+            'version' => $this->installedVersion(),
+            'reason' => $reason,
+            'recheck_after' => $recheckAfter,
+        ]);
+    }
+
     protected function installedVersion(): string
     {
         return $this->service(PluginVersion::class)->current();

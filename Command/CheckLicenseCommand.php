@@ -37,7 +37,7 @@ final class CheckLicenseCommand extends Command
 
         $licenseKey = $this->configuration->getLicenseKey();
         if ($licenseKey === '') {
-            $io->error('No license key is configured, so nothing can be confirmed.');
+            $io->error('No license key is configured, so nothing can be converted.');
 
             return Command::FAILURE;
         }
@@ -49,9 +49,15 @@ final class CheckLicenseCommand extends Command
         if ($stored !== null) {
             $recheckAfter = $stored->recheckAfter();
             if ($recheckAfter !== null && $recheckAfter > $now) {
+                if (!$stored->isLicensed()) {
+                    $io->error('The stored license was refused: ' . ($stored->reason() ?? 'no reason given'));
+
+                    return Command::FAILURE;
+                }
+
                 $io->success('The stored license is still current, nothing to do.');
 
-                return $stored->isLicensed() ? Command::SUCCESS : Command::FAILURE;
+                return Command::SUCCESS;
             }
         }
 
