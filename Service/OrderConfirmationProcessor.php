@@ -15,6 +15,8 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Entity\ContactMapping;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedOrderConfirmation;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedOrderConfirmationLine;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\ContactMappingRepository;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseGate;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseRequiredException;
 
 final class OrderConfirmationProcessor
 {
@@ -25,6 +27,7 @@ final class OrderConfirmationProcessor
         private readonly ActivityService $activityService,
         private readonly SystemConfiguration $systemConfiguration,
         private readonly MatchingRuleEvaluator $matchingRuleEvaluator,
+        private readonly LicenseGate $licenseGate,
     ) {
     }
 
@@ -35,6 +38,11 @@ final class OrderConfirmationProcessor
         string $lineRegex,
         bool $readLinesEnabled
     ): void {
+        $verdict = $this->licenseGate->verdict();
+        if (!$verdict->allowsConversion()) {
+            throw new LicenseRequiredException($verdict);
+        }
+
         $voucherNumberLength = \strlen($orderConfirmation->getVoucherNumber());
         if ($voucherNumberLength < 2 || $voucherNumberLength > 150) {
             throw new UnprocessableOrderConfirmationException(\sprintf(

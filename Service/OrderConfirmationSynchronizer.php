@@ -8,6 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedOrderConfirmation;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedOrderConfirmationRepository;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseRequiredException;
 use Psr\Log\LoggerInterface;
 
 final class OrderConfirmationSynchronizer
@@ -68,7 +69,7 @@ final class OrderConfirmationSynchronizer
                         $this->configuration->isReadLinesEnabled(),
                     );
                     $this->repository->save($orderConfirmation);
-                } catch (CustomerCurrencyMismatchException | UnprocessableOrderConfirmationException $exception) {
+                } catch (CustomerCurrencyMismatchException | LicenseRequiredException | UnprocessableOrderConfirmationException $exception) {
                     $this->logger->error(\sprintf(
                         'Order confirmation %s was not converted automatically: %s',
                         $lexwareId,

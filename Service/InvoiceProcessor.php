@@ -16,6 +16,8 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedInvoiceTimesheet;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\InvoiceLineShape;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedInvoiceRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedInvoiceTimesheetRepository;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseGate;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseRequiredException;
 
 final class InvoiceProcessor
 {
@@ -28,6 +30,7 @@ final class InvoiceProcessor
         private readonly ProjectService $projectService,
         private readonly LexwareSyncConfiguration $configuration,
         private readonly EntityManagerInterface $entityManager,
+        private readonly LicenseGate $licenseGate,
     ) {
     }
 
@@ -42,6 +45,11 @@ final class InvoiceProcessor
         bool $markProjectCompleted,
         User $processedBy,
     ): void {
+        $verdict = $this->licenseGate->verdict();
+        if (!$verdict->allowsConversion()) {
+            throw new LicenseRequiredException($verdict);
+        }
+
         $this->assertCurrencyMatches($trackedInvoice);
 
         $requestBody = $this->buildRequestBody($trackedInvoice, $timesheets, $shape);

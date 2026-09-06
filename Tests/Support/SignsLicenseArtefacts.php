@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseStore;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\PluginVersion;
 
 /**
@@ -19,6 +20,12 @@ trait SignsLicenseArtefacts
     protected function licenseService(): FakeLicenseHttpClient
     {
         return $this->service(FakeLicenseHttpClient::class);
+    }
+
+    protected function givenAConfirmedLicense(): void
+    {
+        $this->configure('lexware_sync.license_key', 'key-one');
+        $this->service(LicenseStore::class)->store('key-one', $this->approval());
     }
 
     protected function approval(): string

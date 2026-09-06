@@ -15,6 +15,7 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedOrderConfirmationReposi
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\CustomerCurrencyMismatchException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareDocumentSummaryFactory;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseRequiredException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\OrderConfirmationProcessor;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\UnprocessableOrderConfirmationException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -90,7 +91,7 @@ final class TriageController extends AbstractController
             $this->repository->save($orderConfirmation);
 
             $this->entityManager->commit();
-        } catch (CustomerCurrencyMismatchException | UnprocessableOrderConfirmationException $exception) {
+        } catch (CustomerCurrencyMismatchException | LicenseRequiredException | UnprocessableOrderConfirmationException $exception) {
             $this->entityManager->rollback();
 
             $this->addFlash('error', $exception->getMessage());

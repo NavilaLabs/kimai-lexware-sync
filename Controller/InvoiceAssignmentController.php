@@ -23,6 +23,7 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareDeepLink;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareDocumentSummaryFactory;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseRequiredException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\TimesheetRateResolver;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -167,7 +168,7 @@ final class InvoiceAssignmentController extends AbstractController
             $this->addFlash('error', 'lexware_sync.invoice.ambiguous_failure');
 
             return $this->redirectToRoute('lexware_sync_invoices_assign', ['id' => $id]);
-        } catch (CustomerCurrencyMismatchException | LexwareApiException $exception) {
+        } catch (CustomerCurrencyMismatchException | LexwareApiException | LicenseRequiredException $exception) {
             $this->addFlash('error', $exception->getMessage());
 
             return $this->redirectToRoute('lexware_sync_invoices_assign', ['id' => $id]);

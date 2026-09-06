@@ -1,0 +1,111 @@
+<?php
+
+declare(strict_types=1);
+
+namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Functional\License;
+
+use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedInvoice;
+use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedOrderConfirmation;
+use KimaiPlugin\KimaiLexwareSyncBundle\Enum\InvoiceLineShape;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\InvoiceProcessor;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseRequiredException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseState;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\OrderConfirmationProcessor;
+use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\FunctionalTestCase;
+
+final class ConversionRequiresALicenseTest extends FunctionalTestCase
+{
+    public function testAnOrderConfirmationIsNotConvertedWithoutALicense(): void
+    {
+        $this->configure('lexware_sync.license_key', '');
+        $orderConfirmation = $this->trackedOrderConfirmation();
+
+        try {
+            $this->service(OrderConfirmationProcessor::class)->convert(
+                $orderConfirmation,
+                new LexwarePayload($this->payload()),
+                null,
+                '',
+                false
+            );
+            self::fail('The conversion should have been refused.');
+        } catch (LicenseRequiredException $exception) {
+            self::assertSame(LicenseState::NoKeyConfigured, $exception->verdict()->state);
+        }
+
+        self::assertNull($orderConfirmation->getProject());
+    }
+
+    public function testAnInvoiceIsNotWrittenBackWithoutALicense(): void
+    {
+        $this->configure('lexware_sync.license_key', '');
+
+        $orderConfirmation = $this->trackedOrderConfirmation();
+        $customer = $this->factory()->createCustomer('Contact GmbH');
+        $project = $this->factory()->createProject($customer);
+        $orderConfirmation->setCustomer($customer);
+        $orderConfirmation->setProject($project);
+
+        $trackedInvoice = new TrackedInvoice('lexware-invoice-1', $orderConfirmation);
+        $trackedInvoice->updateFromLexwarePayload(
+            'RE-2026-500',
+            new \DateTimeImmutable('2026-09-01'),
+            'Contact GmbH',
+            '{"address":{"contactId":"contact-1"},"lineItems":[]}',
+            null
+        );
+        $this->entityManager()->persist($trackedInvoice);
+        $this->entityManager()->flush();
+
+        $activity = $this->factory()->createActivity($project);
+        $user = $this->factory()->createUser('converter');
+        $timesheet = $this->factory()->createTimesheet($project, $activity, $user);
+
+        try {
+            $this->service(InvoiceProcessor::class)->convert(
+                $trackedInvoice,
+                [$timesheet],
+                InvoiceLineShape::PerTimesheet,
+                false,
+                false,
+                $user
+            );
+            self::fail('The invoice should not have been written back.');
+        } catch (LicenseRequiredException $exception) {
+            self::assertSame(LicenseState::NoKeyConfigured, $exception->verdict()->state);
+        }
+
+        self::assertSame(0, $this->lexware()->requestCount(), 'Nothing may reach Lexware while unlicensed.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function payload(): array
+    {
+        return [
+            'address' => ['contactId' => 'contact-1', 'name' => 'Contact GmbH'],
+            'lineItems' => [],
+        ];
+    }
+
+    private function trackedOrderConfirmation(): TrackedOrderConfirmation
+    {
+        $orderConfirmation = new TrackedOrderConfirmation('lexware-license-1');
+        $orderConfirmation->updateFromLexwarePayload(
+            'AB-2026-500',
+            'Order confirmation for a license test',
+            new \DateTimeImmutable('2026-09-01'),
+            'contact-1',
+            'Contact GmbH',
+            '{}',
+            null
+        );
+
+        $this->entityManager()->persist($orderConfirmation);
+        $this->entityManager()->flush();
+
+        return $orderConfirmation;
+    }
+}

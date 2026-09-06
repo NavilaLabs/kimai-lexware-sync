@@ -13,11 +13,15 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Repository\ContactMappingRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\OrderConfirmationProcessor;
 use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\FunctionalTestCase;
+use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\SignsLicenseArtefacts;
 
 final class OrderConfirmationProcessorTest extends FunctionalTestCase
 {
+    use SignsLicenseArtefacts;
+
     public function testConversionCreatesCustomerProjectAndActivitiesForMatchingLines(): void
     {
+        $this->givenAConfirmedLicense();
         $orderConfirmation = $this->trackedOrderConfirmation('lexware-id-1', 'AB-2026-001', 'Contact GmbH');
 
         $this->processor()->convert($orderConfirmation, new LexwarePayload($this->payload()), null, '', true);
@@ -42,6 +46,7 @@ final class OrderConfirmationProcessorTest extends FunctionalTestCase
 
     public function testAnExistingContactMappingReusesItsCustomerInsteadOfCreatingASecondOne(): void
     {
+        $this->givenAConfirmedLicense();
         $existingCustomer = $this->factory()->createCustomer('Already known GmbH');
         $this->service(ContactMappingRepository::class)->save(new ContactMapping('contact-1', $existingCustomer));
 
@@ -56,6 +61,7 @@ final class OrderConfirmationProcessorTest extends FunctionalTestCase
 
     public function testTheLineRegularExpressionDecidesWhichLinesBecomeActivities(): void
     {
+        $this->givenAConfirmedLicense();
         $orderConfirmation = $this->trackedOrderConfirmation('lexware-id-3', 'AB-2026-003', 'Contact GmbH');
 
         $this->processor()->convert($orderConfirmation, new LexwarePayload($this->payload()), null, '/^Development$/', true);
