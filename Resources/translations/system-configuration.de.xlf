@@ -2,6 +2,14 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
     <file source-language="en" target-language="de" datatype="plaintext" original="system-configuration.de.xlf">
         <body>
+            <trans-unit id="lexware_sync.license_key" resname="lexware_sync.license_key">
+                <source>lexware_sync.license_key</source>
+                <target>Lizenzschlüssel</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.license_key_help" resname="lexware_sync.license_key_help">
+                <source>lexware_sync.license_key_help</source>
+                <target>Der Lizenzschlüssel aus Ihrer Kaufbestätigung. Ohne ihn wird keine Auftragsbestätigung in ein Projekt umgewandelt und keine Rechnung an Lexware zurückgeschrieben.</target>
+            </trans-unit>
             <trans-unit id="lexware_sync.api_key" resname="lexware_sync.api_key">
                 <source>lexware_sync.api_key</source>
                 <target>Lexware Public API Schlüssel, leer lassen behält den aktuell gespeicherten Schlüssel</target>
