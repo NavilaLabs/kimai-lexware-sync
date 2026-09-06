@@ -91,6 +91,15 @@ first question is whether it should have.
 - **`LexwareApiClient` paces itself at one request every half second.** In the test container it
   is wired with a pacing of zero. In a contract test, build one client and reuse it, and leave
   the pause between tests in place, or the real account answers 429.
+- **A cache pool that survives the kernel makes the suite depend on its own order.** Anything a
+  service remembers in `cache.app` outlives a test, because the default pool is on disk. The test
+  configuration points the application pool at the array adapter for exactly that reason. If a
+  test passes alone and fails in the suite, suspect a cached value before you suspect the test.
+- **Do not run two suites against the same database at once.** The migration tests build a
+  scratch database of their own, named after the process so that concurrent runs cannot collide,
+  but they still share the template they copy from. Two runs of the same suite are safe now; a
+  full run alongside a migration run is not worth the risk. Continuous integration gives each job
+  its own database service, so this is a local concern only.
 
 ## Isolation, and its one rule
 

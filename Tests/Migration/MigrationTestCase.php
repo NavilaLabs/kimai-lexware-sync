@@ -42,7 +42,10 @@ abstract class MigrationTestCase extends TestCase
         $this->user = isset($parsed['user']) ? (string) $parsed['user'] : 'root';
         $this->password = isset($parsed['pass']) ? (string) $parsed['pass'] : '';
         $this->templateDatabase = ltrim((string) $parsed['path'], '/');
-        $this->scratchDatabase = $this->templateDatabase . '_migration';
+        // The process identifier keeps two concurrent runs apart. With a shared name they drop
+        // and recreate each other's database halfway through, which fails in a way that looks
+        // like a broken migration rather than a collision.
+        $this->scratchDatabase = $this->templateDatabase . '_migration_' . getmypid();
 
         $this->createScratchDatabaseFromTemplate();
         $this->connection = new \PDO(
