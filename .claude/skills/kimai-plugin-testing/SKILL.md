@@ -25,7 +25,7 @@ test when the interesting part is the wiring, which is exactly what breaks on a 
 
 ```
 just test-database          # once, and again after adding a migration
-just test                   # everything
+just test                   # unit, functional and migration, not the contract suite
 just test-unit              # fast, no database needed
 just test-functional
 just test-migration
@@ -164,13 +164,16 @@ not disable the isolation for a test that merely commits.
    insert a row that the new migration has to survive, migrate to `latest`, assert the row is
    still there and correct. The existing upgrade test is the template.
 
-The fresh installation test does not guard the mandatory `kimai2_ext_` prefix by asserting a
-fixed list of tables against a pattern that already carries the prefix; a table created without
-the prefix would simply not match that pattern and would pass unnoticed. It records every table
-name before migrating, migrates, records every table name again, and asserts that everything the
-migrations added is present in that pattern's result, so a table added later without the prefix
-fails the comparison instead of silently disappearing from what gets checked. A new table needs
-no separate entry for this guard to catch it.
+3. Add your new table to the expected list in the fresh installation test, which asserts the
+   full set of tables the migrations create.
+
+The fresh installation test does two separate things, and it is worth knowing which is which. It
+records every table name before migrating, migrates, and takes the difference, then asserts that
+every table in that difference starts with `kimai2_ext_`. That is the prefix guard, and it needs
+no maintenance: a table added later without the prefix fails it on its own. It then asserts the
+exact list of tables created, which is what step 3 above is about, and which will fail until you
+add yours. An earlier version of this test searched only for tables already matching the prefix,
+so a table created without it was invisible and passed unnoticed.
 
 ## After using a new Lexware endpoint
 

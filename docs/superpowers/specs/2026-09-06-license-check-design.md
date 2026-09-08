@@ -238,16 +238,20 @@ alias at `ServiceBackedLicenseGate`.
 
 Second, the `lexware_sync.license_public_keys` parameter, also in `Resources/config/services.yaml`,
 which ships as an empty list because the licensing service's real signing key does not exist yet.
-Forgetting this one is not a no-op: `ServiceBackedLicenseGate` fetches a token from the real
-service, hands it to `LicenseSignatureVerifier`, and an empty accepted key list makes every
-signature check fail, genuine license included. The gate then treats the fetch as unusable,
-logs an error, remembers the failure for fifteen minutes and reports `Unreachable`. A customer
-with a perfectly valid license sees exactly what someone behind a broken firewall would see,
-and nothing in the logs says why beyond the one error line, because as far as the checking code
-is concerned the service handed back an artefact it cannot use. The public key generated at the
-end of the implementation, described in section 13, has to be in this parameter before the alias
-above is switched, or the switch achieves nothing but a confusing failure mode for every
-customer.
+Forgetting this one is not a no-op: an empty accepted key list makes every signature check fail,
+genuine license included. The gate therefore refuses to pretend anything was checked. Before it
+reads a key, makes a request or touches storage, it reports `NoSigningKeyConfigured` and logs an
+error saying that this build accepts no signing key and that whoever packaged it has to ship the
+accepted public keys. The scheduled command says the same thing and stops in the same place. The
+message a person sees names an installation fault rather than blaming their network.
+
+An earlier version of this section described what happened before that state existed: the gate
+fetched a token, could not verify it, and reported `Unreachable`, so a customer with a perfectly
+valid license was told to check their firewall. That is what the whole branch review found, and
+it is why the state was added.
+
+The public key still has to be in this parameter before the alias above is switched, or the
+switch achieves nothing. The difference is that the failure now says so.
 
 Removing the switch afterwards means deleting three things: the alias, the
 `AlwaysLicensedGate` class, and its test. One implementation is then left, and the interface can

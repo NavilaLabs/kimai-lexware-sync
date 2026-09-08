@@ -43,9 +43,13 @@ stays out of the way.
 - **Milestone two**, invoice ingestion followed by timesheet assignment and an outbound
   invoice, is in development. The full design is written down in the specification linked
   below, sections 12 through 18.
-- The **license check** is present but switched off until the licensing service exists. The one
-  place that switches it on is the `KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseGate`
-  alias in `Resources/config/services.yaml`.
+- The **license check** is present but switched off until the licensing service exists. Two
+  things in `Resources/config/services.yaml` switch it on, and both are needed: the
+  `KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseGate` alias has to point at
+  `ServiceBackedLicenseGate`, and the `lexware_sync.license_public_keys` parameter has to carry
+  the licensing service's public key, which ships as an empty list. Change only the alias and
+  the plugin refuses every license, including a genuine one, though it does say so plainly
+  rather than blaming the network.
 
 Full design: [`docs/superpowers/specs/2026-09-04-kimai-lexware-sync-design.md`](docs/superpowers/specs/2026-09-04-kimai-lexware-sync-design.md).
 

@@ -344,7 +344,7 @@
             </trans-unit>
             <trans-unit id="lexware_sync.license.signature_invalid" resname="lexware_sync.license.signature_invalid">
                 <source>lexware_sync.license.signature_invalid</source>
-                <target>Die Lizenz konnte nicht verifiziert werden, daher kann nichts umgewandelt werden. Entweder ist die gespeicherte Lizenz beschädigt, oder sie wurde mit einem Schlüssel signiert, den dieses Plugin nicht akzeptiert. Als Erstes sollte der Lizenzschlüssel in der Systemkonfiguration von Lexware Sync erneut eingetragen werden.</target>
+                <target>Die Lizenz konnte nicht verifiziert werden, daher kann nichts umgewandelt werden. Der Lizenzdienst hat eine Lizenz geliefert, die mit einem Schlüssel signiert wurde, den dieses Plugin nicht akzeptiert. Als Erstes sollte der Lizenzschlüssel in der Systemkonfiguration von Lexware Sync erneut eingetragen werden.</target>
             </trans-unit>
             <trans-unit id="lexware_sync.license.unreachable" resname="lexware_sync.license.unreachable">
                 <source>lexware_sync.license.unreachable</source>

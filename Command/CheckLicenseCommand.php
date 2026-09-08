@@ -35,6 +35,14 @@ final class CheckLicenseCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
+        if (!$this->evaluator->canVerifySignatures()) {
+            $message = 'This build of the plugin accepts no license signing key, so no license can ever be verified. Whoever packaged it has to ship the accepted public keys.';
+            $this->logger->error($message);
+            $io->error($message);
+
+            return Command::FAILURE;
+        }
+
         $licenseKey = $this->configuration->getLicenseKey();
         if ($licenseKey === '') {
             $io->error('No license key is configured, so nothing can be converted.');
