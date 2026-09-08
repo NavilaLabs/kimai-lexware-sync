@@ -10,6 +10,9 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 
+/**
+ * @extends AbstractType<string>
+ */
 final class LexwareApiKeyType extends AbstractType
 {
     public function getParent(): string

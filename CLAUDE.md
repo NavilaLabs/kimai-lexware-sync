@@ -39,7 +39,8 @@ follow along.
 - Use constructor property promotion and typed, readonly properties where the value never
   changes after construction.
 - Mark classes `final` unless there is a concrete, current reason for something else to extend
-  them.
+  them. A Doctrine entity is that exception: Doctrine derives a proxy from it for lazy loading,
+  so entity classes stay non final.
 - Keep a class responsible for one thing. When a class is doing two unrelated jobs, split it
   into two classes rather than growing it.
 - Prefer an enum over a raw string for a fixed set of values, such as the status of a tracked
@@ -47,6 +48,9 @@ follow along.
 - Inject dependencies through the constructor. Do not reach for a static call or a service
   locator when a constructor argument will do.
 - Use strict comparison, `===` and `!==`, always.
+- Never index into a decoded Lexware response directly. Wrap it in `LexwarePayload` and ask for
+  the type you need, so a missing or unexpected field becomes a documented default instead of a
+  cast that happens to work until it does not.
 - Follow the naming and formatting conventions Kimai enforces on its own core code, described in
   the `kimai-plugin` skill: English identifiers, four space indentation, single quoted strings,
   PHP attributes for routing and mapping, and business logic living in services rather than
@@ -72,6 +76,10 @@ likely in a new namespace, rather than organized with comments inside one large 
   `references/kimai-api.md` and `references/lexware-api.md`. Both were checked against real
   source code or a real account during design. Verify anything not already covered there before
   shipping a new mapping.
+- `.claude/skills/kimai-plugin-testing`. This covers the four test suites, the test kernel, the
+  test database, the Lexware fake, and the handful of Kimai specific traps that otherwise cost
+  an hour each. Read it before adding or debugging any test. The design behind it is
+  `docs/superpowers/specs/2026-09-05-test-infrastructure-design.md`.
 
 ## Constraints that are easy to violate by accident
 

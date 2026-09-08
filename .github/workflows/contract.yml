@@ -1,0 +1,76 @@
+name: Lexware contract
+
+# These tests call the real Lexware API of a dedicated test account. They run on a schedule
+# rather than on every push, because they are slow and because the writing ones leave documents
+# behind that Lexware offers no endpoint to delete.
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  contract:
+    name: Against the Lexware test account
+    runs-on: ubuntu-latest
+
+    services:
+      database:
+        image: mysql:8.3
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+
+    env:
+      TEST_DATABASE_HOST: 127.0.0.1
+      TEST_DATABASE_PORT: '3306'
+      TEST_DATABASE_NAME: kimai_test
+      TEST_DATABASE_USER: root
+      TEST_DATABASE_PASSWORD: root
+      TEST_DATABASE_ADMIN_USER: root
+      TEST_DATABASE_ADMIN_PASSWORD: root
+      TEST_DATABASE_URL: 'mysql://root:root@127.0.0.1:3306/kimai_test?charset=utf8mb4&serverVersion=8.3.0'
+      KIMAI_DIRECTORY: ${{ github.workspace }}/kimai
+
+    steps:
+      - name: Check out Kimai
+        uses: actions/checkout@v4
+        with:
+          repository: kimai/kimai
+          ref: '2.65.0'
+          path: kimai
+
+      - name: Check out the plugin
+        uses: actions/checkout@v4
+        with:
+          path: kimai/var/plugins/KimaiLexwareSyncBundle
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: intl, pdo_mysql, zip, gd
+          coverage: none
+
+      - name: Install Kimai dependencies
+        working-directory: kimai
+        run: composer install --no-interaction --no-progress
+
+      - name: Install the plugin's development tooling
+        working-directory: kimai/var/plugins/KimaiLexwareSyncBundle
+        run: composer install --no-interaction --no-progress
+
+      - name: Prepare the test database
+        working-directory: kimai/var/plugins/KimaiLexwareSyncBundle
+        run: Tests/prepare-database.sh
+
+      - name: Run the contract tests
+        working-directory: kimai/var/plugins/KimaiLexwareSyncBundle
+        env:
+          LEXWARE_TEST_API_KEY: ${{ secrets.LEXWARE_TEST_API_KEY }}
+        run: vendor/bin/phpunit --display-warnings --testsuite contract

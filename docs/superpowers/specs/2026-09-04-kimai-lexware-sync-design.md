@@ -132,14 +132,15 @@ the foreign keys that reference it.
 
 **The order confirmation table** holds one row per Lexware order confirmation: an internal
 identifier, the Lexware identifier as a unique value, the voucher number, the title, the
-voucher date, the Lexware contact identifier, the raw payload as the last full response
-received from the API (kept for debugging and for answering audit questions, since the webhook
-body itself is never trusted), a status of pending, automatically converted, manually converted
-or rejected, a flag recording whether a change arrived after conversion (surfaced as a hint icon
-in Kimai's project list, never applied automatically, see section 6), a nullable reference to
-the Kimai project it produced, a nullable reference to the Kimai customer involved, the
-timestamps for when it was first seen and last synchronized, when it was processed, and, only
-when a manual triage action set it, which user processed it.
+voucher date, the Lexware contact identifier, the contact name copied out of the payload so the
+review screen can filter on it in SQL instead of decoding every stored payload, the raw payload
+as the last full response received from the API (kept for debugging and for answering audit
+questions, since the webhook body itself is never trusted), a status of pending, automatically
+converted, manually converted or rejected, a flag recording whether a change arrived after
+conversion (surfaced as a hint icon in Kimai's project list, never applied automatically, see
+section 6), a nullable reference to the Kimai project it produced, a nullable reference to the
+Kimai customer involved, the timestamps for when it was first seen and last synchronized, when
+it was processed, and, only when a manual triage action set it, which user processed it.
 
 **The order confirmation line table** holds one row per line item, populated only when line
 reading is enabled: an internal identifier, a reference to its order confirmation, its position,
@@ -217,6 +218,16 @@ markup table rather than Kimai's own table component. None of the three missing 
 correct decision, since converting or rejecting only ever needs the voucher number and the title
 to identify the right row, but they were part of the original intent and are tracked as a small
 follow-up rather than quietly dropped.
+
+Both review screens, the order confirmation triage screen and the invoice draft screen, page
+their table rather than rendering every tracked row, and each offers a search field next to the
+status filter. The search matches the voucher number, the contact name and, for an order
+confirmation, the title, all as a substring and case insensitively, which is why the contact
+name is stored as its own column rather than read back out of the raw payload. The status
+counts next to the filter buttons are computed under the same search term, so the numbers always
+describe the list actually being shown. The status filter, the search term and the current page
+travel with every row action, so converting or rejecting a document returns to the same place in
+the list.
 
 Each row offers two actions. Converting to a project runs the identical processor logic used by
 the automatic path, skipping the regular expression check since this is an explicit human
@@ -399,15 +410,15 @@ beyond the foreign keys that reference it.
 
 **The tracked invoice table** holds one row per Lexware invoice draft the plugin has decided to
 track: an internal identifier, the Lexware identifier as a unique value, the voucher number, the
-voucher date, the raw payload as the last full response received from the API, a reference to the
-`TrackedOrderConfirmation` row its `relatedVouchers` entry points to, a status of pending,
-converted, rejected or superseded, the last of these meaning the draft left `draft` status inside
-Lexware without ever being converted through the plugin, a nullable timestamp recording when an
-invoice creation attempt started,
-used only for the duplicate protection described in section 16, the Lexware identifier of the
-new, combined invoice once one has been created, the timestamps for when it was first seen and
-last synchronized, when it was converted or rejected, and, whichever action a person took, which
-user took it.
+voucher date, the contact name copied out of the payload for the same search reason as on the
+order confirmation table, the raw payload as the last full response received from the API, a
+reference to the `TrackedOrderConfirmation` row its `relatedVouchers` entry points to, a status
+of pending, converted, rejected or superseded, the last of these meaning the draft left `draft`
+status inside Lexware without ever being converted through the plugin, a nullable timestamp
+recording when an invoice creation attempt started, used only for the duplicate protection
+described in section 16, the Lexware identifier of the new, combined invoice once one has been
+created, the timestamps for when it was first seen and last synchronized, when it was converted
+or rejected, and, whichever action a person took, which user took it.
 
 There is deliberately no separate line table for the tracked invoice, unlike the order
 confirmation line table in milestone one. The draft's original lines are never matched against a

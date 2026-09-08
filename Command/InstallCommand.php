@@ -13,7 +13,7 @@ final class InstallCommand extends AbstractBundleInstallerCommand
         return 'lexware-sync';
     }
 
-    protected function getMigrationConfigFilename(): ?string
+    protected function getMigrationConfigFilename(): string
     {
         return __DIR__ . '/../Migrations/doctrine_migrations.yaml';
     }

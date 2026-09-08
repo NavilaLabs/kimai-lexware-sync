@@ -276,6 +276,16 @@ XML only, so `Accept: application/xml` on a ZUGFeRD voucher won't get you a sepa
 useful here if the sync needs to attach Kimai-side export files (e.g. a rendered Kimai invoice PDF)
 onto the Lexware side, or fetch the Lexware-generated invoice PDF back into Kimai.
 
+**Verified against the live account (2026-09-05):** `GET /v1/files/{documentFileId}` with
+`Accept: application/pdf` returns the rendered document and is what the plugin's PDF links use. The
+file id lives at `files.documentFileId` of the document itself, and it only exists once the document
+is rendered: an order confirmation always carries one, an invoice **draft** carries `files: null`,
+so a draft has no PDF to link to.
+
+**Also verified there:** the `title` field of an order confirmation is the printed document heading
+(literally "Auftragsbestätigung" unless someone edits it in Lexware), not a per-order name. The
+customer name a triage list wants is `address.name`, and the totals are under `totalPrice`.
+
 ### Event Subscriptions (`/v1/event-subscriptions`) — webhooks, for later
 
 `POST`/`GET`/`GET {id}`/`DELETE {id}` on `/v1/event-subscriptions` let Lexware push change

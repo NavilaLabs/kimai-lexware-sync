@@ -22,10 +22,14 @@ final class LexwareWebhookVerifierTest extends TestCase
             'private_key_bits' => 2048,
             'private_key_type' => OPENSSL_KEYTYPE_RSA,
         ]);
+        self::assertNotFalse($keyPair, 'Cannot generate a key pair for the signature tests.');
+
         openssl_pkey_export($keyPair, $privateKeyPem);
         self::$privateKeyPem = $privateKeyPem;
 
         $details = openssl_pkey_get_details($keyPair);
+        self::assertIsArray($details);
+        self::assertIsString($details['key']);
         self::$publicKeyPem = $details['key'];
     }
 

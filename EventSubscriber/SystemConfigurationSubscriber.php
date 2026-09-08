@@ -40,6 +40,11 @@ final class SystemConfigurationSubscriber implements EventSubscriberInterface
         $event->addConfiguration(
             (new SystemConfigurationModel('lexware_sync_configuration'))
                 ->setConfiguration([
+                    (new Configuration('lexware_sync.license_key'))
+                        ->setTranslationDomain('system-configuration')
+                        ->setType(LexwareApiKeyType::class)
+                        ->setRequired(false)
+                        ->setOptions(['help' => 'lexware_sync.license_key_help']),
                     (new Configuration('lexware_sync.api_key'))
                         ->setTranslationDomain('system-configuration')
                         ->setType(LexwareApiKeyType::class)

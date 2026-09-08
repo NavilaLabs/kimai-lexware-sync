@@ -16,6 +16,8 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedInvoiceTimesheet;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\InvoiceLineShape;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedInvoiceRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedInvoiceTimesheetRepository;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseGate;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseRequiredException;
 
 final class InvoiceProcessor
 {
@@ -28,6 +30,7 @@ final class InvoiceProcessor
         private readonly ProjectService $projectService,
         private readonly LexwareSyncConfiguration $configuration,
         private readonly EntityManagerInterface $entityManager,
+        private readonly LicenseGate $licenseGate,
     ) {
     }
 
@@ -42,6 +45,7 @@ final class InvoiceProcessor
         bool $markProjectCompleted,
         User $processedBy,
     ): void {
+        $this->assertLicenseAllowsConversion();
         $this->assertCurrencyMatches($trackedInvoice);
 
         $requestBody = $this->buildRequestBody($trackedInvoice, $timesheets, $shape);
@@ -60,7 +64,7 @@ final class InvoiceProcessor
             throw $exception;
         }
 
-        $newInvoiceId = (string) ($response['id'] ?? '');
+        $newInvoiceId = (new LexwarePayload($response))->string('id');
         if ($newInvoiceId === '') {
             throw new LexwareApiException('Lexware did not return an id for the newly created invoice.');
         }
@@ -78,6 +82,7 @@ final class InvoiceProcessor
         bool $markProjectCompleted,
         User $processedBy,
     ): void {
+        $this->assertLicenseAllowsConversion();
         $this->assertCurrencyMatches($trackedInvoice);
 
         $this->recordConversion($trackedInvoice, $existingLexwareInvoiceId, $timesheets, $markProjectCompleted, $processedBy);
@@ -85,9 +90,8 @@ final class InvoiceProcessor
 
     /**
      * @param Timesheet[] $timesheets
-     * @return array<string, mixed>|null
      */
-    public function findPlausibleMatch(TrackedInvoice $trackedInvoice, array $timesheets, InvoiceLineShape $shape): ?array
+    public function findPlausibleMatch(TrackedInvoice $trackedInvoice, array $timesheets, InvoiceLineShape $shape): ?LexwarePayload
     {
         $creationAttemptedAt = $trackedInvoice->getCreationAttemptedAt();
         if ($creationAttemptedAt === null) {
@@ -95,8 +99,7 @@ final class InvoiceProcessor
         }
 
         $payload = $this->decodePayload($trackedInvoice);
-        $address = $payload['address'] ?? [];
-        $contactId = \is_array($address) ? (string) ($address['contactId'] ?? '') : '';
+        $contactId = $payload->nested('address')->string('contactId');
 
         if ($contactId === '') {
             return null;
@@ -104,17 +107,15 @@ final class InvoiceProcessor
 
         $expectedTotal = $this->calculateExpectedGrossTotal($trackedInvoice, $timesheets, $shape);
 
-        foreach ($this->client->findInvoices($contactId, $creationAttemptedAt) as $candidate) {
-            if (!\is_array($candidate)) {
+        foreach ($this->client->findInvoices($contactId, $creationAttemptedAt) as $rawCandidate) {
+            $candidate = new LexwarePayload($rawCandidate);
+
+            $candidateId = $candidate->string('id');
+            if ($candidateId === '' || $candidateId === $trackedInvoice->getLexwareId()) {
                 continue;
             }
 
-            $candidateId = $candidate['id'] ?? null;
-            if (!\is_string($candidateId) || $candidateId === '' || $candidateId === $trackedInvoice->getLexwareId()) {
-                continue;
-            }
-
-            if (!isset($candidate['totalAmount']) || abs((float) $candidate['totalAmount'] - $expectedTotal) > 0.01) {
+            if (!$candidate->has('totalAmount') || abs($candidate->float('totalAmount') - $expectedTotal) > 0.01) {
                 continue;
             }
 
@@ -132,38 +133,40 @@ final class InvoiceProcessor
     {
         $payload = $this->decodePayload($trackedInvoice);
 
-        $originalLines = $payload['lineItems'] ?? [];
-        $originalLines = \is_array($originalLines) ? $originalLines : [];
+        $originalLines = $payload->rawList('lineItems');
 
-        $currency = (string) ($payload['totalPrice']['currency'] ?? 'EUR');
+        $currency = $payload->nested('totalPrice')->string('currency', 'EUR');
         $taxRatePercentage = 19;
 
-        foreach ($originalLines as $line) {
-            $unitPrice = \is_array($line['unitPrice'] ?? null) ? $line['unitPrice'] : null;
-            if ($unitPrice !== null) {
-                $currency = (string) ($unitPrice['currency'] ?? $currency);
-                $taxRatePercentage = (int) ($unitPrice['taxRatePercentage'] ?? $taxRatePercentage);
-                break;
+        foreach ($payload->nestedList('lineItems') as $line) {
+            if (!$line->has('unitPrice')) {
+                continue;
             }
+
+            $unitPrice = $line->nested('unitPrice');
+            $currency = $unitPrice->string('currency', $currency);
+            $taxRatePercentage = $unitPrice->integer('taxRatePercentage', $taxRatePercentage);
+            break;
         }
 
         $newLines = $this->lineBuilder->buildLines($timesheets, $shape, $taxRatePercentage, $currency);
 
         $requestBody = [
             'voucherDate' => (new \DateTimeImmutable())->format('Y-m-d\TH:i:s.vP'),
-            'address' => $payload['address'] ?? [],
+            'address' => $payload->nested('address')->toArray(),
             'lineItems' => array_merge($originalLines, $newLines),
-            'taxConditions' => $payload['taxConditions'] ?? ['taxType' => 'net'],
-            'shippingConditions' => $payload['shippingConditions'] ?? [
+            'taxConditions' => $payload->has('taxConditions') ? $payload->nested('taxConditions')->toArray() : ['taxType' => 'net'],
+            'shippingConditions' => $payload->has('shippingConditions') ? $payload->nested('shippingConditions')->toArray() : [
                 'shippingType' => 'service',
                 'shippingDate' => (new \DateTimeImmutable())->format('Y-m-d\TH:i:s.vP'),
             ],
             'totalPrice' => ['currency' => $currency],
         ];
 
+        $carried = $payload->toArray();
         foreach (['title', 'introduction', 'remark', 'paymentConditions', 'language'] as $carriedField) {
-            if (isset($payload[$carriedField])) {
-                $requestBody[$carriedField] = $payload[$carriedField];
+            if (isset($carried[$carriedField])) {
+                $requestBody[$carriedField] = $carried[$carriedField];
             }
         }
 
@@ -178,15 +181,11 @@ final class InvoiceProcessor
         $requestBody = $this->buildRequestBody($trackedInvoice, $timesheets, $shape);
         $total = 0.0;
 
-        foreach ($requestBody['lineItems'] as $line) {
-            if (!\is_array($line)) {
-                continue;
-            }
-
-            $unitPrice = \is_array($line['unitPrice'] ?? null) ? $line['unitPrice'] : [];
-            $quantity = (float) ($line['quantity'] ?? 0);
-            $netAmount = (float) ($unitPrice['netAmount'] ?? 0);
-            $taxRatePercentage = (float) ($unitPrice['taxRatePercentage'] ?? 0);
+        foreach ((new LexwarePayload($requestBody))->nestedList('lineItems') as $line) {
+            $unitPrice = $line->nested('unitPrice');
+            $quantity = $line->float('quantity');
+            $netAmount = $unitPrice->float('netAmount');
+            $taxRatePercentage = $unitPrice->float('taxRatePercentage');
 
             $total += $quantity * $netAmount * (1 + $taxRatePercentage / 100);
         }
@@ -239,6 +238,14 @@ final class InvoiceProcessor
         }
     }
 
+    private function assertLicenseAllowsConversion(): void
+    {
+        $verdict = $this->licenseGate->verdict();
+        if (!$verdict->allowsConversion()) {
+            throw new LicenseRequiredException($verdict);
+        }
+    }
+
     private function assertCurrencyMatches(TrackedInvoice $trackedInvoice): void
     {
         $customer = $trackedInvoice->getRelatedOrderConfirmation()->getCustomer();
@@ -268,13 +275,8 @@ final class InvoiceProcessor
         $this->projectService->updateProject($project);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function decodePayload(TrackedInvoice $trackedInvoice): array
+    private function decodePayload(TrackedInvoice $trackedInvoice): LexwarePayload
     {
-        $payload = json_decode($trackedInvoice->getRawPayload(), true);
-
-        return \is_array($payload) ? $payload : [];
+        return LexwarePayload::fromJson($trackedInvoice->getRawPayload());
     }
 }

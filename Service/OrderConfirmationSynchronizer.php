@@ -8,6 +8,8 @@ use Doctrine\ORM\EntityManagerInterface;
 use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedOrderConfirmation;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedOrderConfirmationRepository;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseRequiredException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseVerdictMessageFormatter;
 use Psr\Log\LoggerInterface;
 
 final class OrderConfirmationSynchronizer
@@ -20,15 +22,16 @@ final class OrderConfirmationSynchronizer
         private readonly LexwareSyncConfiguration $configuration,
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
+        private readonly LicenseVerdictMessageFormatter $licenseVerdictMessageFormatter,
     ) {
     }
 
     public function synchronize(string $lexwareId): void
     {
-        $payload = $this->client->getOrderConfirmation($lexwareId);
+        $payload = new LexwarePayload($this->client->getOrderConfirmation($lexwareId));
         $existing = $this->repository->findByLexwareId($lexwareId);
 
-        $remoteUpdatedAt = isset($payload['updatedDate']) ? new \DateTimeImmutable((string) $payload['updatedDate']) : null;
+        $remoteUpdatedAt = $payload->dateTime('updatedDate');
 
         if ($existing !== null && $remoteUpdatedAt !== null && $existing->getRemoteUpdatedAt() !== null) {
             if ($remoteUpdatedAt <= $existing->getRemoteUpdatedAt()) {
@@ -41,14 +44,15 @@ final class OrderConfirmationSynchronizer
         try {
             $orderConfirmation = $existing ?? new TrackedOrderConfirmation($lexwareId);
 
-            $address = $payload['address'] ?? [];
+            $address = $payload->nested('address');
 
             $orderConfirmation->updateFromLexwarePayload(
-                (string) ($payload['voucherNumber'] ?? ''),
-                (string) ($payload['title'] ?? ''),
-                new \DateTimeImmutable((string) ($payload['voucherDate'] ?? 'now')),
-                (string) ($address['contactId'] ?? ''),
-                json_encode($payload, \JSON_THROW_ON_ERROR),
+                $payload->string('voucherNumber'),
+                $payload->string('title'),
+                $payload->dateTime('voucherDate') ?? new \DateTimeImmutable(),
+                $address->string('contactId'),
+                $address->string('name'),
+                json_encode($payload->toArray(), \JSON_THROW_ON_ERROR),
                 $remoteUpdatedAt,
             );
 
@@ -67,6 +71,12 @@ final class OrderConfirmationSynchronizer
                         $this->configuration->isReadLinesEnabled(),
                     );
                     $this->repository->save($orderConfirmation);
+                } catch (LicenseRequiredException $exception) {
+                    $this->logger->error(\sprintf(
+                        'Order confirmation %s was not converted automatically: %s',
+                        $lexwareId,
+                        $this->licenseVerdictMessageFormatter->format($exception->verdict()),
+                    ));
                 } catch (CustomerCurrencyMismatchException | UnprocessableOrderConfirmationException $exception) {
                     $this->logger->error(\sprintf(
                         'Order confirmation %s was not converted automatically: %s',

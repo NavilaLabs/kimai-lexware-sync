@@ -1,0 +1,5 @@
+{% if licenseState != 'licensed' %}
+    <div class="alert alert-warning" data-license-state="{{ licenseState }}">
+        {{ licenseMessage }}
+    </div>
+{% endif %}

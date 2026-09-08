@@ -21,6 +21,7 @@ RUN printf '%s\n' \
 
 RUN groupadd -f -g ${USER_GID} dev \
     && useradd -m -u ${USER_UID} -g ${USER_GID} -G www-data -s /bin/bash dev \
-    && chown -R ${USER_UID}:${USER_GID} /opt/kimai/var /composer
+    && mkdir -p /home/dev/.local/bin /home/dev/.local/share \
+    && chown -R ${USER_UID}:${USER_GID} /home/dev/.local /opt/kimai/var /composer
 
 ENV COMPOSER_HOME=/composer

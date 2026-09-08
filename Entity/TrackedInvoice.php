@@ -27,6 +27,9 @@ class TrackedInvoice
     #[ORM\Column(name: 'voucher_date', type: 'datetime_immutable')]
     private \DateTimeImmutable $voucherDate;
 
+    #[ORM\Column(name: 'contact_name', type: 'string', length: 255)]
+    private string $contactName = '';
+
     #[ORM\Column(name: 'raw_payload', type: 'text')]
     private string $rawPayload = '{}';
 
@@ -89,6 +92,11 @@ class TrackedInvoice
         return $this->voucherDate;
     }
 
+    public function getContactName(): string
+    {
+        return $this->contactName;
+    }
+
     public function getRawPayload(): string
     {
         return $this->rawPayload;
@@ -132,11 +140,13 @@ class TrackedInvoice
     public function updateFromLexwarePayload(
         string $voucherNumber,
         \DateTimeImmutable $voucherDate,
+        string $contactName,
         string $rawPayload,
         ?\DateTimeImmutable $remoteUpdatedAt
     ): void {
         $this->voucherNumber = $voucherNumber;
         $this->voucherDate = $voucherDate;
+        $this->contactName = $contactName;
         $this->rawPayload = $rawPayload;
         $this->lastSynchronizedAt = new \DateTimeImmutable();
         $this->remoteUpdatedAt = $remoteUpdatedAt;

@@ -1,3 +1,11 @@
+parameters:
+    lexware_sync.license_service_url: 'https://licensing.navilalabs.com/v1/check'
+    # The base64 encoded Ed25519 public keys accepted for a license artefact's signature. This
+    # stays empty until the licensing service exists and its signing key pair has been generated,
+    # since the check is switched off until then anyway. See the README for how to generate the
+    # pair once the service is ready to go live.
+    lexware_sync.license_public_keys: []
+
 services:
     _defaults:
         autowire: true
@@ -16,3 +24,19 @@ services:
     KimaiPlugin\KimaiLexwareSyncBundle\Controller\:
         resource: '../../Controller'
         tags: ['controller.service_arguments']
+
+    # This alias switches the license check on and off. It ships pointing at AlwaysLicensedGate
+    # because the licensing service does not exist yet. Pointing it at ServiceBackedLicenseGate
+    # is half of switching the check on: the lexware_sync.license_public_keys parameter above
+    # has to carry the signing key as well, or every license is refused, genuine ones included.
+    KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseGate:
+        alias: KimaiPlugin\KimaiLexwareSyncBundle\Service\License\AlwaysLicensedGate
+        public: true
+
+    KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseClient:
+        arguments:
+            $serviceUrl: '%lexware_sync.license_service_url%'
+
+    KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseSignatureVerifier:
+        arguments:
+            $base64PublicKeys: '%lexware_sync.license_public_keys%'

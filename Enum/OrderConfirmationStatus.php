@@ -20,4 +20,14 @@ enum OrderConfirmationStatus: string
     {
         return $this === self::AutomaticallyConverted || $this === self::ManuallyConverted;
     }
+
+    public function isRejected(): bool
+    {
+        return $this === self::Rejected;
+    }
+
+    public function isConvertible(): bool
+    {
+        return $this === self::Pending || $this === self::Rejected;
+    }
 }

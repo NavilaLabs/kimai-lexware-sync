@@ -10,7 +10,7 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Repository\ContactMappingRepository;
 
 #[ORM\Entity(repositoryClass: ContactMappingRepository::class)]
 #[ORM\Table(name: 'kimai2_ext_lexware_contact_mapping')]
-final class ContactMapping
+class ContactMapping
 {
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]

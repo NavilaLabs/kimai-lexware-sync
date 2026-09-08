@@ -2,6 +2,102 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
     <file source-language="en" target-language="de" datatype="plaintext" original="messages.de.xlf">
         <body>
+            <trans-unit id="lexware_sync.menu" resname="lexware_sync.menu">
+                <source>lexware_sync.menu</source>
+                <target>Lexware</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.customer" resname="lexware_sync.customer">
+                <source>lexware_sync.customer</source>
+                <target>Kunde</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.net_total" resname="lexware_sync.net_total">
+                <source>lexware_sync.net_total</source>
+                <target>Nettosumme</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.line_items" resname="lexware_sync.line_items">
+                <source>lexware_sync.line_items</source>
+                <target>Positionen</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.status" resname="lexware_sync.status">
+                <source>lexware_sync.status</source>
+                <target>Status</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.processed" resname="lexware_sync.processed">
+                <source>lexware_sync.processed</source>
+                <target>Bearbeitet</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.no_documents" resname="lexware_sync.no_documents">
+                <source>lexware_sync.no_documents</source>
+                <target>Keine Belege in dieser Ansicht.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.no_search_results" resname="lexware_sync.no_search_results">
+                <source>lexware_sync.no_search_results</source>
+                <target>Keine Belege gefunden.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.search_placeholder" resname="lexware_sync.search_placeholder">
+                <source>lexware_sync.search_placeholder</source>
+                <target>Belegnummer oder Kunde</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.open_project" resname="lexware_sync.open_project">
+                <source>lexware_sync.open_project</source>
+                <target>Projekt öffnen</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.open_in_lexware" resname="lexware_sync.open_in_lexware">
+                <source>lexware_sync.open_in_lexware</source>
+                <target>In Lexware öffnen</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.open_pdf" resname="lexware_sync.open_pdf">
+                <source>lexware_sync.open_pdf</source>
+                <target>PDF</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.filter.open" resname="lexware_sync.filter.open">
+                <source>lexware_sync.filter.open</source>
+                <target>Offen</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.filter.converted" resname="lexware_sync.filter.converted">
+                <source>lexware_sync.filter.converted</source>
+                <target>Umgewandelt</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.filter.rejected" resname="lexware_sync.filter.rejected">
+                <source>lexware_sync.filter.rejected</source>
+                <target>Abgelehnt</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.filter.all" resname="lexware_sync.filter.all">
+                <source>lexware_sync.filter.all</source>
+                <target>Alle</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.status.pending" resname="lexware_sync.status.pending">
+                <source>lexware_sync.status.pending</source>
+                <target>Offen</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.status.automatically_converted" resname="lexware_sync.status.automatically_converted">
+                <source>lexware_sync.status.automatically_converted</source>
+                <target>Automatisch umgewandelt</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.status.manually_converted" resname="lexware_sync.status.manually_converted">
+                <source>lexware_sync.status.manually_converted</source>
+                <target>Manuell umgewandelt</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.status.converted" resname="lexware_sync.status.converted">
+                <source>lexware_sync.status.converted</source>
+                <target>Umgewandelt</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.status.rejected" resname="lexware_sync.status.rejected">
+                <source>lexware_sync.status.rejected</source>
+                <target>Abgelehnt</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.status.superseded" resname="lexware_sync.status.superseded">
+                <source>lexware_sync.status.superseded</source>
+                <target>Ersetzt</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.document.unavailable" resname="lexware_sync.document.unavailable">
+                <source>lexware_sync.document.unavailable</source>
+                <target>Das Dokument konnte nicht von Lexware geladen werden.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.document.no_pdf" resname="lexware_sync.document.no_pdf">
+                <source>lexware_sync.document.no_pdf</source>
+                <target>Für diesen Beleg liegt in Lexware kein PDF vor.</target>
+            </trans-unit>
             <trans-unit id="lexware_sync.connect_webhooks" resname="lexware_sync.connect_webhooks">
                 <source>lexware_sync.connect_webhooks</source>
                 <target>Webhooks verbinden</target>
@@ -20,7 +116,7 @@
             </trans-unit>
             <trans-unit id="lexware_sync.triage.title" resname="lexware_sync.triage.title">
                 <source>lexware_sync.triage.title</source>
-                <target>Offene Auftragsbestätigungen</target>
+                <target>Auftragsbestätigungen</target>
             </trans-unit>
             <trans-unit id="lexware_sync.triage.action" resname="lexware_sync.triage.action">
                 <source>lexware_sync.triage.action</source>
@@ -30,10 +126,6 @@
                 <source>lexware_sync.triage.voucher_number</source>
                 <target>Belegnummer</target>
             </trans-unit>
-            <trans-unit id="lexware_sync.triage.title_column" resname="lexware_sync.triage.title_column">
-                <source>lexware_sync.triage.title_column</source>
-                <target>Titel</target>
-            </trans-unit>
             <trans-unit id="lexware_sync.triage.voucher_date" resname="lexware_sync.triage.voucher_date">
                 <source>lexware_sync.triage.voucher_date</source>
                 <target>Datum</target>
@@ -42,9 +134,17 @@
                 <source>lexware_sync.triage.convert</source>
                 <target>In Projekt umwandeln</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.triage.convert_anyway" resname="lexware_sync.triage.convert_anyway">
+                <source>lexware_sync.triage.convert_anyway</source>
+                <target>Doch umwandeln</target>
+            </trans-unit>
             <trans-unit id="lexware_sync.triage.reject" resname="lexware_sync.triage.reject">
                 <source>lexware_sync.triage.reject</source>
                 <target>Ablehnen</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.triage.changed_after_conversion" resname="lexware_sync.triage.changed_after_conversion">
+                <source>lexware_sync.triage.changed_after_conversion</source>
+                <target>Der Beleg wurde in Lexware nach der Umwandlung geändert</target>
             </trans-unit>
             <trans-unit id="lexware_sync.origin" resname="lexware_sync.origin">
                 <source>lexware_sync.origin</source>
@@ -52,7 +152,7 @@
             </trans-unit>
             <trans-unit id="lexware_sync.invoice.title" resname="lexware_sync.invoice.title">
                 <source>lexware_sync.invoice.title</source>
-                <target>Offene Rechnungsentwürfe</target>
+                <target>Rechnungsentwürfe</target>
             </trans-unit>
             <trans-unit id="lexware_sync.invoice.action" resname="lexware_sync.invoice.action">
                 <source>lexware_sync.invoice.action</source>
@@ -72,27 +172,39 @@
             </trans-unit>
             <trans-unit id="lexware_sync.invoice.assign" resname="lexware_sync.invoice.assign">
                 <source>lexware_sync.invoice.assign</source>
-                <target>Timesheets zuordnen</target>
+                <target>Zeiten zuordnen</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.assign_anyway" resname="lexware_sync.invoice.assign_anyway">
+                <source>lexware_sync.invoice.assign_anyway</source>
+                <target>Doch Zeiten zuordnen</target>
             </trans-unit>
             <trans-unit id="lexware_sync.invoice.reject" resname="lexware_sync.invoice.reject">
                 <source>lexware_sync.invoice.reject</source>
                 <target>Ablehnen</target>
             </trans-unit>
-            <trans-unit id="lexware_sync.invoice.recently_converted" resname="lexware_sync.invoice.recently_converted">
-                <source>lexware_sync.invoice.recently_converted</source>
-                <target>Kürzlich umgewandelt</target>
+            <trans-unit id="lexware_sync.invoice.open_draft" resname="lexware_sync.invoice.open_draft">
+                <source>lexware_sync.invoice.open_draft</source>
+                <target>Entwurf in Lexware öffnen</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.open_created" resname="lexware_sync.invoice.open_created">
+                <source>lexware_sync.invoice.open_created</source>
+                <target>Erstellte Rechnung öffnen</target>
             </trans-unit>
             <trans-unit id="lexware_sync.invoice.modified_after_export" resname="lexware_sync.invoice.modified_after_export">
                 <source>lexware_sync.invoice.modified_after_export</source>
-                <target>Ein Timesheet dieser Rechnung wurde nach der Erstellung bearbeitet</target>
+                <target>Ein Zeiteintrag dieser Rechnung wurde nach der Erstellung bearbeitet</target>
             </trans-unit>
             <trans-unit id="lexware_sync.invoice.assign_title" resname="lexware_sync.invoice.assign_title">
                 <source>lexware_sync.invoice.assign_title</source>
-                <target>Timesheets zuordnen zu</target>
+                <target>Zeiten zuordnen zu</target>
             </trans-unit>
             <trans-unit id="lexware_sync.invoice.original_lines" resname="lexware_sync.invoice.original_lines">
                 <source>lexware_sync.invoice.original_lines</source>
                 <target>Ursprüngliche Positionen aus dem Entwurf</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.original_lines_total" resname="lexware_sync.invoice.original_lines_total">
+                <source>lexware_sync.invoice.original_lines_total</source>
+                <target>Summe der Entwurfspositionen</target>
             </trans-unit>
             <trans-unit id="lexware_sync.invoice.line_name" resname="lexware_sync.invoice.line_name">
                 <source>lexware_sync.invoice.line_name</source>
@@ -102,9 +214,21 @@
                 <source>lexware_sync.invoice.line_quantity</source>
                 <target>Menge</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.invoice.line_unit_price" resname="lexware_sync.invoice.line_unit_price">
+                <source>lexware_sync.invoice.line_unit_price</source>
+                <target>Einzelpreis</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.line_amount" resname="lexware_sync.invoice.line_amount">
+                <source>lexware_sync.invoice.line_amount</source>
+                <target>Betrag</target>
+            </trans-unit>
             <trans-unit id="lexware_sync.invoice.select_timesheets" resname="lexware_sync.invoice.select_timesheets">
                 <source>lexware_sync.invoice.select_timesheets</source>
-                <target>Timesheets zum Hinzufügen auswählen</target>
+                <target>Zeiten zum Hinzufügen auswählen</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.no_timesheets" resname="lexware_sync.invoice.no_timesheets">
+                <source>lexware_sync.invoice.no_timesheets</source>
+                <target>Für dieses Projekt gibt es keine offenen Zeiten.</target>
             </trans-unit>
             <trans-unit id="lexware_sync.invoice.timesheet_date" resname="lexware_sync.invoice.timesheet_date">
                 <source>lexware_sync.invoice.timesheet_date</source>
@@ -112,19 +236,47 @@
             </trans-unit>
             <trans-unit id="lexware_sync.invoice.timesheet_activity" resname="lexware_sync.invoice.timesheet_activity">
                 <source>lexware_sync.invoice.timesheet_activity</source>
-                <target>Aktivität</target>
+                <target>Tätigkeit</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.timesheet_description" resname="lexware_sync.invoice.timesheet_description">
+                <source>lexware_sync.invoice.timesheet_description</source>
+                <target>Beschreibung</target>
             </trans-unit>
             <trans-unit id="lexware_sync.invoice.timesheet_duration" resname="lexware_sync.invoice.timesheet_duration">
                 <source>lexware_sync.invoice.timesheet_duration</source>
                 <target>Stunden</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.invoice.timesheet_hourly_rate" resname="lexware_sync.invoice.timesheet_hourly_rate">
+                <source>lexware_sync.invoice.timesheet_hourly_rate</source>
+                <target>Stundensatz</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.timesheet_amount" resname="lexware_sync.invoice.timesheet_amount">
+                <source>lexware_sync.invoice.timesheet_amount</source>
+                <target>Betrag</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.selected_timesheets_total" resname="lexware_sync.invoice.selected_timesheets_total">
+                <source>lexware_sync.invoice.selected_timesheets_total</source>
+                <target>Summe der ausgewählten Zeiten</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.new_invoice_total" resname="lexware_sync.invoice.new_invoice_total">
+                <source>lexware_sync.invoice.new_invoice_total</source>
+                <target>Gesamt netto der neuen Rechnung</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.missing_rate_hint" resname="lexware_sync.invoice.missing_rate_hint">
+                <source>lexware_sync.invoice.missing_rate_hint</source>
+                <target>Für diesen Eintrag ist kein Stundensatz hinterlegt</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.invoice.missing_rate_warning" resname="lexware_sync.invoice.missing_rate_warning">
+                <source>lexware_sync.invoice.missing_rate_warning</source>
+                <target>Bei %number% ausgewählten Einträgen ist kein Stundensatz hinterlegt. Diese Positionen landen mit 0,00 auf der Rechnung. Der Stundensatz wird beim Benutzer als „Preis pro Stunde“ gepflegt.</target>
+            </trans-unit>
             <trans-unit id="lexware_sync.invoice.shape_per_timesheet" resname="lexware_sync.invoice.shape_per_timesheet">
                 <source>lexware_sync.invoice.shape_per_timesheet</source>
-                <target>Eine Zeile pro Timesheet</target>
+                <target>Eine Zeile pro Zeiteintrag</target>
             </trans-unit>
             <trans-unit id="lexware_sync.invoice.shape_aggregated" resname="lexware_sync.invoice.shape_aggregated">
                 <source>lexware_sync.invoice.shape_aggregated</source>
-                <target>Eine aggregierte Zeile pro Aktivität</target>
+                <target>Eine aggregierte Zeile pro Tätigkeit</target>
             </trans-unit>
             <trans-unit id="lexware_sync.invoice.finalize" resname="lexware_sync.invoice.finalize">
                 <source>lexware_sync.invoice.finalize</source>
@@ -164,7 +316,7 @@
             </trans-unit>
             <trans-unit id="lexware_sync.invoice.timesheets_dropped" resname="lexware_sync.invoice.timesheets_dropped">
                 <source>lexware_sync.invoice.timesheets_dropped</source>
-                <target>Ein oder mehrere ausgewählte Timesheets waren nicht mehr wählbar und wurden weggelassen.</target>
+                <target>Ein oder mehrere ausgewählte Zeiteinträge waren nicht mehr wählbar und wurden weggelassen.</target>
             </trans-unit>
             <trans-unit id="lexware_sync.invoice.check_status_failed" resname="lexware_sync.invoice.check_status_failed">
                 <source>lexware_sync.invoice.check_status_failed</source>
@@ -173,6 +325,50 @@
             <trans-unit id="lexware_sync.invoice.confirm_existing_mismatch" resname="lexware_sync.invoice.confirm_existing_mismatch">
                 <source>lexware_sync.invoice.confirm_existing_mismatch</source>
                 <target>Diese Rechnung konnte nicht erneut bestätigt werden. Bitte den Status erneut prüfen.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.license.licensed" resname="lexware_sync.license.licensed">
+                <source>lexware_sync.license.licensed</source>
+                <target>Die Lizenz dieser Installation ist bestätigt.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.license.no_key_configured" resname="lexware_sync.license.no_key_configured">
+                <source>lexware_sync.license.no_key_configured</source>
+                <target>Es ist kein Lizenzschlüssel hinterlegt, daher kann nichts umgewandelt werden. Den Lizenzschlüssel in der Systemkonfiguration von Lexware Sync eintragen.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.license.no_signing_key_configured" resname="lexware_sync.license.no_signing_key_configured">
+                <source>lexware_sync.license.no_signing_key_configured</source>
+                <target>Diese Kopie des Plugins enthält keinen Signaturschlüssel für Lizenzen, daher lässt sich keine Lizenz prüfen und es kann nichts umgewandelt werden. Das ist ein Fehler im installierten Paket und lässt sich hier nicht beheben: Bitte beim Verkäufer dieses Plugins melden.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.license.rejected" resname="lexware_sync.license.rejected">
+                <source>lexware_sync.license.rejected</source>
+                <target>Die Lizenz dieser Installation wurde abgelehnt, daher kann nichts umgewandelt werden.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.license.signature_invalid" resname="lexware_sync.license.signature_invalid">
+                <source>lexware_sync.license.signature_invalid</source>
+                <target>Die Lizenz konnte nicht verifiziert werden, daher kann nichts umgewandelt werden. Der Lizenzdienst hat eine Lizenz geliefert, die mit einem Schlüssel signiert wurde, den dieses Plugin nicht akzeptiert. Als Erstes sollte der Lizenzschlüssel in der Systemkonfiguration von Lexware Sync erneut eingetragen werden.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.license.unreachable" resname="lexware_sync.license.unreachable">
+                <source>lexware_sync.license.unreachable</source>
+                <target>Der Lizenzserver war nicht erreichbar, daher konnte die Lizenz nicht bestätigt werden. Bitte prüfen, ob dieser Server ausgehende Verbindungen ins Internet aufbauen darf.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.license.version_not_covered" resname="lexware_sync.license.version_not_covered">
+                <source>lexware_sync.license.version_not_covered</source>
+                <target>Die Lizenz dieser Installation deckt die aktuell laufende Version des Plugins nicht ab, daher kann nichts umgewandelt werden.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.license.reason.expired" resname="lexware_sync.license.reason.expired">
+                <source>lexware_sync.license.reason.expired</source>
+                <target>Das Abonnement ist abgelaufen. Es muss verlängert werden, um wieder umwandeln zu können.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.license.reason.revoked" resname="lexware_sync.license.reason.revoked">
+                <source>lexware_sync.license.reason.revoked</source>
+                <target>Das Abonnement wurde widerrufen. Bitte beim Verkäufer dieses Plugins melden, um das zu klären.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.license.reason.unknown_key" resname="lexware_sync.license.reason.unknown_key">
+                <source>lexware_sync.license.reason.unknown_key</source>
+                <target>Der Lizenzserver kennt diesen Lizenzschlüssel nicht. Bitte prüfen, ob er vollständig aus der Kaufbestätigung übernommen wurde, und sich in diesem Fall beim Verkäufer dieses Plugins melden.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.license.reason.version_not_covered" resname="lexware_sync.license.reason.version_not_covered">
+                <source>lexware_sync.license.reason.version_not_covered</source>
+                <target>Diese Plugin-Version ist neuer, als das Abonnement abdeckt. Entweder das Abonnement erweitern oder eine ältere, abgedeckte Version verwenden.</target>
             </trans-unit>
         </body>
     </file>

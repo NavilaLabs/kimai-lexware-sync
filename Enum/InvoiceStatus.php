@@ -16,6 +16,16 @@ enum InvoiceStatus: string
         return $this === self::Pending;
     }
 
+    public function isRejected(): bool
+    {
+        return $this === self::Rejected;
+    }
+
+    public function isConverted(): bool
+    {
+        return $this === self::Converted;
+    }
+
     public function isTerminal(): bool
     {
         return $this === self::Converted || $this === self::Superseded;

@@ -1,0 +1,24 @@
+kimai:
+    data_dir: '%kernel.project_dir%/var/plugin-test-data'
+
+# A Kimai source checkout, which is what continuous integration builds against, has no compiled
+# frontend assets. Without this, every rendered template would fail on a missing entrypoints
+# file, for reasons that have nothing to do with what the test is checking.
+webpack_encore:
+    strict_mode: false
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\FakeLexwareHttpClient: ~
+
+    KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiClient:
+        arguments:
+            $httpClient: '@KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\FakeLexwareHttpClient'
+            $minimumIntervalSeconds: 0.0
+
+    KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseStore:
+        public: true

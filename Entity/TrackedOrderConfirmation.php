@@ -37,6 +37,9 @@ class TrackedOrderConfirmation
     #[ORM\Column(name: 'lexware_contact_id', type: 'string', length: 100)]
     private string $lexwareContactId = '';
 
+    #[ORM\Column(name: 'contact_name', type: 'string', length: 255)]
+    private string $contactName = '';
+
     #[ORM\Column(name: 'raw_payload', type: 'text')]
     private string $rawPayload = '{}';
 
@@ -116,6 +119,11 @@ class TrackedOrderConfirmation
         return $this->lexwareContactId;
     }
 
+    public function getContactName(): string
+    {
+        return $this->contactName;
+    }
+
     public function getRawPayload(): string
     {
         return $this->rawPayload;
@@ -189,6 +197,7 @@ class TrackedOrderConfirmation
         string $title,
         \DateTimeImmutable $voucherDate,
         string $lexwareContactId,
+        string $contactName,
         string $rawPayload,
         ?\DateTimeImmutable $remoteUpdatedAt
     ): void {
@@ -200,6 +209,7 @@ class TrackedOrderConfirmation
         $this->title = $title;
         $this->voucherDate = $voucherDate;
         $this->lexwareContactId = $lexwareContactId;
+        $this->contactName = $contactName;
         $this->rawPayload = $rawPayload;
         $this->lastSynchronizedAt = new \DateTimeImmutable();
         $this->remoteUpdatedAt = $remoteUpdatedAt;

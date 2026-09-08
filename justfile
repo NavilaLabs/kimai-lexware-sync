@@ -31,9 +31,14 @@ reconcile: reconcile-orders reconcile-invoices
 check-api-key:
     {{kimai}}/bin/console kimai:lexware-sync:check-api-key
 
-# Run this bundle's automated test suite.
+# Run the three local test suites: unit, functional and migration.
+#
+# The contract suite is deliberately not part of this. It talks to a real Lexware account and
+# creates documents there that Lexware cannot delete again, and it accepts the LEXWARE_API_KEY
+# from the plugin's own .env, so a shell that has sourced .env would write real documents on an
+# otherwise routine `just check`. Run it on purpose with `just test-contract`.
 test *args:
-    vendor/bin/phpunit {{args}}
+    vendor/bin/phpunit --display-warnings --testsuite unit,functional,migration {{args}}
 
 # Check code style without modifying files.
 codestyle:
@@ -49,3 +54,27 @@ stan:
 
 # Run the full local verification loop: code style, static analysis, tests.
 check: codestyle stan test
+
+# Create and migrate the database used by the functional and migration suites.
+test-database *args:
+    Tests/prepare-database.sh {{args}}
+
+# Run only the fast tests that need neither kernel nor database.
+test-unit *args:
+    vendor/bin/phpunit --display-warnings --testsuite unit {{args}}
+
+# Run the tests that boot Kimai against the test database.
+test-functional *args:
+    vendor/bin/phpunit --display-warnings --testsuite functional {{args}}
+
+# Run the database migration tests.
+test-migration *args:
+    vendor/bin/phpunit --display-warnings --testsuite migration {{args}}
+
+# Run the tests that talk to the real Lexware test account.
+test-contract *args:
+    vendor/bin/phpunit --display-warnings --testsuite contract {{args}}
+
+# Run the local test suites with a coverage report in var/coverage.
+test-coverage *args:
+    XDEBUG_MODE=coverage vendor/bin/phpunit --testsuite unit,functional,migration --coverage-html var/coverage --coverage-text {{args}}

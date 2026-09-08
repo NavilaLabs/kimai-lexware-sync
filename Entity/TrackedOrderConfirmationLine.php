@@ -9,7 +9,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'kimai2_ext_lexware_order_confirmation_line')]
-final class TrackedOrderConfirmationLine
+class TrackedOrderConfirmationLine
 {
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]

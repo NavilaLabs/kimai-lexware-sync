@@ -10,7 +10,7 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedInvoiceTimesheetReposit
 
 #[ORM\Entity(repositoryClass: TrackedInvoiceTimesheetRepository::class)]
 #[ORM\Table(name: 'kimai2_ext_lexware_invoice_timesheet')]
-final class TrackedInvoiceTimesheet
+class TrackedInvoiceTimesheet
 {
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
