@@ -52,7 +52,10 @@ Extend `Tests\Support\FunctionalTestCase`. It boots `TestKernel` and gives you:
 - `factory()` builds Kimai entities: `createCustomer()`, `createProject()`, `createActivity()`,
   `createUser()`, `createTimesheet()`.
 - `lexware()` is the fake HTTP client, see below.
-- `configure('lexware_sync.some_key', $value)` sets a system configuration value in memory.
+- `configure('lexware_sync.some_key', $value)` writes a system configuration row and sets the
+  same value on Kimai's in memory snapshot. It has to do both, because the plugin reads its own
+  settings from the table through `SettingReader` rather than from that snapshot, while Kimai's
+  own code still reads the snapshot.
 
 Extend `Tests\Support\WebTestCase` for a controller. It adds `browser()`,
 `browserLoggedInAs($name, $roles)` and `url('route_name')`.

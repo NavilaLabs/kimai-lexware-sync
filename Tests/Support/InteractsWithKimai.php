@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support;
 
+use App\Configuration\ConfigurationService;
 use App\Configuration\SystemConfiguration;
+use App\Entity\Configuration;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -50,8 +52,18 @@ trait InteractsWithKimai
         return $this->entityFactory ??= new KimaiEntityFactory($this->entityManager());
     }
 
-    protected function configure(string $key, mixed $value): void
+    /**
+     * The plugin reads its own settings from the configuration table rather than from Kimai's
+     * cached snapshot, so a test that only set the snapshot would configure something the code
+     * under test never sees. This writes the row and keeps the snapshot in step with it.
+     */
+    protected function configure(string $key, string|int|bool|null $value): void
     {
+        $configurationService = $this->service(ConfigurationService::class);
+
+        $stored = $configurationService->getConfiguration($key) ?? (new Configuration())->setName($key);
+        $configurationService->saveConfiguration($stored->setValue($value));
+
         $this->service(SystemConfiguration::class)->set($key, $value);
     }
 
