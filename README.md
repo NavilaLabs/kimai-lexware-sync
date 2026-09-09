@@ -38,11 +38,14 @@ stays out of the way.
 ## Status
 
 - **Milestone one**, order confirmation ingestion followed by automatic or manual project
-  creation, is in development. The full design is written down in the specification linked
-  below.
+  creation, is implemented, including the triage screen's customer, amount and line item
+  columns. One small piece is still missing: the icon on Kimai's project list that would mark a
+  project as originating from an order confirmation. It is already shown on the project detail
+  page; only its placement on the list itself and the direct link to the Lexware document from
+  there are outstanding. The full design is written down in the specification linked below.
 - **Milestone two**, invoice ingestion followed by timesheet assignment and an outbound
-  invoice, is in development. The full design is written down in the specification linked
-  below, sections 12 through 18.
+  invoice, is implemented. The full design is written down in the specification linked below,
+  sections 12 through 18.
 - The **license check** is present but switched off until the licensing service exists. Two
   things in `Resources/config/services.yaml` switch it on, and both are needed: the
   `KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseGate` alias has to point at
