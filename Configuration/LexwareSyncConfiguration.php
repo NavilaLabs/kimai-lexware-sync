@@ -4,80 +4,80 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Configuration;
 
-use App\Configuration\SystemConfiguration;
-
 final class LexwareSyncConfiguration
 {
     public const PROJECT_COMPLETION_END_DATE = 'end_date';
     public const PROJECT_COMPLETION_HIDDEN = 'hidden';
 
-    public function __construct(private readonly SystemConfiguration $configuration)
+    private const DEFAULT_RECONCILE_INTERVAL_MINUTES = 30;
+
+    public function __construct(private readonly SettingReader $settingReader)
     {
     }
 
     public function getApiKey(): string
     {
-        $value = $this->configuration->find('lexware_sync.api_key');
-
-        return \is_string($value) ? $value : '';
+        return $this->readText('lexware_sync.api_key');
     }
 
     public function getPublicBaseUrl(): string
     {
-        $value = $this->configuration->find('lexware_sync.public_base_url');
-
-        return \is_string($value) ? rtrim($value, '/') : '';
+        return rtrim($this->readText('lexware_sync.public_base_url'), '/');
     }
 
     public function isAutoConvertEnabled(): bool
     {
-        return (bool) ($this->configuration->find('lexware_sync.auto_convert_enabled') ?? false);
+        return $this->readFlag('lexware_sync.auto_convert_enabled');
     }
 
     public function getTitleRegex(): string
     {
-        $value = $this->configuration->find('lexware_sync.title_regex');
-
-        return \is_string($value) ? $value : '';
+        return $this->readText('lexware_sync.title_regex');
     }
 
     public function isReadLinesEnabled(): bool
     {
-        return (bool) ($this->configuration->find('lexware_sync.read_lines_enabled') ?? false);
+        return $this->readFlag('lexware_sync.read_lines_enabled');
     }
 
     public function getLineRegex(): string
     {
-        $value = $this->configuration->find('lexware_sync.line_regex');
-
-        return \is_string($value) ? $value : '';
+        return $this->readText('lexware_sync.line_regex');
     }
 
     public function getReconcileIntervalMinutes(): int
     {
-        $value = $this->configuration->find('lexware_sync.reconcile_interval_minutes');
+        $minutes = (int) $this->readText('lexware_sync.reconcile_interval_minutes');
 
-        return \is_int($value) && $value > 0 ? $value : 30;
+        return $minutes > 0 ? $minutes : self::DEFAULT_RECONCILE_INTERVAL_MINUTES;
     }
 
     public function getInvoiceTitleRegex(): string
     {
-        $value = $this->configuration->find('lexware_sync.invoice_title_regex');
-
-        return \is_string($value) ? $value : '';
+        return $this->readText('lexware_sync.invoice_title_regex');
     }
 
     public function getProjectCompletionMode(): string
     {
-        $value = $this->configuration->find('lexware_sync.project_completion_mode');
+        $value = $this->readText('lexware_sync.project_completion_mode');
 
         return $value === self::PROJECT_COMPLETION_HIDDEN ? self::PROJECT_COMPLETION_HIDDEN : self::PROJECT_COMPLETION_END_DATE;
     }
 
     public function getLicenseKey(): string
     {
-        $value = $this->configuration->find('lexware_sync.license_key');
+        return $this->readText('lexware_sync.license_key');
+    }
 
-        return \is_string($value) ? $value : '';
+    private function readText(string $name): string
+    {
+        return $this->settingReader->read($name) ?? '';
+    }
+
+    private function readFlag(string $name): bool
+    {
+        $value = $this->settingReader->read($name);
+
+        return $value !== null && $value !== '' && $value !== '0';
     }
 }

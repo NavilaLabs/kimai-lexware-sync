@@ -176,6 +176,18 @@ this:
 Every regular expression field is compiled and validated when it is saved, and rejected
 immediately if invalid, rather than failing later while an event is being processed.
 
+These keys are written through Kimai's system configuration screen, but they are not read back
+through it. `SystemConfiguration` answers from a snapshot of the whole configuration table that
+Kimai caches for a day, in the cache pool of whichever environment filled it, and saving on the
+settings screen drops only that one pool's copy. A console run such as the reconciliation poll,
+or a second web node, therefore keeps acting on the value an administrator changed hours ago.
+That is not a theoretical risk: it silently converted two order confirmations without their
+lines on 2026-09-08, because line reading had just been switched on in the browser while the
+converting process still held the old snapshot. Every key above is read through
+`SettingReader` instead, whose one implementation, `DatabaseSettingReader`, asks
+`ConfigurationService` for the single row it needs. That costs one small query per value read
+and makes the cache, the cache adapter and the number of nodes irrelevant for this plugin.
+
 The flow for each event is as follows. First, the freshly fetched resource is upserted into the
 tracking table, staying in the pending state if this is a new record. Second, if automatic
 conversion is enabled, and the title rule is either empty or matches the title, the conversion

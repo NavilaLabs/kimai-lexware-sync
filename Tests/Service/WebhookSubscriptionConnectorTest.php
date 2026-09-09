@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Service;
 
-use App\Configuration\ConfigLoaderInterface;
-use App\Configuration\SystemConfiguration;
 use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\WebhookSubscriptionOutcome;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiClient;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\WebhookSubscriptionConnector;
+use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\InMemorySettingReader;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -21,14 +20,7 @@ final class WebhookSubscriptionConnectorTest extends TestCase
 
     private function createClient(callable $responseFactory): LexwareApiClient
     {
-        $loader = new class () implements ConfigLoaderInterface {
-            public function getConfigurations(): array
-            {
-                return [];
-            }
-        };
-
-        $configuration = new LexwareSyncConfiguration(new SystemConfiguration($loader, ['lexware_sync.api_key' => 'test-key']));
+        $configuration = new LexwareSyncConfiguration(new InMemorySettingReader(['lexware_sync.api_key' => 'test-key']));
 
         return new LexwareApiClient(new MockHttpClient($responseFactory), $configuration);
     }

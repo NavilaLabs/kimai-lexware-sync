@@ -40,3 +40,6 @@ services:
     KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseSignatureVerifier:
         arguments:
             $base64PublicKeys: '%lexware_sync.license_public_keys%'
+
+    KimaiPlugin\KimaiLexwareSyncBundle\Configuration\SettingReader:
+        alias: KimaiPlugin\KimaiLexwareSyncBundle\Configuration\DatabaseSettingReader

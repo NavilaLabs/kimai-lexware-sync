@@ -8,6 +8,7 @@
          failOnRisky="true">
     <testsuites>
         <testsuite name="unit">
+            <directory>Tests/Configuration</directory>
             <directory>Tests/Service</directory>
         </testsuite>
         <testsuite name="functional">

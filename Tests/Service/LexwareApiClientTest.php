@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Service;
 
-use App\Configuration\ConfigLoaderInterface;
-use App\Configuration\SystemConfiguration;
 use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\AmbiguousLexwareRequestException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiClient;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\InMemorySettingReader;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\Exception\TransportException;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -19,14 +18,7 @@ final class LexwareApiClientTest extends TestCase
 {
     private function createConfiguration(string $apiKey): LexwareSyncConfiguration
     {
-        $loader = new class () implements ConfigLoaderInterface {
-            public function getConfigurations(): array
-            {
-                return [];
-            }
-        };
-
-        return new LexwareSyncConfiguration(new SystemConfiguration($loader, ['lexware_sync.api_key' => $apiKey]));
+        return new LexwareSyncConfiguration(new InMemorySettingReader(['lexware_sync.api_key' => $apiKey]));
     }
 
     public function testGetOrderConfirmationSendsBearerTokenAndDecodesResponse(): void
