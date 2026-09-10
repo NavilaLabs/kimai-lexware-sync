@@ -42,9 +42,21 @@
                 <source>lexware_sync.invoice_title_regex</source>
                 <target>Title pattern an invoice draft must match to be tracked, empty matches every title</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.project_title_source" resname="lexware_sync.project_title_source">
+                <source>lexware_sync.project_title_source</source>
+                <target>What a converted project is named: the voucher number, the order confirmation's own title, or the customer combined with the title</target>
+            </trans-unit>
             <trans-unit id="lexware_sync.project_completion_mode" resname="lexware_sync.project_completion_mode">
                 <source>lexware_sync.project_completion_mode</source>
                 <target>What marking a project completed does: set an end date, or hide its visibility</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.check_api_key_interval_days" resname="lexware_sync.check_api_key_interval_days">
+                <source>lexware_sync.check_api_key_interval_days</source>
+                <target>Days between scheduled API key health checks, only documents the expected cron cadence, enforces nothing itself</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.check_license_interval_days" resname="lexware_sync.check_license_interval_days">
+                <source>lexware_sync.check_license_interval_days</source>
+                <target>Days between scheduled license health checks, only documents the expected cron cadence, enforces nothing itself</target>
             </trans-unit>
         </body>
     </file>

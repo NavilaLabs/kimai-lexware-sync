@@ -10,6 +10,7 @@ use App\Entity\Timesheet;
 use App\Repository\Query\TimesheetQuery;
 use App\Repository\TimesheetRepository;
 use App\Utils\PageSetup;
+use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedInvoice;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\DocumentStatusFilter;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\InvoiceLineShape;
@@ -18,6 +19,8 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedInvoiceRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedInvoiceTimesheetRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\AmbiguousLexwareRequestException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\CustomerCurrencyMismatchException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck\HealthCheckResultStore;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck\HealthCheckStatusFormatter;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\InvoiceProcessor;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareDeepLink;
@@ -47,6 +50,9 @@ final class InvoiceAssignmentController extends AbstractController
         private readonly LexwareDeepLink $deepLink,
         private readonly LicenseGate $licenseGate,
         private readonly LicenseVerdictMessageFormatter $licenseVerdictMessageFormatter,
+        private readonly HealthCheckResultStore $healthCheckResultStore,
+        private readonly HealthCheckStatusFormatter $healthCheckStatusFormatter,
+        private readonly LexwareSyncConfiguration $configuration,
     ) {
     }
 
@@ -88,6 +94,7 @@ final class InvoiceAssignmentController extends AbstractController
             'convertedVoucherUrl' => $convertedVoucherNumber !== null ? $this->deepLink->forInvoice($convertedVoucherNumber) : null,
             'licenseState' => $verdict->state->key(),
             'licenseMessage' => $this->licenseVerdictMessageFormatter->format($verdict),
+            'healthCheckMessages' => $this->healthCheckMessages(),
         ]);
     }
 
@@ -309,6 +316,7 @@ final class InvoiceAssignmentController extends AbstractController
             'draftUrl' => $this->deepLink->forInvoice($trackedInvoice->getVoucherNumber()),
             'licenseState' => $verdict->state->key(),
             'licenseMessage' => $this->licenseVerdictMessageFormatter->format($verdict),
+            'healthCheckMessages' => $this->healthCheckMessages(),
         ]);
     }
 
@@ -372,6 +380,35 @@ final class InvoiceAssignmentController extends AbstractController
         }
 
         return round($total, 2);
+    }
+
+    /**
+     * @return list<array{check: string, state: string, message: string}>
+     */
+    private function healthCheckMessages(): array
+    {
+        $now = new \DateTimeImmutable();
+        $messages = [];
+
+        $apiKey = $this->healthCheckStatusFormatter->format(
+            $this->healthCheckResultStore->latest('api_key'),
+            $this->configuration->getCheckApiKeyIntervalDays(),
+            $now,
+        );
+        if ($apiKey !== null) {
+            $messages[] = ['check' => 'api_key'] + $apiKey;
+        }
+
+        $license = $this->healthCheckStatusFormatter->format(
+            $this->healthCheckResultStore->latest('license'),
+            $this->configuration->getCheckLicenseIntervalDays(),
+            $now,
+        );
+        if ($license !== null) {
+            $messages[] = ['check' => 'license'] + $license;
+        }
+
+        return $messages;
     }
 
     /**

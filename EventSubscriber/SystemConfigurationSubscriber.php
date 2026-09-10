@@ -77,11 +77,30 @@ final class SystemConfigurationSubscriber implements EventSubscriberInterface
                         ->setTranslationDomain('system-configuration')
                         ->setType(IntegerType::class)
                         ->setRequired(false),
+                    (new Configuration('lexware_sync.check_api_key_interval_days'))
+                        ->setTranslationDomain('system-configuration')
+                        ->setType(IntegerType::class)
+                        ->setRequired(false),
+                    (new Configuration('lexware_sync.check_license_interval_days'))
+                        ->setTranslationDomain('system-configuration')
+                        ->setType(IntegerType::class)
+                        ->setRequired(false),
                     (new Configuration('lexware_sync.invoice_title_regex'))
                         ->setTranslationDomain('system-configuration')
                         ->setType(TextType::class)
                         ->setRequired(false)
                         ->setConstraints([$this->createRegexConstraint()]),
+                    (new Configuration('lexware_sync.project_title_source'))
+                        ->setTranslationDomain('system-configuration')
+                        ->setType(ChoiceType::class)
+                        ->setRequired(false)
+                        ->setOptions([
+                            'choices' => [
+                                'Voucher number' => LexwareSyncConfiguration::PROJECT_TITLE_VOUCHER_NUMBER,
+                                'Order confirmation title' => LexwareSyncConfiguration::PROJECT_TITLE_ORDER_CONFIRMATION_TITLE,
+                                'Customer and title' => LexwareSyncConfiguration::PROJECT_TITLE_CUSTOMER_AND_TITLE,
+                            ],
+                        ]),
                     (new Configuration('lexware_sync.project_completion_mode'))
                         ->setTranslationDomain('system-configuration')
                         ->setType(ChoiceType::class)

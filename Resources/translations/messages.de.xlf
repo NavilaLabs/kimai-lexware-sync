@@ -370,6 +370,14 @@
                 <source>lexware_sync.license.reason.version_not_covered</source>
                 <target>Diese Plugin-Version ist neuer, als das Abonnement abdeckt. Entweder das Abonnement erweitern oder eine ältere, abgedeckte Version verwenden.</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.health_check.failed" resname="lexware_sync.health_check.failed">
+                <source>lexware_sync.health_check.failed</source>
+                <target>Die letzte geplante Gesundheitsprüfung ist fehlgeschlagen: %message%</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.health_check.stale" resname="lexware_sync.health_check.stale">
+                <source>lexware_sync.health_check.stale</source>
+                <target>Diese Gesundheitsprüfung lief nicht innerhalb der erwarteten %days% Tage, bitte prüfen, ob ihr Cron-Eintrag noch eingerichtet ist.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

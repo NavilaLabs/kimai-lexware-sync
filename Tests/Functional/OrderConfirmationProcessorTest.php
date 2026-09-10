@@ -7,11 +7,13 @@ namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Functional;
 use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Project;
+use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\ContactMapping;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedOrderConfirmation;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\ContactMappingRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\OrderConfirmationProcessor;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\UnprocessableOrderConfirmationException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\FunctionalTestCase;
 use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\SignsLicenseArtefacts;
 
@@ -71,6 +73,77 @@ final class OrderConfirmationProcessorTest extends FunctionalTestCase
 
         self::assertCount(1, $activities);
         self::assertSame('Development', $activities[0]->getName());
+    }
+
+    public function testConversionPopulatesOrderNumberOrderDateAndComment(): void
+    {
+        $this->givenAConfirmedLicense();
+        $orderConfirmation = $this->trackedOrderConfirmation('lexware-id-order-metadata', 'AB-2026-050', 'Contact GmbH');
+
+        $this->processor()->convert($orderConfirmation, new LexwarePayload($this->payload()), null, '', false);
+        $this->entityManager()->flush();
+
+        $project = $orderConfirmation->getProject();
+        self::assertInstanceOf(Project::class, $project);
+        self::assertSame('AB-2026-050', $project->getOrderNumber());
+        self::assertEquals(new \DateTime('2026-09-01'), $project->getOrderDate());
+        self::assertSame('Order confirmation for a test', $project->getComment());
+    }
+
+    public function testAVoucherNumberLongerThanFiftyCharactersIsUnprocessable(): void
+    {
+        $this->givenAConfirmedLicense();
+        $orderConfirmation = $this->trackedOrderConfirmation('lexware-id-long-voucher', str_repeat('A', 51), 'Contact GmbH');
+
+        $this->expectException(UnprocessableOrderConfirmationException::class);
+
+        $this->processor()->convert($orderConfirmation, new LexwarePayload($this->payload()), null, '', false);
+    }
+
+    public function testTheOrderConfirmationTitleCanBeUsedAsTheProjectName(): void
+    {
+        $this->givenAConfirmedLicense();
+        $this->configure('lexware_sync.project_title_source', LexwareSyncConfiguration::PROJECT_TITLE_ORDER_CONFIRMATION_TITLE);
+        $orderConfirmation = $this->trackedOrderConfirmation('lexware-id-title-source', 'AB-2026-060', 'Contact GmbH');
+
+        $this->processor()->convert($orderConfirmation, new LexwarePayload($this->payload()), null, '', false);
+        $this->entityManager()->flush();
+
+        self::assertSame('Order confirmation for a test', $orderConfirmation->getProject()?->getName());
+    }
+
+    public function testCustomerAndTitleCanBeCombinedAsTheProjectName(): void
+    {
+        $this->givenAConfirmedLicense();
+        $this->configure('lexware_sync.project_title_source', LexwareSyncConfiguration::PROJECT_TITLE_CUSTOMER_AND_TITLE);
+        $orderConfirmation = $this->trackedOrderConfirmation('lexware-id-title-source-2', 'AB-2026-061', 'Contact GmbH');
+
+        $this->processor()->convert($orderConfirmation, new LexwarePayload($this->payload()), null, '', false);
+        $this->entityManager()->flush();
+
+        self::assertSame('Contact GmbH - Order confirmation for a test', $orderConfirmation->getProject()?->getName());
+    }
+
+    public function testAnUnusableTitleFallsBackToTheVoucherNumber(): void
+    {
+        $this->givenAConfirmedLicense();
+        $this->configure('lexware_sync.project_title_source', LexwareSyncConfiguration::PROJECT_TITLE_ORDER_CONFIRMATION_TITLE);
+        $orderConfirmation = $this->trackedOrderConfirmation('lexware-id-title-source-3', 'AB-2026-062', 'Contact GmbH');
+        $orderConfirmation->updateFromLexwarePayload(
+            'AB-2026-062',
+            'Title with a disallowed " character',
+            new \DateTimeImmutable('2026-09-01'),
+            'contact-1',
+            'Contact GmbH',
+            json_encode($this->payload(), \JSON_THROW_ON_ERROR),
+            null,
+        );
+        $this->entityManager()->flush();
+
+        $this->processor()->convert($orderConfirmation, new LexwarePayload($this->payload()), null, '', false);
+        $this->entityManager()->flush();
+
+        self::assertSame('AB-2026-062', $orderConfirmation->getProject()?->getName());
     }
 
     private function processor(): OrderConfirmationProcessor

@@ -370,6 +370,14 @@
                 <source>lexware_sync.license.reason.version_not_covered</source>
                 <target>This plugin version is newer than what the subscription covers. Upgrade the subscription or use an earlier, covered version.</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.health_check.failed" resname="lexware_sync.health_check.failed">
+                <source>lexware_sync.health_check.failed</source>
+                <target>The last scheduled health check failed: %message%</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.health_check.stale" resname="lexware_sync.health_check.stale">
+                <source>lexware_sync.health_check.stale</source>
+                <target>This health check has not run in the expected %days% day(s), check whether its cron entry is still in place.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

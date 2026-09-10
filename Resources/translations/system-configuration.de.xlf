@@ -42,9 +42,21 @@
                 <source>lexware_sync.invoice_title_regex</source>
                 <target>Titelmuster, das ein Rechnungsentwurf erfüllen muss, um erfasst zu werden, leer bedeutet jeder Titel passt</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.project_title_source" resname="lexware_sync.project_title_source">
+                <source>lexware_sync.project_title_source</source>
+                <target>Wie ein konvertiertes Projekt benannt wird: die Belegnummer, der Titel der Auftragsbestätigung, oder Kunde kombiniert mit dem Titel</target>
+            </trans-unit>
             <trans-unit id="lexware_sync.project_completion_mode" resname="lexware_sync.project_completion_mode">
                 <source>lexware_sync.project_completion_mode</source>
                 <target>Was das Markieren eines Projekts als abgeschlossen bewirkt: ein Enddatum setzen oder die Sichtbarkeit verstecken</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.check_api_key_interval_days" resname="lexware_sync.check_api_key_interval_days">
+                <source>lexware_sync.check_api_key_interval_days</source>
+                <target>Tage zwischen den geplanten API-Key-Gesundheitsprüfungen, dokumentiert nur den erwarteten Cron-Rhythmus, erzwingt selbst nichts</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.check_license_interval_days" resname="lexware_sync.check_license_interval_days">
+                <source>lexware_sync.check_license_interval_days</source>
+                <target>Tage zwischen den geplanten Lizenz-Gesundheitsprüfungen, dokumentiert nur den erwarteten Cron-Rhythmus, erzwingt selbst nichts</target>
             </trans-unit>
         </body>
     </file>

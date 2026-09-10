@@ -2,6 +2,7 @@
 
 {% block main %}
     {{ include('@KimaiLexwareSync/license/banner.html.twig') }}
+    {{ include('@KimaiLexwareSync/health_check/banner.html.twig') }}
 
     {% embed '@theme/embeds/card.html.twig' %}
         {% block box_title %}{{ 'lexware_sync.invoice.assign_title'|trans }} {{ trackedInvoice.voucherNumber }}{% endblock %}

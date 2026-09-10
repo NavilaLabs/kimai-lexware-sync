@@ -11,6 +11,7 @@ use App\Entity\Customer;
 use App\Entity\Project;
 use App\Entity\User;
 use App\Project\ProjectService;
+use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\ContactMapping;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedOrderConfirmation;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedOrderConfirmationLine;
@@ -28,6 +29,7 @@ final class OrderConfirmationProcessor
         private readonly SystemConfiguration $systemConfiguration,
         private readonly MatchingRuleEvaluator $matchingRuleEvaluator,
         private readonly LicenseGate $licenseGate,
+        private readonly LexwareSyncConfiguration $configuration,
     ) {
     }
 
@@ -44,7 +46,7 @@ final class OrderConfirmationProcessor
         }
 
         $voucherNumberLength = \strlen($orderConfirmation->getVoucherNumber());
-        if ($voucherNumberLength < 2 || $voucherNumberLength > 150) {
+        if ($voucherNumberLength < 2 || $voucherNumberLength > 50) {
             throw new UnprocessableOrderConfirmationException(\sprintf(
                 'Order confirmation "%s" has a voucher number that is unusable as a project name.',
                 $orderConfirmation->getLexwareId(),
@@ -58,8 +60,11 @@ final class OrderConfirmationProcessor
         $customer = $this->resolveCustomer($contactId, $contactName);
 
         $project = $this->projectService->createNewProject($customer);
-        $project->setName($orderConfirmation->getVoucherNumber());
+        $project->setName($this->resolveProjectName($orderConfirmation, $customer));
         $project->setStart(\DateTime::createFromImmutable($orderConfirmation->getVoucherDate()));
+        $project->setOrderNumber($orderConfirmation->getVoucherNumber());
+        $project->setOrderDate(\DateTime::createFromImmutable($orderConfirmation->getVoucherDate()));
+        $project->setComment($orderConfirmation->getTitle());
         $project->setColor($this->pickRandomColor());
         $this->projectService->saveProject($project);
 
@@ -75,6 +80,35 @@ final class OrderConfirmationProcessor
         if ($readLinesEnabled) {
             $this->convertLines($orderConfirmation, $payload->nestedList('lineItems'), $project, $lineRegex);
         }
+    }
+
+    private function resolveProjectName(TrackedOrderConfirmation $orderConfirmation, Customer $customer): string
+    {
+        $voucherNumber = $orderConfirmation->getVoucherNumber();
+
+        $candidate = match ($this->configuration->getProjectTitleSource()) {
+            LexwareSyncConfiguration::PROJECT_TITLE_ORDER_CONFIRMATION_TITLE => $orderConfirmation->getTitle(),
+            LexwareSyncConfiguration::PROJECT_TITLE_CUSTOMER_AND_TITLE => ($customer->getName() ?? '') . ' - ' . $orderConfirmation->getTitle(),
+            default => $voucherNumber,
+        };
+
+        return $this->isUsableAsProjectName($candidate) ? $candidate : $voucherNumber;
+    }
+
+    private function isUsableAsProjectName(string $value): bool
+    {
+        $length = \strlen($value);
+        if ($length < 2 || $length > 150) {
+            return false;
+        }
+
+        foreach (['<', '>', '"', '='] as $character) {
+            if (str_contains($value, $character)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function resolveCustomer(string $contactId, string $contactName): Customer

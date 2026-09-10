@@ -16,6 +16,7 @@
 
 {% block main %}
     {{ include('@KimaiLexwareSync/license/banner.html.twig') }}
+    {{ include('@KimaiLexwareSync/health_check/banner.html.twig') }}
 
     {% if convertedVoucherNumber %}
         <div class="alert alert-success">

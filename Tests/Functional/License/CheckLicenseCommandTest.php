@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Functional\License;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck\HealthCheckResultStore;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseStore;
 use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\FunctionalTestCase;
 use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\SignsLicenseArtefacts;
@@ -85,6 +86,41 @@ final class CheckLicenseCommandTest extends FunctionalTestCase
         self::assertSame(Command::FAILURE, $tester->getStatusCode());
         self::assertSame(0, $this->licenseService()->requestCount());
         self::assertStringContainsString('expired', $tester->getDisplay());
+    }
+
+    public function testEveryRunRecordsAHealthCheckResultRegardlessOfOutcome(): void
+    {
+        $this->configure('lexware_sync.license_key', 'key-one');
+        $this->licenseService()->willRespondWith('POST', '/v1/check', ['license' => $this->refusal('expired')]);
+
+        $this->runCommand();
+
+        $result = $this->service(HealthCheckResultStore::class)->latest('license');
+        self::assertNotNull($result);
+        self::assertFalse($result->ok);
+    }
+
+    public function testAReusedStoredApprovalAlsoRecordsAHealthCheckResult(): void
+    {
+        $this->configure('lexware_sync.license_key', 'key-one');
+        $this->service(LicenseStore::class)->store('key-one', $this->approvalRecheckedAfter('2099-01-01T00:00:00+01:00'));
+
+        $this->runCommand();
+
+        $result = $this->service(HealthCheckResultStore::class)->latest('license');
+        self::assertNotNull($result);
+        self::assertTrue($result->ok);
+    }
+
+    public function testNoLicenseKeyConfiguredStillRecordsAHealthCheckResult(): void
+    {
+        $this->configure('lexware_sync.license_key', '');
+
+        $this->runCommand();
+
+        $result = $this->service(HealthCheckResultStore::class)->latest('license');
+        self::assertNotNull($result);
+        self::assertFalse($result->ok);
     }
 
     private function runCommand(): CommandTester

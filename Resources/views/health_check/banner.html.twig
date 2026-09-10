@@ -1,0 +1,5 @@
+{% for entry in healthCheckMessages %}
+    <div class="alert alert-warning" data-health-check="{{ entry.check }}" data-health-check-state="{{ entry.state }}">
+        {{ entry.message }}
+    </div>
+{% endfor %}

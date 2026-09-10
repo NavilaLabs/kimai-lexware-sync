@@ -88,6 +88,9 @@ screen.
 | `lexware_sync.reconcile_interval_minutes` | How often an administrator should schedule the reconciliation poll to run. The plugin does not enforce this interval itself, it only reads it back as documentation for the cron entry described below. | `30` |
 | `lexware_sync.invoice_title_regex` | Regular expression checked against an invoice draft's title, applied on top of its `relatedVouchers` link to a tracked order confirmation. An empty value matches every title. | empty |
 | `lexware_sync.project_completion_mode` | What marking a project completed, offered when converting a tracked invoice, actually does: `end_date` sets an end date on the project, `hidden` hides its visibility. | `end_date` |
+| `lexware_sync.project_title_source` | What a converted project's name is set to: the voucher number, the order confirmation's own title, or the customer's name combined with the title. `orderNumber`, `orderDate` and `comment` are always populated from the voucher number, voucher date and title regardless of this choice. | `voucher_number` |
+| `lexware_sync.check_api_key_interval_days` | How often an administrator should schedule the API key health check to run. Like `lexware_sync.reconcile_interval_minutes`, the plugin does not enforce this itself, it only compares a stored check result's age against this value to decide whether to show a "this has not run in a while" warning on the triage and invoice screens. | `7` |
+| `lexware_sync.check_license_interval_days` | The same, for the license health check. | `1` |
 
 Every regular expression field is optional. Leaving it empty means it matches everything,
 never that it matches nothing. This rule is applied consistently across the whole plugin.
@@ -110,7 +113,11 @@ on:
 - `bin/console kimai:lexware-sync:check-api-key` confirms the configured Lexware API key still
   authenticates. Schedule it about once a week, well ahead of the key's twenty four month
   expiry, so an administrator notices a key that needs renewing instead of finding out when
-  synchronization silently stops.
+  synchronization silently stops. Besides logging and a cron exit code, its result is also
+  recorded and shown as a warning banner on the triage and invoice screens, both when the check
+  actively fails and when it has not run at all in longer than
+  `lexware_sync.check_api_key_interval_days` allows, for example because the cron entry itself
+  was removed.
 - `bin/console kimai:lexware-sync:reconcile-invoices` polls Lexware for invoice drafts that a
   webhook delivery might have missed, on the same interval as the order confirmation
   reconciliation poll above.
@@ -120,7 +127,9 @@ on:
   fails every day and a daily error mail for nothing. Schedule it once a day, and only from the
   day the check is switched on. It usually does nothing, because it only asks again when the
   stored confirmation says it is time. It exits with a failure code when the license is refused,
-  so that a cron mail or a monitoring system notices before a user does.
+  so that a cron mail or a monitoring system notices before a user does. Like the API key check,
+  every run also records a result shown as a warning banner on the triage and invoice screens
+  once it has not run in longer than `lexware_sync.check_license_interval_days` allows.
 
 Second, the real Lexware webhook subscriptions have to be registered, once this Kimai instance is
 reachable at the public HTTPS endpoint described in the Requirements section above. Click

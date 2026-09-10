@@ -22,3 +22,6 @@ services:
 
     KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseStore:
         public: true
+
+    KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck\HealthCheckResultStore:
+        public: true
