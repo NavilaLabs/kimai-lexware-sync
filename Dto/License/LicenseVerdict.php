@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace KimaiPlugin\KimaiLexwareSyncBundle\Service\License;
+namespace KimaiPlugin\KimaiLexwareSyncBundle\Dto\License;
+
+use KimaiPlugin\KimaiLexwareSyncBundle\Enum\License\LicenseState;
 
 final class LicenseVerdict
 {

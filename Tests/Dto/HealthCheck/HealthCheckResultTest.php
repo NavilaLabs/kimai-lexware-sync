@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Service\HealthCheck;
+namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Dto\HealthCheck;
 
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck\HealthCheckResult;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\HealthCheck\HealthCheckResult;
 use PHPUnit\Framework\TestCase;
 
 final class HealthCheckResultTest extends TestCase

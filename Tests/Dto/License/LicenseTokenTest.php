@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Service\License;
+namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Dto\License;
 
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseToken;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\MalformedLicenseToken;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\License\LicenseToken;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\License\MalformedLicenseToken;
 use PHPUnit\Framework\TestCase;
 
 final class LicenseTokenTest extends TestCase

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Service;
+namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Factory;
 
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareDocumentSummaryFactory;
+use KimaiPlugin\KimaiLexwareSyncBundle\Factory\LexwareDocumentSummaryFactory;
 use PHPUnit\Framework\TestCase;
 
 final class LexwareDocumentSummaryFactoryTest extends TestCase

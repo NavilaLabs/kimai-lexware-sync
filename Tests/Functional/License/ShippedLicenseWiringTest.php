@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Functional\License;
 
 use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedOrderConfirmation;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\AlwaysLicensedGate;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseGate;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseStore;

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Controller;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\WebhookEvent;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\WebhookEventRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\InvoiceSynchronizer;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareWebhookVerifier;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\OrderConfirmationSynchronizer;
 use Symfony\Component\HttpFoundation\JsonResponse;

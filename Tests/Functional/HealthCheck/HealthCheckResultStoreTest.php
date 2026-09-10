@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Functional\HealthCheck;
 
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck\HealthCheckResult;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\HealthCheck\HealthCheckResult;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck\HealthCheckResultStore;
 use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\FunctionalTestCase;
 

@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Service\License;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\License\LicenseToken;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\License\LicenseVerdict;
+use KimaiPlugin\KimaiLexwareSyncBundle\Enum\License\LicenseState;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\License\MalformedLicenseToken;
+
 final class LicenseEvaluator
 {
     public function __construct(private readonly LicenseSignatureVerifier $verifier)

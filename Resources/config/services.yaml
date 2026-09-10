@@ -33,7 +33,7 @@ services:
         alias: KimaiPlugin\KimaiLexwareSyncBundle\Service\License\AlwaysLicensedGate
         public: true
 
-    KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseClient:
+    KimaiPlugin\KimaiLexwareSyncBundle\Client\License\LicenseClient:
         arguments:
             $serviceUrl: '%lexware_sync.license_service_url%'
 

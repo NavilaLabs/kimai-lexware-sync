@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Service;
+namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Client;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Client\LexwareApiClient;
 use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\AmbiguousLexwareRequestException;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiClient;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\AmbiguousLexwareRequestException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\LexwareApiException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\InMemorySettingReader;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\Exception\TransportException;

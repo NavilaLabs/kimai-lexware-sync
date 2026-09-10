@@ -6,6 +6,7 @@ namespace KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck;
 
 use App\Entity\Configuration;
 use App\Repository\ConfigurationRepository;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\HealthCheck\HealthCheckResult;
 
 final class HealthCheckResultStore
 {

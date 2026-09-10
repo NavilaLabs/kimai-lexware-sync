@@ -10,14 +10,19 @@ use App\Entity\User;
 use App\Project\ProjectService;
 use App\Repository\TimesheetRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use KimaiPlugin\KimaiLexwareSyncBundle\Client\LexwareApiClient;
 use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedInvoice;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedInvoiceTimesheet;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\InvoiceLineShape;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\AmbiguousLexwareRequestException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\CustomerCurrencyMismatchException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\LexwareApiException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\License\LicenseRequiredException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedInvoiceRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedInvoiceTimesheetRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseGate;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseRequiredException;
 
 final class InvoiceProcessor
 {

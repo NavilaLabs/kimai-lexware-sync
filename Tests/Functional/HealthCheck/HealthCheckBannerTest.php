@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Functional\HealthCheck;
 
 use App\Entity\User;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\HealthCheck\HealthCheckResult;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedInvoice;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedOrderConfirmation;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck\HealthCheckResult;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck\HealthCheckResultStore;
 use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\SignsLicenseArtefacts;
 use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\WebTestCase;

@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace KimaiPlugin\KimaiLexwareSyncBundle\Service\License;
+namespace KimaiPlugin\KimaiLexwareSyncBundle\Exception\License;
+
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\License\LicenseVerdict;
 
 final class LicenseRequiredException extends \RuntimeException
 {

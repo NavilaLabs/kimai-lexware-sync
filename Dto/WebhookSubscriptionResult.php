@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace KimaiPlugin\KimaiLexwareSyncBundle\Service;
+namespace KimaiPlugin\KimaiLexwareSyncBundle\Dto;
 
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\WebhookSubscriptionOutcome;
 

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Contract;
 
 use App\Configuration\SystemConfiguration;
+use KimaiPlugin\KimaiLexwareSyncBundle\Client\LexwareApiClient;
 use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiClient;
 use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\FunctionalTestCase;
 use Symfony\Component\HttpClient\HttpClient;
 

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Command;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Client\License\LicenseClient;
 use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck\HealthCheckResult;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\HealthCheck\HealthCheckResult;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\License\LicenseServiceUnavailable;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck\HealthCheckResultStore;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseClient;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseEvaluator;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseServiceUnavailable;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseStore;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\PluginVersion;
 use Psr\Log\LoggerInterface;

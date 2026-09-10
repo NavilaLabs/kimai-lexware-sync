@@ -2,9 +2,12 @@
 
 declare(strict_types=1);
 
-namespace KimaiPlugin\KimaiLexwareSyncBundle\Service;
+namespace KimaiPlugin\KimaiLexwareSyncBundle\Client;
 
 use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\LexwarePayload;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\AmbiguousLexwareRequestException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\LexwareApiException;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;

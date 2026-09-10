@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Command;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Client\LexwareApiClient;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedOrderConfirmationRepository;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiClient;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\OrderConfirmationSynchronizer;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;

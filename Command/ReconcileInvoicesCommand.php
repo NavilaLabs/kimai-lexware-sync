@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Command;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Client\LexwareApiClient;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\ContactMappingRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedInvoiceRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\InvoiceSynchronizer;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiClient;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;

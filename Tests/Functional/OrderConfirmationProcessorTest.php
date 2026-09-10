@@ -8,12 +8,12 @@ use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Project;
 use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\ContactMapping;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedOrderConfirmation;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\UnprocessableOrderConfirmationException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\ContactMappingRepository;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\OrderConfirmationProcessor;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\UnprocessableOrderConfirmationException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\FunctionalTestCase;
 use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\SignsLicenseArtefacts;
 

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Service\License;
+namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Client\License;
 
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseClient;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseServiceUnavailable;
+use KimaiPlugin\KimaiLexwareSyncBundle\Client\License\LicenseClient;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\License\LicenseServiceUnavailable;
 use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\FakeLicenseHttpClient;
 use PHPUnit\Framework\TestCase;
 

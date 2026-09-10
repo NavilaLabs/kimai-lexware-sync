@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Service;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Client\LexwareApiClient;
 use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedInvoice;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedOrderConfirmation;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\InvoiceStatus;

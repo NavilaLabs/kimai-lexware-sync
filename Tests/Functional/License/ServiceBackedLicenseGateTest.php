@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Functional\License;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Client\License\LicenseClient;
 use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseClient;
+use KimaiPlugin\KimaiLexwareSyncBundle\Enum\License\LicenseState;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseEvaluator;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseSignatureVerifier;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseState;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseStore;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\PluginVersion;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\ServiceBackedLicenseGate;

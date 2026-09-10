@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace KimaiPlugin\KimaiLexwareSyncBundle\Service\License;
+namespace KimaiPlugin\KimaiLexwareSyncBundle\Client\License;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\License\LicenseServiceUnavailable;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 

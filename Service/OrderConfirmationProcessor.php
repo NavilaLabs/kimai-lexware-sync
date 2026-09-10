@@ -12,12 +12,15 @@ use App\Entity\Project;
 use App\Entity\User;
 use App\Project\ProjectService;
 use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\ContactMapping;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedOrderConfirmation;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedOrderConfirmationLine;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\CustomerCurrencyMismatchException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\License\LicenseRequiredException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\UnprocessableOrderConfirmationException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\ContactMappingRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseGate;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseRequiredException;
 
 final class OrderConfirmationProcessor
 {

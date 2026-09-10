@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace KimaiPlugin\KimaiLexwareSyncBundle\Service;
+namespace KimaiPlugin\KimaiLexwareSyncBundle\Factory;
+
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\LexwareDocumentSummary;
 
 final class LexwareDocumentSummaryFactory
 {

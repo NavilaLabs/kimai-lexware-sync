@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\HealthCheck\HealthCheckResult;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class HealthCheckStatusFormatter

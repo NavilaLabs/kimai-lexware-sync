@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Service;
+namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Dto;
 
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\LexwarePayload;
 use PHPUnit\Framework\TestCase;
 
 final class LexwarePayloadTest extends TestCase

@@ -6,9 +6,9 @@ namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Service;
 
 use App\Entity\Activity;
 use App\Entity\Timesheet;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\InvoiceLineShape;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\InvoiceLineBuilder;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\TimesheetRateResolver;
 use PHPUnit\Framework\TestCase;
 

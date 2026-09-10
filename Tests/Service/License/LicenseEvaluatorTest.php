@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Service\License;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Enum\License\LicenseState;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseEvaluator;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseSignatureVerifier;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseState;
 use PHPUnit\Framework\TestCase;
 
 final class LicenseEvaluatorTest extends TestCase

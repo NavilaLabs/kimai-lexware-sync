@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace KimaiPlugin\KimaiLexwareSyncBundle\Service;
+namespace KimaiPlugin\KimaiLexwareSyncBundle\Dto;
 
 /**
  * A Lexware response is an untyped array all the way down. Reading it directly means casting

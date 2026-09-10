@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Service;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Client\LexwareApiClient;
 use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\WebhookSubscriptionOutcome;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiClient;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\WebhookSubscriptionConnector;
 use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\InMemorySettingReader;
 use PHPUnit\Framework\TestCase;
