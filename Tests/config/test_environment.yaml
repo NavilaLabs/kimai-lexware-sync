@@ -25,3 +25,9 @@ services:
 
     KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck\HealthCheckResultStore:
         public: true
+
+    KimaiPlugin\KimaiLexwareSyncBundle\Service\OrderConfirmationLineResolver:
+        public: true
+
+    KimaiPlugin\KimaiLexwareSyncBundle\Service\ProjectChangeIndicator:
+        public: true

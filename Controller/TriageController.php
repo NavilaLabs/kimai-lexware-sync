@@ -17,8 +17,7 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Exception\UnprocessableOrderConfirmationE
 use KimaiPlugin\KimaiLexwareSyncBundle\Factory\LexwareDocumentSummaryFactory;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\Query\DocumentListQuery;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedOrderConfirmationRepository;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck\HealthCheckResultStore;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck\HealthCheckStatusFormatter;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck\HealthCheckBanner;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseGate;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseVerdictMessageFormatter;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\OrderConfirmationProcessor;
@@ -40,8 +39,7 @@ final class TriageController extends AbstractController
         private readonly EntityManagerInterface $entityManager,
         private readonly LicenseGate $licenseGate,
         private readonly LicenseVerdictMessageFormatter $licenseVerdictMessageFormatter,
-        private readonly HealthCheckResultStore $healthCheckResultStore,
-        private readonly HealthCheckStatusFormatter $healthCheckStatusFormatter,
+        private readonly HealthCheckBanner $healthCheckBanner,
     ) {
     }
 
@@ -73,7 +71,8 @@ final class TriageController extends AbstractController
             'counts' => $this->countByStatus($listQuery),
             'licenseState' => $verdict->state->key(),
             'licenseMessage' => $this->licenseVerdictMessageFormatter->format($verdict),
-            'healthCheckMessages' => $this->healthCheckMessages(),
+            'healthCheckMessages' => $this->healthCheckBanner->messages(),
+            'readLinesEnabled' => $this->configuration->isReadLinesEnabled(),
         ]);
     }
 
@@ -139,35 +138,6 @@ final class TriageController extends AbstractController
         $this->repository->save($orderConfirmation);
 
         return $this->redirectToTriage($listQuery);
-    }
-
-    /**
-     * @return list<array{check: string, state: string, message: string}>
-     */
-    private function healthCheckMessages(): array
-    {
-        $now = new \DateTimeImmutable();
-        $messages = [];
-
-        $apiKey = $this->healthCheckStatusFormatter->format(
-            $this->healthCheckResultStore->latest('api_key'),
-            $this->configuration->getCheckApiKeyIntervalDays(),
-            $now,
-        );
-        if ($apiKey !== null) {
-            $messages[] = ['check' => 'api_key'] + $apiKey;
-        }
-
-        $license = $this->healthCheckStatusFormatter->format(
-            $this->healthCheckResultStore->latest('license'),
-            $this->configuration->getCheckLicenseIntervalDays(),
-            $now,
-        );
-        if ($license !== null) {
-            $messages[] = ['check' => 'license'] + $license;
-        }
-
-        return $messages;
     }
 
     /**

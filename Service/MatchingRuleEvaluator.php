@@ -31,4 +31,13 @@ final class MatchingRuleEvaluator
 
         return $lineDescription !== null && preg_match($lineRegex, $lineDescription) === 1;
     }
+
+    public function matchesUnit(string $unitName, string $unitRegex): bool
+    {
+        if ($unitRegex === '') {
+            return true;
+        }
+
+        return preg_match($unitRegex, $unitName) === 1;
+    }
 }

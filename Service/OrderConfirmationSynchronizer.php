@@ -27,6 +27,7 @@ final class OrderConfirmationSynchronizer
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
         private readonly LicenseVerdictMessageFormatter $licenseVerdictMessageFormatter,
+        private readonly ProjectChangeIndicator $projectChangeIndicator,
     ) {
     }
 
@@ -89,6 +90,8 @@ final class OrderConfirmationSynchronizer
                     ));
                 }
             }
+
+            $this->projectChangeIndicator->synchronize($orderConfirmation);
 
             $this->entityManager->commit();
         } catch (\Throwable $exception) {

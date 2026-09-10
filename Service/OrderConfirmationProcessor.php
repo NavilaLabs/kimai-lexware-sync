@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Service;
 
 use App\Activity\ActivityService;
-use App\Configuration\SystemConfiguration;
 use App\Customer\CustomerService;
 use App\Entity\Customer;
 use App\Entity\Project;
@@ -29,10 +28,11 @@ final class OrderConfirmationProcessor
         private readonly CustomerService $customerService,
         private readonly ProjectService $projectService,
         private readonly ActivityService $activityService,
-        private readonly SystemConfiguration $systemConfiguration,
         private readonly MatchingRuleEvaluator $matchingRuleEvaluator,
         private readonly LicenseGate $licenseGate,
         private readonly LexwareSyncConfiguration $configuration,
+        private readonly OrderConfirmationLineActivityFactory $activityFactory,
+        private readonly ThemeColorPicker $colorPicker,
     ) {
     }
 
@@ -68,7 +68,7 @@ final class OrderConfirmationProcessor
         $project->setOrderNumber($orderConfirmation->getVoucherNumber());
         $project->setOrderDate(\DateTime::createFromImmutable($orderConfirmation->getVoucherDate()));
         $project->setComment($orderConfirmation->getTitle());
-        $project->setColor($this->pickRandomColor());
+        $project->setColor($this->colorPicker->pick());
         $this->projectService->saveProject($project);
 
         $orderConfirmation->setCustomer($customer);
@@ -146,61 +146,51 @@ final class OrderConfirmationProcessor
      */
     private function convertLines(TrackedOrderConfirmation $orderConfirmation, array $lineItems, Project $project, string $lineRegex): void
     {
+        $deriveBudgetEnabled = $this->configuration->isDeriveBudgetEnabled();
+        $budgetUnitRegex = $this->configuration->getBudgetUnitRegex();
+        $projectTimeBudget = 0;
+        $projectBudget = 0.0;
+
         foreach ($lineItems as $position => $lineItem) {
             $type = $lineItem->string('type', 'custom');
             $name = $lineItem->string('name');
             $description = $lineItem->nullableString('description');
+            $quantity = $lineItem->float('quantity');
+            $unitName = $lineItem->string('unitName');
+            $netAmount = $lineItem->float('lineItemAmount');
 
             $matched = $this->matchingRuleEvaluator->matchesLine($type, $name, $description, $lineRegex);
+            $isHourLine = $deriveBudgetEnabled && $this->matchingRuleEvaluator->matchesUnit($unitName, $budgetUnitRegex);
 
-            $line = new TrackedOrderConfirmationLine($orderConfirmation, $position, $type, $name, $description, $matched);
+            $line = new TrackedOrderConfirmationLine($orderConfirmation, $position, $type, $name, $description, $matched, $quantity, $unitName, $netAmount, $isHourLine);
             $orderConfirmation->addLine($line);
+
+            if ($isHourLine) {
+                $projectTimeBudget += $this->activityFactory->timeBudgetFor($quantity);
+                $projectBudget += $netAmount;
+            }
 
             if (!$matched) {
                 continue;
             }
 
-            $activityName = $this->resolveActivityName($name, $description);
-            if ($activityName === null) {
+            $activity = $this->activityFactory->createActivity($project, $name, $description);
+            if ($activity === null) {
                 continue;
             }
 
-            $activity = $this->activityService->createNewActivity($project);
-            $activity->setName($activityName);
-            $activity->setColor($this->pickRandomColor());
+            if ($isHourLine) {
+                $this->activityFactory->applyBudget($activity, $quantity, $netAmount);
+            }
+
             $this->activityService->saveActivity($activity);
 
             $line->setActivity($activity);
         }
-    }
 
-    private function resolveActivityName(string $name, ?string $description): ?string
-    {
-        if ($this->isUsableAsActivityName($name)) {
-            return $name;
+        if ($deriveBudgetEnabled) {
+            $project->setTimeBudget($projectTimeBudget);
+            $project->setBudget($projectBudget);
         }
-
-        if ($description !== null && $this->isUsableAsActivityName($description)) {
-            return $description;
-        }
-
-        return null;
-    }
-
-    private function isUsableAsActivityName(string $value): bool
-    {
-        $length = \strlen($value);
-
-        return $length >= 2 && $length <= 150;
-    }
-
-    private function pickRandomColor(): string
-    {
-        $colors = array_values($this->systemConfiguration->getThemeColors());
-        if (\count($colors) === 0) {
-            return '#c0c0c0';
-        }
-
-        return $colors[array_rand($colors)];
     }
 }

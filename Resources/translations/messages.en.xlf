@@ -104,7 +104,7 @@
             </trans-unit>
             <trans-unit id="lexware_sync.connect_webhooks_running" resname="lexware_sync.connect_webhooks_running">
                 <source>lexware_sync.connect_webhooks_running</source>
-                <target>Connecting…</target>
+                <target>Connectingâ¦</target>
             </trans-unit>
             <trans-unit id="lexware_sync.connect_webhooks_result" resname="lexware_sync.connect_webhooks_result">
                 <source>lexware_sync.connect_webhooks_result</source>
@@ -145,6 +145,74 @@
             <trans-unit id="lexware_sync.triage.changed_after_conversion" resname="lexware_sync.triage.changed_after_conversion">
                 <source>lexware_sync.triage.changed_after_conversion</source>
                 <target>The document changed in Lexware after it was converted</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.triage.resolve_lines" resname="lexware_sync.triage.resolve_lines">
+                <source>lexware_sync.triage.resolve_lines</source>
+                <target>Resolve changes</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.triage.lines_resolved" resname="lexware_sync.triage.lines_resolved">
+                <source>lexware_sync.triage.lines_resolved</source>
+                <target>The line changes have been resolved</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.title" resname="lexware_sync.resolve_lines.title">
+                <source>lexware_sync.resolve_lines.title</source>
+                <target>Resolve line changes</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.status" resname="lexware_sync.resolve_lines.status">
+                <source>lexware_sync.resolve_lines.status</source>
+                <target>Status</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.position" resname="lexware_sync.resolve_lines.position">
+                <source>lexware_sync.resolve_lines.position</source>
+                <target>Position</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.quantity" resname="lexware_sync.resolve_lines.quantity">
+                <source>lexware_sync.resolve_lines.quantity</source>
+                <target>Quantity</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.unit_name" resname="lexware_sync.resolve_lines.unit_name">
+                <source>lexware_sync.resolve_lines.unit_name</source>
+                <target>Unit</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.net_amount" resname="lexware_sync.resolve_lines.net_amount">
+                <source>lexware_sync.resolve_lines.net_amount</source>
+                <target>Net amount</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.status.unchanged" resname="lexware_sync.resolve_lines.status.unchanged">
+                <source>lexware_sync.resolve_lines.status.unchanged</source>
+                <target>Unchanged</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.status.changed" resname="lexware_sync.resolve_lines.status.changed">
+                <source>lexware_sync.resolve_lines.status.changed</source>
+                <target>Changed</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.status.new" resname="lexware_sync.resolve_lines.status.new">
+                <source>lexware_sync.resolve_lines.status.new</source>
+                <target>New</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.status.removed" resname="lexware_sync.resolve_lines.status.removed">
+                <source>lexware_sync.resolve_lines.status.removed</source>
+                <target>Removed</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.no_lines" resname="lexware_sync.resolve_lines.no_lines">
+                <source>lexware_sync.resolve_lines.no_lines</source>
+                <target>There are no lines to compare</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.budget_disabled_hint" resname="lexware_sync.resolve_lines.budget_disabled_hint">
+                <source>lexware_sync.resolve_lines.budget_disabled_hint</source>
+                <target>Budget derivation is switched off. The selected changes are applied to the recorded lines, time and cost budgets are left untouched.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.confirm" resname="lexware_sync.resolve_lines.confirm">
+                <source>lexware_sync.resolve_lines.confirm</source>
+                <target>Really apply the selected changes?</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.submit" resname="lexware_sync.resolve_lines.submit">
+                <source>lexware_sync.resolve_lines.submit</source>
+                <target>Apply selected changes</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.project.changed_column" resname="lexware_sync.project.changed_column">
+                <source>lexware_sync.project.changed_column</source>
+                <target>Lexware change</target>
             </trans-unit>
             <trans-unit id="lexware_sync.origin" resname="lexware_sync.origin">
                 <source>lexware_sync.origin</source>

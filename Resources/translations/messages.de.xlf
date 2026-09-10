@@ -146,6 +146,74 @@
                 <source>lexware_sync.triage.changed_after_conversion</source>
                 <target>Der Beleg wurde in Lexware nach der Umwandlung geändert</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.triage.resolve_lines" resname="lexware_sync.triage.resolve_lines">
+                <source>lexware_sync.triage.resolve_lines</source>
+                <target>Änderungen auflösen</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.triage.lines_resolved" resname="lexware_sync.triage.lines_resolved">
+                <source>lexware_sync.triage.lines_resolved</source>
+                <target>Änderungen an den Positionen wurden bearbeitet</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.title" resname="lexware_sync.resolve_lines.title">
+                <source>lexware_sync.resolve_lines.title</source>
+                <target>Positionsänderungen auflösen</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.status" resname="lexware_sync.resolve_lines.status">
+                <source>lexware_sync.resolve_lines.status</source>
+                <target>Status</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.position" resname="lexware_sync.resolve_lines.position">
+                <source>lexware_sync.resolve_lines.position</source>
+                <target>Position</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.quantity" resname="lexware_sync.resolve_lines.quantity">
+                <source>lexware_sync.resolve_lines.quantity</source>
+                <target>Menge</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.unit_name" resname="lexware_sync.resolve_lines.unit_name">
+                <source>lexware_sync.resolve_lines.unit_name</source>
+                <target>Einheit</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.net_amount" resname="lexware_sync.resolve_lines.net_amount">
+                <source>lexware_sync.resolve_lines.net_amount</source>
+                <target>Nettobetrag</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.status.unchanged" resname="lexware_sync.resolve_lines.status.unchanged">
+                <source>lexware_sync.resolve_lines.status.unchanged</source>
+                <target>Unverändert</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.status.changed" resname="lexware_sync.resolve_lines.status.changed">
+                <source>lexware_sync.resolve_lines.status.changed</source>
+                <target>Geändert</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.status.new" resname="lexware_sync.resolve_lines.status.new">
+                <source>lexware_sync.resolve_lines.status.new</source>
+                <target>Neu</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.status.removed" resname="lexware_sync.resolve_lines.status.removed">
+                <source>lexware_sync.resolve_lines.status.removed</source>
+                <target>Entfernt</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.no_lines" resname="lexware_sync.resolve_lines.no_lines">
+                <source>lexware_sync.resolve_lines.no_lines</source>
+                <target>Es gibt keine Positionen zu vergleichen</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.budget_disabled_hint" resname="lexware_sync.resolve_lines.budget_disabled_hint">
+                <source>lexware_sync.resolve_lines.budget_disabled_hint</source>
+                <target>Die Budgetableitung ist ausgeschaltet. Die ausgewählten Änderungen werden in den erfassten Positionen nachgezogen, Zeit- und Kostenbudgets bleiben dabei unangetastet.</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.confirm" resname="lexware_sync.resolve_lines.confirm">
+                <source>lexware_sync.resolve_lines.confirm</source>
+                <target>Ausgewählte Änderungen wirklich übernehmen?</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.resolve_lines.submit" resname="lexware_sync.resolve_lines.submit">
+                <source>lexware_sync.resolve_lines.submit</source>
+                <target>Ausgewählte Änderungen übernehmen</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.project.changed_column" resname="lexware_sync.project.changed_column">
+                <source>lexware_sync.project.changed_column</source>
+                <target>Lexware-Änderung</target>
+            </trans-unit>
             <trans-unit id="lexware_sync.origin" resname="lexware_sync.origin">
                 <source>lexware_sync.origin</source>
                 <target>Lexware Auftragsbestätigung</target>

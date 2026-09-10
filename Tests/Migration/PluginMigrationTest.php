@@ -59,6 +59,58 @@ final class PluginMigrationTest extends MigrationTestCase
         self::assertSame('', $row['contact_name'], 'A row that predates the column should end up with an empty contact name, not with a broken migration.');
     }
 
+    public function testUpgradingAnInstallationWithExistingLinesFillsTheNewColumnsWithSafeDefaults(): void
+    {
+        $this->migrate(self::FIRST_VERSION);
+        $this->givenTrackedOrderConfirmation('lexware-upgrade-2', 'AB-2026-901');
+        $idStatement = $this->connection->query(
+            "SELECT id FROM kimai2_ext_lexware_order_confirmation WHERE lexware_id = 'lexware-upgrade-2'"
+        );
+        self::assertNotFalse($idStatement);
+        $orderConfirmationId = $idStatement->fetchColumn();
+        self::assertNotFalse($orderConfirmationId);
+        $this->givenTrackedOrderConfirmationLine((int) $orderConfirmationId);
+
+        self::assertNotContains(
+            'quantity',
+            $this->columnNames('kimai2_ext_lexware_order_confirmation_line'),
+            'The starting point of this test is a schema from before the budget fields were added.'
+        );
+
+        $this->migrate();
+
+        $statement = $this->connection->query(
+            'SELECT quantity, unit_name, net_amount, is_hour_line, removed_from_source
+             FROM kimai2_ext_lexware_order_confirmation_line
+             WHERE order_confirmation_id = ' . (int) $orderConfirmationId
+        );
+        self::assertNotFalse($statement);
+
+        $row = $statement->fetch(\PDO::FETCH_ASSOC);
+        self::assertIsArray($row, 'The tracked order confirmation line did not survive the upgrade.');
+        self::assertSame(0.0, (float) $row['quantity']);
+        self::assertSame('', $row['unit_name']);
+        self::assertSame(0.0, (float) $row['net_amount']);
+        self::assertSame(0, (int) $row['is_hour_line']);
+        self::assertSame(0, (int) $row['removed_from_source']);
+    }
+
+    private function givenTrackedOrderConfirmationLine(int $orderConfirmationId): void
+    {
+        $statement = $this->connection->prepare(
+            'INSERT INTO kimai2_ext_lexware_order_confirmation_line
+                (order_confirmation_id, position, type, name, description, matched)
+             VALUES (:order_confirmation_id, 0, :type, :name, :description, 0)'
+        );
+
+        $statement->execute([
+            'order_confirmation_id' => $orderConfirmationId,
+            'type' => 'custom',
+            'name' => 'Development',
+            'description' => null,
+        ]);
+    }
+
     private function givenTrackedOrderConfirmation(string $lexwareId, string $voucherNumber): void
     {
         $statement = $this->connection->prepare(

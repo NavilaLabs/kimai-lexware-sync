@@ -15,6 +15,15 @@ lexware_sync_triage:
     defaults:
         _locale: '%locale%'
 
+lexware_sync_triage_resolve_lines:
+    resource: '@KimaiLexwareSyncBundle/Controller/OrderConfirmationLineResolutionController.php'
+    type: attribute
+    prefix: /{_locale}
+    requirements:
+        _locale: '%app_locales%'
+    defaults:
+        _locale: '%locale%'
+
 lexware_sync_invoices:
     resource: '@KimaiLexwareSyncBundle/Controller/InvoiceAssignmentController.php'
     type: attribute

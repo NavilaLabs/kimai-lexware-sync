@@ -146,6 +146,77 @@ final class OrderConfirmationProcessorTest extends FunctionalTestCase
         self::assertSame('AB-2026-062', $orderConfirmation->getProject()?->getName());
     }
 
+    public function testDerivedBudgetSumsOnlyTheHourLinesOntoTheirActivitiesAndTheProject(): void
+    {
+        $this->givenAConfirmedLicense();
+        $this->configure('lexware_sync.derive_budget_enabled', true);
+        $orderConfirmation = $this->trackedOrderConfirmation('lexware-id-budget-1', 'AB-2026-100', 'Contact GmbH');
+
+        $this->processor()->convert($orderConfirmation, new LexwarePayload($this->budgetedPayload()), null, '', true);
+        $this->entityManager()->flush();
+
+        $project = $orderConfirmation->getProject();
+        self::assertInstanceOf(Project::class, $project);
+        self::assertSame(1200.0, $project->getBudget());
+        self::assertSame(43200, $project->getTimeBudget());
+
+        $activities = $this->entityManager()->getRepository(Activity::class)->findBy(['project' => $project]);
+        $byName = [];
+        foreach ($activities as $activity) {
+            $byName[$activity->getName()] = $activity;
+        }
+
+        self::assertSame(28800, $byName['Development']->getTimeBudget());
+        self::assertSame(800.0, $byName['Development']->getBudget());
+        self::assertSame(0, $byName['Material']->getTimeBudget());
+        self::assertSame(0.0, $byName['Material']->getBudget());
+    }
+
+    public function testDerivedBudgetIsNeverSetWhenTheSettingIsOff(): void
+    {
+        $this->givenAConfirmedLicense();
+        $orderConfirmation = $this->trackedOrderConfirmation('lexware-id-budget-2', 'AB-2026-101', 'Contact GmbH');
+
+        $this->processor()->convert($orderConfirmation, new LexwarePayload($this->budgetedPayload()), null, '', true);
+        $this->entityManager()->flush();
+
+        self::assertSame(0.0, $orderConfirmation->getProject()?->getBudget());
+    }
+
+    public function testTheProjectBudgetCountsAnHourLineThatTheLineRegexDidNotMatch(): void
+    {
+        $this->givenAConfirmedLicense();
+        $this->configure('lexware_sync.derive_budget_enabled', true);
+        $orderConfirmation = $this->trackedOrderConfirmation('lexware-id-budget-3', 'AB-2026-102', 'Contact GmbH');
+
+        $this->processor()->convert($orderConfirmation, new LexwarePayload($this->budgetedPayload()), null, '/^Development$/', true);
+        $this->entityManager()->flush();
+
+        $project = $orderConfirmation->getProject();
+        self::assertInstanceOf(Project::class, $project);
+
+        $activities = $this->entityManager()->getRepository(Activity::class)->findBy(['project' => $project]);
+        self::assertCount(1, $activities, 'Only the line the regex matched becomes an activity.');
+
+        self::assertSame(43200, $project->getTimeBudget(), 'Consulting is an hour line too, so the project budget covers it even without an activity.');
+        self::assertSame(1200.0, $project->getBudget());
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function budgetedPayload(): array
+    {
+        return [
+            'address' => ['contactId' => 'contact-1', 'name' => 'Contact GmbH'],
+            'lineItems' => [
+                ['type' => 'custom', 'name' => 'Development', 'description' => 'Building the thing', 'quantity' => 8, 'unitName' => 'Stunden', 'lineItemAmount' => 800.0],
+                ['type' => 'custom', 'name' => 'Consulting', 'description' => 'Talking about the thing', 'quantity' => 4, 'unitName' => 'Stunden', 'lineItemAmount' => 400.0],
+                ['type' => 'custom', 'name' => 'Material', 'description' => 'A physical thing', 'quantity' => 2, 'unitName' => 'Stück', 'lineItemAmount' => 100.0],
+            ],
+        ];
+    }
+
     private function processor(): OrderConfirmationProcessor
     {
         return $this->service(OrderConfirmationProcessor::class);

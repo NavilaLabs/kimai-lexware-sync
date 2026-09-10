@@ -12,9 +12,12 @@ final class LexwareSyncConfiguration
     public const PROJECT_TITLE_ORDER_CONFIRMATION_TITLE = 'order_confirmation_title';
     public const PROJECT_TITLE_CUSTOMER_AND_TITLE = 'customer_and_title';
 
-    private const DEFAULT_RECONCILE_INTERVAL_MINUTES = 30;
-    private const DEFAULT_CHECK_API_KEY_INTERVAL_DAYS = 7;
-    private const DEFAULT_CHECK_LICENSE_INTERVAL_DAYS = 1;
+    public const DEFAULT_RECONCILE_INTERVAL_MINUTES = 30;
+    public const DEFAULT_CHECK_API_KEY_INTERVAL_DAYS = 7;
+    public const DEFAULT_CHECK_LICENSE_INTERVAL_DAYS = 1;
+    public const DEFAULT_BUDGET_UNIT_REGEX = '/^(Stunden?|Std\.?|hours?|hrs?|h)$/i';
+    public const DEFAULT_PROJECT_TITLE_SOURCE = self::PROJECT_TITLE_VOUCHER_NUMBER;
+    public const DEFAULT_PROJECT_COMPLETION_MODE = self::PROJECT_COMPLETION_END_DATE;
 
     public function __construct(private readonly SettingReader $settingReader)
     {
@@ -66,7 +69,7 @@ final class LexwareSyncConfiguration
     {
         $value = $this->readText('lexware_sync.project_completion_mode');
 
-        return $value === self::PROJECT_COMPLETION_HIDDEN ? self::PROJECT_COMPLETION_HIDDEN : self::PROJECT_COMPLETION_END_DATE;
+        return $value === self::PROJECT_COMPLETION_HIDDEN ? self::PROJECT_COMPLETION_HIDDEN : self::DEFAULT_PROJECT_COMPLETION_MODE;
     }
 
     public function getLicenseKey(): string
@@ -94,8 +97,20 @@ final class LexwareSyncConfiguration
 
         return match ($value) {
             self::PROJECT_TITLE_ORDER_CONFIRMATION_TITLE, self::PROJECT_TITLE_CUSTOMER_AND_TITLE => $value,
-            default => self::PROJECT_TITLE_VOUCHER_NUMBER,
+            default => self::DEFAULT_PROJECT_TITLE_SOURCE,
         };
+    }
+
+    public function isDeriveBudgetEnabled(): bool
+    {
+        return $this->readFlag('lexware_sync.derive_budget_enabled');
+    }
+
+    public function getBudgetUnitRegex(): string
+    {
+        $value = $this->readText('lexware_sync.budget_unit_regex');
+
+        return $value !== '' ? $value : self::DEFAULT_BUDGET_UNIT_REGEX;
     }
 
     private function readText(string $name): string

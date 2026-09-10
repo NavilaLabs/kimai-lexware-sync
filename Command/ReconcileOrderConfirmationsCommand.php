@@ -8,6 +8,7 @@ use KimaiPlugin\KimaiLexwareSyncBundle\Client\LexwareApiClient;
 use KimaiPlugin\KimaiLexwareSyncBundle\Dto\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedOrderConfirmationRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\OrderConfirmationSynchronizer;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\ProjectChangeIndicator;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -22,6 +23,7 @@ final class ReconcileOrderConfirmationsCommand extends Command
         private readonly LexwareApiClient $client,
         private readonly TrackedOrderConfirmationRepository $repository,
         private readonly OrderConfirmationSynchronizer $synchronizer,
+        private readonly ProjectChangeIndicator $projectChangeIndicator,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct();
@@ -62,6 +64,8 @@ final class ReconcileOrderConfirmationsCommand extends Command
             $isLastPage = $result->boolean('last', true);
             $page++;
         }
+
+        $this->projectChangeIndicator->synchronizeAll();
 
         $io->success(\sprintf('Reconciled %d order confirmation(s), %d failed.', $synchronized, $failed));
 

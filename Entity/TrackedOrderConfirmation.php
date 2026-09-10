@@ -139,6 +139,11 @@ class TrackedOrderConfirmation
         return $this->changedAfterConversion;
     }
 
+    public function clearChangedAfterConversion(): void
+    {
+        $this->changedAfterConversion = false;
+    }
+
     public function getProject(): ?Project
     {
         return $this->project;

@@ -35,6 +35,21 @@ class TrackedOrderConfirmationLine
     #[ORM\Column(name: 'matched', type: 'boolean')]
     private bool $matched;
 
+    #[ORM\Column(name: 'quantity', type: 'float')]
+    private float $quantity;
+
+    #[ORM\Column(name: 'unit_name', type: 'string', length: 255)]
+    private string $unitName;
+
+    #[ORM\Column(name: 'net_amount', type: 'float')]
+    private float $netAmount;
+
+    #[ORM\Column(name: 'is_hour_line', type: 'boolean')]
+    private bool $isHourLine;
+
+    #[ORM\Column(name: 'removed_from_source', type: 'boolean')]
+    private bool $removedFromSource = false;
+
     #[ORM\ManyToOne(targetEntity: Activity::class)]
     #[ORM\JoinColumn(name: 'activity_id', nullable: true, onDelete: 'SET NULL')]
     private ?Activity $activity = null;
@@ -45,7 +60,11 @@ class TrackedOrderConfirmationLine
         string $type,
         string $name,
         ?string $description,
-        bool $matched
+        bool $matched,
+        float $quantity,
+        string $unitName,
+        float $netAmount,
+        bool $isHourLine
     ) {
         $this->orderConfirmation = $orderConfirmation;
         $this->position = $position;
@@ -53,6 +72,10 @@ class TrackedOrderConfirmationLine
         $this->name = $name;
         $this->description = $description;
         $this->matched = $matched;
+        $this->quantity = $quantity;
+        $this->unitName = $unitName;
+        $this->netAmount = $netAmount;
+        $this->isHourLine = $isHourLine;
     }
 
     public function getId(): ?int
@@ -78,6 +101,52 @@ class TrackedOrderConfirmationLine
     public function isMatched(): bool
     {
         return $this->matched;
+    }
+
+    public function getPosition(): int
+    {
+        return $this->position;
+    }
+
+    public function getQuantity(): float
+    {
+        return $this->quantity;
+    }
+
+    public function getUnitName(): string
+    {
+        return $this->unitName;
+    }
+
+    public function getNetAmount(): float
+    {
+        return $this->netAmount;
+    }
+
+    public function isHourLine(): bool
+    {
+        return $this->isHourLine;
+    }
+
+    public function isRemovedFromSource(): bool
+    {
+        return $this->removedFromSource;
+    }
+
+    public function updateFromLexwareLine(string $name, ?string $description, float $quantity, string $unitName, float $netAmount, bool $isHourLine): void
+    {
+        $this->name = $name;
+        $this->description = $description;
+        $this->quantity = $quantity;
+        $this->unitName = $unitName;
+        $this->netAmount = $netAmount;
+        $this->isHourLine = $isHourLine;
+        $this->removedFromSource = false;
+    }
+
+    public function markRemovedFromSource(): void
+    {
+        $this->removedFromSource = true;
     }
 
     public function getActivity(): ?Activity

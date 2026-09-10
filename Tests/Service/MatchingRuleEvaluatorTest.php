@@ -46,4 +46,20 @@ final class MatchingRuleEvaluatorTest extends TestCase
         self::assertTrue($evaluator->matchesLine('custom', 'Position', 'enthält Beratung', '/Beratung/'));
         self::assertFalse($evaluator->matchesLine('custom', 'Lieferung', 'Versandkosten', '/Beratung/'));
     }
+
+    public function testEmptyUnitRegexMatchesEverything(): void
+    {
+        $evaluator = new MatchingRuleEvaluator();
+
+        self::assertTrue($evaluator->matchesUnit('Stück', ''));
+    }
+
+    public function testUnitRegexMustMatchTheWholeUnitName(): void
+    {
+        $evaluator = new MatchingRuleEvaluator();
+
+        self::assertTrue($evaluator->matchesUnit('Stunden', '/^(Stunden?|Std\.?|hours?|hrs?|h)$/i'));
+        self::assertTrue($evaluator->matchesUnit('hours', '/^(Stunden?|Std\.?|hours?|hrs?|h)$/i'));
+        self::assertFalse($evaluator->matchesUnit('Stück', '/^(Stunden?|Std\.?|hours?|hrs?|h)$/i'));
+    }
 }

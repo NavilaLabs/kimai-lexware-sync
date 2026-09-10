@@ -1,0 +1,95 @@
+{% extends 'base.html.twig' %}
+
+{% block main %}
+    {{ include('@KimaiLexwareSync/license/banner.html.twig') }}
+    {{ include('@KimaiLexwareSync/health_check/banner.html.twig') }}
+
+    {% embed '@theme/embeds/card.html.twig' %}
+        {% block box_title %}{{ 'lexware_sync.resolve_lines.title'|trans }} {{ orderConfirmation.voucherNumber }}{% endblock %}
+        {% block box_body %}
+            {% if not deriveBudgetEnabled %}
+                <div class="alert alert-info">{{ 'lexware_sync.resolve_lines.budget_disabled_hint'|trans }}</div>
+            {% endif %}
+            <form method="post" action="{{ path('lexware_sync_triage_apply_lines', {id: orderConfirmation.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('lexware_sync_triage') }}">
+                <div class="table-responsive">
+                    <table class="table table-vcenter">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>{{ 'lexware_sync.resolve_lines.status'|trans }}</th>
+                                <th>{{ 'lexware_sync.resolve_lines.position'|trans }}</th>
+                                <th class="text-end">{{ 'lexware_sync.resolve_lines.quantity'|trans }}</th>
+                                <th>{{ 'lexware_sync.resolve_lines.unit_name'|trans }}</th>
+                                <th class="text-end">{{ 'lexware_sync.resolve_lines.net_amount'|trans }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in entries %}
+                                {% set isChanged = entry.status.value == 'changed' %}
+                                {% set quantityChanged = isChanged and entry.oldQuantity != entry.newQuantity %}
+                                {% set unitNameChanged = isChanged and entry.oldUnitName != entry.newUnitName %}
+                                {% set netAmountChanged = isChanged and entry.oldNetAmount != entry.newNetAmount %}
+                                {% set nameChanged = isChanged and entry.oldName != entry.newName %}
+                                {% set descriptionChanged = isChanged and entry.oldDescription != entry.newDescription %}
+                                {% set rowSpan = isChanged ? 2 : 1 %}
+
+                                <tr class="border-top">
+                                    <td colspan="6" class="text-muted small fw-semibold pt-3">
+                                        {% if nameChanged %}
+                                            {{ entry.oldName }} &rarr; {{ entry.newName }}
+                                        {% else %}
+                                            {{ entry.newName ?? entry.oldName }}
+                                        {% endif %}
+                                        {% if descriptionChanged %}
+                                            <div class="fw-normal">{{ entry.oldDescription }} &rarr; {{ entry.newDescription }}</div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if entry.status.value in ['changed', 'removed', 'unchanged'] %}
+                                    <tr data-line-diff-status="{{ entry.status.value }}" class="{{ entry.status.value == 'removed' ? 'table-danger' : '' }}">
+                                        {% if entry.status.value != 'unchanged' %}
+                                            <td rowspan="{{ rowSpan }}"><input type="checkbox" name="positions[]" value="{{ entry.position }}" checked></td>
+                                        {% else %}
+                                            <td></td>
+                                        {% endif %}
+                                        <td rowspan="{{ rowSpan }}">{{ ('lexware_sync.resolve_lines.status.' ~ entry.status.value)|trans }}</td>
+                                        <td rowspan="{{ rowSpan }}">{{ entry.position }}</td>
+                                        <td class="text-end {{ quantityChanged ? 'fw-bold' : '' }}">{{ entry.oldQuantity }}</td>
+                                        <td class="{{ unitNameChanged ? 'fw-bold' : '' }}">{{ entry.oldUnitName }}</td>
+                                        <td class="text-end {{ netAmountChanged ? 'fw-bold' : '' }}">{{ entry.oldNetAmount|money(currency) }}</td>
+                                    </tr>
+                                {% endif %}
+                                {% if entry.status.value == 'new' %}
+                                    <tr data-line-diff-status="new" class="table-success">
+                                        <td><input type="checkbox" name="positions[]" value="{{ entry.position }}" checked></td>
+                                        <td>{{ 'lexware_sync.resolve_lines.status.new'|trans }}</td>
+                                        <td>{{ entry.position }}</td>
+                                        <td class="text-end">{{ entry.newQuantity }}</td>
+                                        <td>{{ entry.newUnitName }}</td>
+                                        <td class="text-end">{{ entry.newNetAmount|money(currency) }}</td>
+                                    </tr>
+                                {% elseif isChanged %}
+                                    <tr data-line-diff-row="new-value" class="table-success">
+                                        <td class="text-end {{ quantityChanged ? 'fw-bold' : '' }}">{{ entry.newQuantity }}</td>
+                                        <td class="{{ unitNameChanged ? 'fw-bold' : '' }}">{{ entry.newUnitName }}</td>
+                                        <td class="text-end {{ netAmountChanged ? 'fw-bold' : '' }}">{{ entry.newNetAmount|money(currency) }}</td>
+                                    </tr>
+                                {% endif %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-muted">{{ 'lexware_sync.resolve_lines.no_lines'|trans }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <button type="submit" class="btn btn-primary confirmation-link"
+                        data-question="{{ 'lexware_sync.resolve_lines.confirm'|trans }}">
+                    {{ 'lexware_sync.resolve_lines.submit'|trans }}
+                </button>
+                <a href="{{ path('lexware_sync_triage') }}" class="btn btn-cancel">{{ 'cancel'|trans }}</a>
+            </form>
+        {% endblock %}
+    {% endembed %}
+{% endblock %}

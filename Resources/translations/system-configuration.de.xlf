@@ -58,6 +58,14 @@
                 <source>lexware_sync.check_license_interval_days</source>
                 <target>Tage zwischen den geplanten Lizenz-Gesundheitsprüfungen, dokumentiert nur den erwarteten Cron-Rhythmus, erzwingt selbst nichts</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.derive_budget_enabled" resname="lexware_sync.derive_budget_enabled">
+                <source>lexware_sync.derive_budget_enabled</source>
+                <target>Aus Stunden-Positionen der Auftragsbestätigung ein Zeit- und Kostenbudget für die Tätigkeit und das Projekt ableiten, wirkt nur zusammen mit der Positionserfassung oben</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.budget_unit_regex" resname="lexware_sync.budget_unit_regex">
+                <source>lexware_sync.budget_unit_regex</source>
+                <target>Muster, das die Einheit einer Position als Stunden erkennt, anders als die übrigen Muster oben bedeutet ein leeres Feld hier nicht, dass jede Einheit passt, sondern verwendet einen sinnvollen Standard (Stunden, Std., hours, h)</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

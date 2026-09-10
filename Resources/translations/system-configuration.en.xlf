@@ -58,6 +58,14 @@
                 <source>lexware_sync.check_license_interval_days</source>
                 <target>Days between scheduled license health checks, only documents the expected cron cadence, enforces nothing itself</target>
             </trans-unit>
+            <trans-unit id="lexware_sync.derive_budget_enabled" resname="lexware_sync.derive_budget_enabled">
+                <source>lexware_sync.derive_budget_enabled</source>
+                <target>Derive a time and cost budget for the activity and the project from hour based order confirmation lines, only has an effect together with line reading above</target>
+            </trans-unit>
+            <trans-unit id="lexware_sync.budget_unit_regex" resname="lexware_sync.budget_unit_regex">
+                <source>lexware_sync.budget_unit_regex</source>
+                <target>Pattern that recognises a line's unit as hours, unlike the other patterns above an empty field here does not match every unit, it uses a sensible default instead (Stunden, Std., hours, h)</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

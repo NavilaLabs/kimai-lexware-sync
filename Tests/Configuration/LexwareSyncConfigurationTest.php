@@ -94,4 +94,36 @@ final class LexwareSyncConfigurationTest extends TestCase
 
         self::assertSame(LexwareSyncConfiguration::PROJECT_TITLE_VOUCHER_NUMBER, $configuration->getProjectTitleSource());
     }
+
+    public function testDeriveBudgetIsDisabledByDefault(): void
+    {
+        $configuration = new LexwareSyncConfiguration(new InMemorySettingReader());
+
+        self::assertFalse($configuration->isDeriveBudgetEnabled());
+    }
+
+    public function testDeriveBudgetCanBeEnabled(): void
+    {
+        $configuration = new LexwareSyncConfiguration(new InMemorySettingReader([
+            'lexware_sync.derive_budget_enabled' => '1',
+        ]));
+
+        self::assertTrue($configuration->isDeriveBudgetEnabled());
+    }
+
+    public function testBudgetUnitRegexFallsBackToAHardcodedDefaultWhenUnset(): void
+    {
+        $configuration = new LexwareSyncConfiguration(new InMemorySettingReader());
+
+        self::assertSame('/^(Stunden?|Std\.?|hours?|hrs?|h)$/i', $configuration->getBudgetUnitRegex());
+    }
+
+    public function testBudgetUnitRegexUsesTheStoredValueWhenSet(): void
+    {
+        $configuration = new LexwareSyncConfiguration(new InMemorySettingReader([
+            'lexware_sync.budget_unit_regex' => '/^Arbeitsstunden$/',
+        ]));
+
+        self::assertSame('/^Arbeitsstunden$/', $configuration->getBudgetUnitRegex());
+    }
 }
