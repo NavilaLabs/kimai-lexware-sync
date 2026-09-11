@@ -16,6 +16,7 @@
 
 {% block main %}
     {{ include('@KimaiLexwareSync/license/banner.html.twig') }}
+    {{ include('@KimaiLexwareSync/health_check/banner.html.twig') }}
 
     {% embed '@theme/embeds/card.html.twig' %}
         {% block box_title %}{{ 'lexware_sync.triage.title'|trans }}{% endblock %}
@@ -88,6 +89,9 @@
                                         {{ listStateFields }}
                                         <button type="submit" class="btn btn-sm btn-secondary">{{ 'lexware_sync.triage.reject'|trans }}</button>
                                     </form>
+                                {% endif %}
+                                {% if readLinesEnabled and orderConfirmation.changedAfterConversion and orderConfirmation.status.isConverted %}
+                                    <a href="{{ path('lexware_sync_triage_resolve_lines', {id: orderConfirmation.id}) }}" class="btn btn-sm btn-warning">{{ 'lexware_sync.triage.resolve_lines'|trans }}</a>
                                 {% endif %}
                                 {% if orderConfirmation.project is not null %}
                                     <a href="{{ path('project_details', {id: orderConfirmation.project.id}) }}" class="btn btn-sm btn-outline-secondary">{{ 'lexware_sync.open_project'|trans }}</a>

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Service\License;
 
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseState;
+use KimaiPlugin\KimaiLexwareSyncBundle\Enum\License\LicenseState;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Translation\Loader\XliffFileLoader;
 

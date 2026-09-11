@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Service\License;
 
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseState;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseVerdict;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\License\LicenseVerdict;
+use KimaiPlugin\KimaiLexwareSyncBundle\Enum\License\LicenseState;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseVerdictMessageFormatter;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;

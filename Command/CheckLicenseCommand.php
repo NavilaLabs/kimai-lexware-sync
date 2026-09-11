@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Command;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Client\License\LicenseClient;
 use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseClient;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\HealthCheck\HealthCheckResult;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\License\LicenseServiceUnavailable;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck\HealthCheckResultStore;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseEvaluator;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseServiceUnavailable;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseStore;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\PluginVersion;
 use Psr\Log\LoggerInterface;
@@ -26,6 +28,7 @@ final class CheckLicenseCommand extends Command
         private readonly LicenseEvaluator $evaluator,
         private readonly LicenseClient $client,
         private readonly PluginVersion $pluginVersion,
+        private readonly HealthCheckResultStore $healthCheckResultStore,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct();
@@ -39,13 +42,16 @@ final class CheckLicenseCommand extends Command
             $message = 'This build of the plugin accepts no license signing key, so no license can ever be verified. Whoever packaged it has to ship the accepted public keys.';
             $this->logger->error($message);
             $io->error($message);
+            $this->recordHealthCheckResult(false, $message);
 
             return Command::FAILURE;
         }
 
         $licenseKey = $this->configuration->getLicenseKey();
         if ($licenseKey === '') {
-            $io->error('No license key is configured, so nothing can be converted.');
+            $message = 'No license key is configured, so nothing can be converted.';
+            $io->error($message);
+            $this->recordHealthCheckResult(false, $message);
 
             return Command::FAILURE;
         }
@@ -58,12 +64,15 @@ final class CheckLicenseCommand extends Command
             $recheckAfter = $stored->recheckAfter();
             if ($recheckAfter !== null && $recheckAfter > $now) {
                 if (!$stored->isLicensed()) {
-                    $io->error('The stored license was refused: ' . ($stored->reason() ?? 'no reason given'));
+                    $message = 'The stored license was refused: ' . ($stored->reason() ?? 'no reason given');
+                    $io->error($message);
+                    $this->recordHealthCheckResult(false, $message);
 
                     return Command::FAILURE;
                 }
 
                 $io->success('The stored license is still current, nothing to do.');
+                $this->recordHealthCheckResult(true, null);
 
                 return Command::SUCCESS;
             }
@@ -75,6 +84,7 @@ final class CheckLicenseCommand extends Command
             $message = 'The licensing service could not be reached: ' . $exception->getMessage();
             $this->logger->error($message);
             $io->error($message);
+            $this->recordHealthCheckResult(false, $message);
 
             return Command::FAILURE;
         }
@@ -84,6 +94,7 @@ final class CheckLicenseCommand extends Command
             $message = 'The licensing service answered with an artefact this installation cannot use.';
             $this->logger->error($message);
             $io->error($message);
+            $this->recordHealthCheckResult(false, $message);
 
             return Command::FAILURE;
         }
@@ -91,13 +102,21 @@ final class CheckLicenseCommand extends Command
         $this->store->store($licenseKey, $raw);
 
         if (!$fresh->isLicensed()) {
-            $io->error('The license was refused: ' . ($fresh->reason() ?? 'no reason given'));
+            $message = 'The license was refused: ' . ($fresh->reason() ?? 'no reason given');
+            $io->error($message);
+            $this->recordHealthCheckResult(false, $message);
 
             return Command::FAILURE;
         }
 
         $io->success('The license is confirmed for ' . $fresh->customer() . '.');
+        $this->recordHealthCheckResult(true, null);
 
         return Command::SUCCESS;
+    }
+
+    private function recordHealthCheckResult(bool $ok, ?string $message): void
+    {
+        $this->healthCheckResultStore->store(new HealthCheckResult('license', new \DateTimeImmutable(), $ok, $message));
     }
 }

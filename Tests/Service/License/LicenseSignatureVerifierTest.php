@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Service\License;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\License\LicenseToken;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseSignatureVerifier;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseToken;
 use PHPUnit\Framework\TestCase;
 
 final class LicenseSignatureVerifierTest extends TestCase

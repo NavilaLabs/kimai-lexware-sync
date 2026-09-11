@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Service;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Client\LexwareApiClient;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\WebhookSubscriptionResult;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\WebhookSubscriptionOutcome;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\AmbiguousLexwareRequestException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\LexwareApiException;
 
 final class WebhookSubscriptionConnector
 {

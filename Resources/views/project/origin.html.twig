@@ -1,4 +1,11 @@
 <span class="lexware-sync-origin" data-toggle="tooltip" data-placement="top" title="{{ 'lexware_sync.origin'|trans }}: {{ orderConfirmation.voucherNumber }}">
-    <i class="{{ orderConfirmation.hasChangedAfterConversion ? 'fas fa-exclamation-triangle text-warning' : 'fas fa-file-invoice' }}"></i>
+    {% if orderConfirmation.hasChangedAfterConversion %}
+        <i class="fas fa-exclamation-triangle text-warning" title="{{ 'lexware_sync.triage.changed_after_conversion'|trans }}"></i>
+    {% else %}
+        <i class="fas fa-file-invoice"></i>
+    {% endif %}
     {{ orderConfirmation.voucherNumber }}
 </span>
+{% if readLinesEnabled and orderConfirmation.hasChangedAfterConversion and orderConfirmation.status.isConverted and is_granted('manage_lexware_sync') %}
+    <a href="{{ path('lexware_sync_triage_resolve_lines', {id: orderConfirmation.id}) }}" class="btn btn-sm btn-warning ms-2">{{ 'lexware_sync.triage.resolve_lines'|trans }}</a>
+{% endif %}

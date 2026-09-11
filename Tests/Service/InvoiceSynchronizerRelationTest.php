@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Service;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\InvoiceSynchronizer;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 

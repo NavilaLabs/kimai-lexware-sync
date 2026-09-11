@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Service\License;
 
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\License\LicenseVerdict;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class LicenseVerdictMessageFormatter

@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
+use KimaiPlugin\KimaiLexwareSyncBundle\Client\LexwareApiClient;
 use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedOrderConfirmation;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\CustomerCurrencyMismatchException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\License\LicenseRequiredException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\UnprocessableOrderConfirmationException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedOrderConfirmationRepository;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseRequiredException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseVerdictMessageFormatter;
 use Psr\Log\LoggerInterface;
 
@@ -23,6 +27,7 @@ final class OrderConfirmationSynchronizer
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
         private readonly LicenseVerdictMessageFormatter $licenseVerdictMessageFormatter,
+        private readonly ProjectChangeIndicator $projectChangeIndicator,
     ) {
     }
 
@@ -85,6 +90,8 @@ final class OrderConfirmationSynchronizer
                     ));
                 }
             }
+
+            $this->projectChangeIndicator->synchronize($orderConfirmation);
 
             $this->entityManager->commit();
         } catch (\Throwable $exception) {

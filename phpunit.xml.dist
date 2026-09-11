@@ -9,6 +9,8 @@
     <testsuites>
         <testsuite name="unit">
             <directory>Tests/Configuration</directory>
+            <directory>Tests/Entity</directory>
+            <directory>Tests/EventSubscriber</directory>
             <directory>Tests/Service</directory>
         </testsuite>
         <testsuite name="functional">

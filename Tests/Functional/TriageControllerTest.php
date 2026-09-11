@@ -40,6 +40,58 @@ final class TriageControllerTest extends WebTestCase
         self::assertResponseRedirects();
     }
 
+    public function testTheResolveLinesButtonOnlyAppearsWhileLineReadingIsOn(): void
+    {
+        $browser = $this->browserLoggedInAs('administrator', [User::ROLE_SUPER_ADMIN]);
+        $orderConfirmation = $this->givenAChangedConvertedOrderConfirmation();
+        $link = $this->url('lexware_sync_triage_resolve_lines', ['id' => $orderConfirmation->getId()]);
+        $listUrl = $this->url('lexware_sync_triage') . '?status=converted';
+
+        $crawler = $browser->request('GET', $listUrl);
+        self::assertCount(0, $crawler->filter('a[href="' . $link . '"]'), 'A button leading to a screen that only redirects back is worse than no button.');
+
+        $this->configure('lexware_sync.read_lines_enabled', true);
+
+        $crawler = $browser->request('GET', $listUrl);
+        self::assertCount(1, $crawler->filter('a[href="' . $link . '"]'));
+    }
+
+    private function givenAChangedConvertedOrderConfirmation(): TrackedOrderConfirmation
+    {
+        $project = $this->factory()->createProject();
+
+        $orderConfirmation = new TrackedOrderConfirmation('lexware-triage-changed');
+        $orderConfirmation->updateFromLexwarePayload(
+            'AB-2026-020',
+            'Order confirmation for a test',
+            new \DateTimeImmutable('2026-09-01'),
+            'contact-1',
+            'Contact GmbH',
+            '{"lineItems":[]}',
+            null
+        );
+        $orderConfirmation->setProject($project);
+        $orderConfirmation->markAutomaticallyConverted();
+
+        $this->entityManager()->persist($orderConfirmation);
+        $this->entityManager()->flush();
+
+        $orderConfirmation->updateFromLexwarePayload(
+            'AB-2026-020',
+            'Order confirmation for a test',
+            new \DateTimeImmutable('2026-09-01'),
+            'contact-1',
+            'Contact GmbH',
+            '{"lineItems":[{"type":"custom","name":"Development"}]}',
+            null
+        );
+        $this->entityManager()->flush();
+
+        self::assertTrue($orderConfirmation->hasChangedAfterConversion());
+
+        return $orderConfirmation;
+    }
+
     private function givenPendingOrderConfirmation(string $voucherNumber, string $contactName): void
     {
         $orderConfirmation = new TrackedOrderConfirmation('lexware-' . $voucherNumber);

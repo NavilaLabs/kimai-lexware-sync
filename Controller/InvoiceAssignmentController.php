@@ -10,21 +10,22 @@ use App\Entity\Timesheet;
 use App\Repository\Query\TimesheetQuery;
 use App\Repository\TimesheetRepository;
 use App\Utils\PageSetup;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedInvoice;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\DocumentStatusFilter;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\InvoiceLineShape;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\AmbiguousLexwareRequestException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\CustomerCurrencyMismatchException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\LexwareApiException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\License\LicenseRequiredException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Factory\LexwareDocumentSummaryFactory;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\Query\DocumentListQuery;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedInvoiceRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedInvoiceTimesheetRepository;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\AmbiguousLexwareRequestException;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\CustomerCurrencyMismatchException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck\HealthCheckBanner;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\InvoiceProcessor;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareDeepLink;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareDocumentSummaryFactory;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseGate;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseRequiredException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseVerdictMessageFormatter;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\TimesheetRateResolver;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -47,6 +48,7 @@ final class InvoiceAssignmentController extends AbstractController
         private readonly LexwareDeepLink $deepLink,
         private readonly LicenseGate $licenseGate,
         private readonly LicenseVerdictMessageFormatter $licenseVerdictMessageFormatter,
+        private readonly HealthCheckBanner $healthCheckBanner,
     ) {
     }
 
@@ -88,6 +90,7 @@ final class InvoiceAssignmentController extends AbstractController
             'convertedVoucherUrl' => $convertedVoucherNumber !== null ? $this->deepLink->forInvoice($convertedVoucherNumber) : null,
             'licenseState' => $verdict->state->key(),
             'licenseMessage' => $this->licenseVerdictMessageFormatter->format($verdict),
+            'healthCheckMessages' => $this->healthCheckBanner->messages(),
         ]);
     }
 
@@ -309,6 +312,7 @@ final class InvoiceAssignmentController extends AbstractController
             'draftUrl' => $this->deepLink->forInvoice($trackedInvoice->getVoucherNumber()),
             'licenseState' => $verdict->state->key(),
             'licenseMessage' => $this->licenseVerdictMessageFormatter->format($verdict),
+            'healthCheckMessages' => $this->healthCheckBanner->messages(),
         ]);
     }
 

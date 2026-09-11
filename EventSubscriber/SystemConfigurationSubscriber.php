@@ -73,19 +73,53 @@ final class SystemConfigurationSubscriber implements EventSubscriberInterface
                         ->setType(TextType::class)
                         ->setRequired(false)
                         ->setConstraints([$this->createRegexConstraint()]),
+                    (new Configuration('lexware_sync.derive_budget_enabled'))
+                        ->setTranslationDomain('system-configuration')
+                        ->setType(CheckboxType::class)
+                        ->setRequired(false),
+                    (new Configuration('lexware_sync.budget_unit_regex'))
+                        ->setTranslationDomain('system-configuration')
+                        ->setType(TextType::class)
+                        ->setRequired(false)
+                        ->setValue(LexwareSyncConfiguration::DEFAULT_BUDGET_UNIT_REGEX)
+                        ->setConstraints([$this->createRegexConstraint()]),
                     (new Configuration('lexware_sync.reconcile_interval_minutes'))
                         ->setTranslationDomain('system-configuration')
                         ->setType(IntegerType::class)
-                        ->setRequired(false),
+                        ->setRequired(false)
+                        ->setValue(LexwareSyncConfiguration::DEFAULT_RECONCILE_INTERVAL_MINUTES),
+                    (new Configuration('lexware_sync.check_api_key_interval_days'))
+                        ->setTranslationDomain('system-configuration')
+                        ->setType(IntegerType::class)
+                        ->setRequired(false)
+                        ->setValue(LexwareSyncConfiguration::DEFAULT_CHECK_API_KEY_INTERVAL_DAYS),
+                    (new Configuration('lexware_sync.check_license_interval_days'))
+                        ->setTranslationDomain('system-configuration')
+                        ->setType(IntegerType::class)
+                        ->setRequired(false)
+                        ->setValue(LexwareSyncConfiguration::DEFAULT_CHECK_LICENSE_INTERVAL_DAYS),
                     (new Configuration('lexware_sync.invoice_title_regex'))
                         ->setTranslationDomain('system-configuration')
                         ->setType(TextType::class)
                         ->setRequired(false)
                         ->setConstraints([$this->createRegexConstraint()]),
+                    (new Configuration('lexware_sync.project_title_source'))
+                        ->setTranslationDomain('system-configuration')
+                        ->setType(ChoiceType::class)
+                        ->setRequired(false)
+                        ->setValue(LexwareSyncConfiguration::DEFAULT_PROJECT_TITLE_SOURCE)
+                        ->setOptions([
+                            'choices' => [
+                                'Voucher number' => LexwareSyncConfiguration::PROJECT_TITLE_VOUCHER_NUMBER,
+                                'Order confirmation title' => LexwareSyncConfiguration::PROJECT_TITLE_ORDER_CONFIRMATION_TITLE,
+                                'Customer and title' => LexwareSyncConfiguration::PROJECT_TITLE_CUSTOMER_AND_TITLE,
+                            ],
+                        ]),
                     (new Configuration('lexware_sync.project_completion_mode'))
                         ->setTranslationDomain('system-configuration')
                         ->setType(ChoiceType::class)
                         ->setRequired(false)
+                        ->setValue(LexwareSyncConfiguration::DEFAULT_PROJECT_COMPLETION_MODE)
                         ->setOptions([
                             'choices' => [
                                 'End date' => LexwareSyncConfiguration::PROJECT_COMPLETION_END_DATE,

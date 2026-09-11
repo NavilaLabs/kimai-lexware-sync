@@ -6,14 +6,14 @@ namespace KimaiPlugin\KimaiLexwareSyncBundle\Tests\Functional\License;
 
 use App\Entity\Timesheet;
 use App\Entity\User;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedInvoice;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedOrderConfirmation;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\InvoiceLineShape;
+use KimaiPlugin\KimaiLexwareSyncBundle\Enum\License\LicenseState;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\License\LicenseRequiredException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedInvoiceTimesheetRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\InvoiceProcessor;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseRequiredException;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseState;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\OrderConfirmationProcessor;
 use KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\FunctionalTestCase;
 

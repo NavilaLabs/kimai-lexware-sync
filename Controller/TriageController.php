@@ -8,18 +8,19 @@ use App\Controller\AbstractController;
 use App\Utils\PageSetup;
 use Doctrine\ORM\EntityManagerInterface;
 use KimaiPlugin\KimaiLexwareSyncBundle\Configuration\LexwareSyncConfiguration;
+use KimaiPlugin\KimaiLexwareSyncBundle\Dto\LexwarePayload;
 use KimaiPlugin\KimaiLexwareSyncBundle\Entity\TrackedOrderConfirmation;
 use KimaiPlugin\KimaiLexwareSyncBundle\Enum\DocumentStatusFilter;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\CustomerCurrencyMismatchException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\License\LicenseRequiredException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\UnprocessableOrderConfirmationException;
+use KimaiPlugin\KimaiLexwareSyncBundle\Factory\LexwareDocumentSummaryFactory;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\Query\DocumentListQuery;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedOrderConfirmationRepository;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\CustomerCurrencyMismatchException;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareDocumentSummaryFactory;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwarePayload;
+use KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck\HealthCheckBanner;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseGate;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseRequiredException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseVerdictMessageFormatter;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\OrderConfirmationProcessor;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\UnprocessableOrderConfirmationException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -38,6 +39,7 @@ final class TriageController extends AbstractController
         private readonly EntityManagerInterface $entityManager,
         private readonly LicenseGate $licenseGate,
         private readonly LicenseVerdictMessageFormatter $licenseVerdictMessageFormatter,
+        private readonly HealthCheckBanner $healthCheckBanner,
     ) {
     }
 
@@ -69,6 +71,8 @@ final class TriageController extends AbstractController
             'counts' => $this->countByStatus($listQuery),
             'licenseState' => $verdict->state->key(),
             'licenseMessage' => $this->licenseVerdictMessageFormatter->format($verdict),
+            'healthCheckMessages' => $this->healthCheckBanner->messages(),
+            'readLinesEnabled' => $this->configuration->isReadLinesEnabled(),
         ]);
     }
 

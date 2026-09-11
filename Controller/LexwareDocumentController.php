@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace KimaiPlugin\KimaiLexwareSyncBundle\Controller;
 
 use App\Controller\AbstractController;
+use KimaiPlugin\KimaiLexwareSyncBundle\Client\LexwareApiClient;
+use KimaiPlugin\KimaiLexwareSyncBundle\Exception\LexwareApiException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedInvoiceRepository;
 use KimaiPlugin\KimaiLexwareSyncBundle\Repository\TrackedOrderConfirmationRepository;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiClient;
-use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiException;
 use KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareDeepLink;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Response;

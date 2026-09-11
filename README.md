@@ -46,6 +46,26 @@ stays out of the way.
 - **Milestone two**, invoice ingestion followed by timesheet assignment and an outbound
   invoice, is implemented. The full design is written down in the specification linked below,
   sections 12 through 18.
+- **Budget derivation**, `lexware_sync.derive_budget_enabled`, is implemented. When an order
+  confirmation changes in Lexware after it was already converted, the triage screen offers a
+  "resolve changes" button next to that row, leading to a screen that lists exactly what changed
+  line by line and lets a person choose which of those changes to apply. The converted project's
+  own detail screen offers the same button next to the order confirmation it came from, so the
+  change is visible from either direction; there it appears only for a user who also holds
+  `manage_lexware_sync`, since the project screen itself is open to a wider audience than the
+  Lexware screens are. Kimai's project list gets a "Lexware" column carrying the same warning,
+  so a pending change is visible without opening anything. Kimai builds that list's columns in
+  its own controller, where a plugin cannot add one, so this rides on a project meta field and
+  therefore starts hidden behind the column picker (the icon above the table); switch it on once
+  and Kimai remembers it. The marker is written whenever the reconcile command sees the order
+  confirmation and whenever a change is resolved, and every reconcile run also repairs any
+  project whose marker drifted, so an installation that predates this column fills in on the
+  next run rather than needing a backfill. The button and the screen need `lexware_sync.read_lines_enabled`, since
+  without stored lines there is nothing to compare; with budget derivation switched off the screen
+  still reconciles the line data and clears the changed flag, it just leaves every budget alone. A removed line's activity, and any
+  time already booked against it, is never deleted or reassigned by this plugin, only its derived
+  budget is reset to zero; Kimai's own timesheet edit screen already covers moving booked time to
+  a different activity by hand.
 - The **license check** is present but switched off until the licensing service exists. Two
   things in `Resources/config/services.yaml` switch it on, and both are needed: the
   `KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseGate` alias has to point at
@@ -88,9 +108,16 @@ screen.
 | `lexware_sync.reconcile_interval_minutes` | How often an administrator should schedule the reconciliation poll to run. The plugin does not enforce this interval itself, it only reads it back as documentation for the cron entry described below. | `30` |
 | `lexware_sync.invoice_title_regex` | Regular expression checked against an invoice draft's title, applied on top of its `relatedVouchers` link to a tracked order confirmation. An empty value matches every title. | empty |
 | `lexware_sync.project_completion_mode` | What marking a project completed, offered when converting a tracked invoice, actually does: `end_date` sets an end date on the project, `hidden` hides its visibility. | `end_date` |
+| `lexware_sync.project_title_source` | What a converted project's name is set to: the voucher number, the order confirmation's own title, or the customer's name combined with the title. `orderNumber`, `orderDate` and `comment` are always populated from the voucher number, voucher date and title regardless of this choice. | `voucher_number` |
+| `lexware_sync.check_api_key_interval_days` | How often an administrator should schedule the API key health check to run. Like `lexware_sync.reconcile_interval_minutes`, the plugin does not enforce this itself, it only compares a stored check result's age against this value to decide whether to show a "this has not run in a while" warning on the triage and invoice screens. | `7` |
+| `lexware_sync.check_license_interval_days` | The same, for the license health check. | `1` |
+| `lexware_sync.derive_budget_enabled` | Derive a time and cost budget for each hour based order confirmation line, set on its Kimai activity and summed onto the project. Only has an effect together with `lexware_sync.read_lines_enabled` above. | `false` |
+| `lexware_sync.budget_unit_regex` | Regular expression checked against a line's unit name to decide whether it counts as hours for the budget above. Unlike every other regex field in this plugin, an empty value here does **not** match everything, it falls back to a hardcoded default (`/^(Stunden?\|Std\.?\|hours?\|hrs?\|h)$/i`), so material and goods lines are not silently counted as billable hours the moment this feature is turned on. | the hardcoded default above |
 
 Every regular expression field is optional. Leaving it empty means it matches everything,
-never that it matches nothing. This rule is applied consistently across the whole plugin.
+never that it matches nothing, with one deliberate exception:
+`lexware_sync.budget_unit_regex` above falls back to a sensible default instead, since matching
+every unit by default would defeat the point of separating hours from material.
 
 ## Running it
 
@@ -110,7 +137,11 @@ on:
 - `bin/console kimai:lexware-sync:check-api-key` confirms the configured Lexware API key still
   authenticates. Schedule it about once a week, well ahead of the key's twenty four month
   expiry, so an administrator notices a key that needs renewing instead of finding out when
-  synchronization silently stops.
+  synchronization silently stops. Besides logging and a cron exit code, its result is also
+  recorded and shown as a warning banner on the triage and invoice screens, both when the check
+  actively fails and when it has not run at all in longer than
+  `lexware_sync.check_api_key_interval_days` allows, for example because the cron entry itself
+  was removed.
 - `bin/console kimai:lexware-sync:reconcile-invoices` polls Lexware for invoice drafts that a
   webhook delivery might have missed, on the same interval as the order confirmation
   reconciliation poll above.
@@ -120,7 +151,9 @@ on:
   fails every day and a daily error mail for nothing. Schedule it once a day, and only from the
   day the check is switched on. It usually does nothing, because it only asks again when the
   stored confirmation says it is time. It exits with a failure code when the license is refused,
-  so that a cron mail or a monitoring system notices before a user does.
+  so that a cron mail or a monitoring system notices before a user does. Like the API key check,
+  every run also records a result shown as a warning banner on the triage and invoice screens
+  once it has not run in longer than `lexware_sync.check_license_interval_days` allows.
 
 Second, the real Lexware webhook subscriptions have to be registered, once this Kimai instance is
 reachable at the public HTTPS endpoint described in the Requirements section above. Click

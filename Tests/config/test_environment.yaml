@@ -15,10 +15,19 @@ services:
 
     KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\FakeLexwareHttpClient: ~
 
-    KimaiPlugin\KimaiLexwareSyncBundle\Service\LexwareApiClient:
+    KimaiPlugin\KimaiLexwareSyncBundle\Client\LexwareApiClient:
         arguments:
             $httpClient: '@KimaiPlugin\KimaiLexwareSyncBundle\Tests\Support\FakeLexwareHttpClient'
             $minimumIntervalSeconds: 0.0
 
     KimaiPlugin\KimaiLexwareSyncBundle\Service\License\LicenseStore:
+        public: true
+
+    KimaiPlugin\KimaiLexwareSyncBundle\Service\HealthCheck\HealthCheckResultStore:
+        public: true
+
+    KimaiPlugin\KimaiLexwareSyncBundle\Service\OrderConfirmationLineResolver:
+        public: true
+
+    KimaiPlugin\KimaiLexwareSyncBundle\Service\ProjectChangeIndicator:
         public: true

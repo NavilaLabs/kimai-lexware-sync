@@ -42,6 +42,17 @@ final class TrackedOrderConfirmationRepository extends ServiceEntityRepository
         return $this->count(['status' => OrderConfirmationStatus::Pending]);
     }
 
+    /**
+     * @return TrackedOrderConfirmation[]
+     */
+    public function findAllWithAProject(): array
+    {
+        return $this->createQueryBuilder('orderConfirmation')
+            ->where('orderConfirmation.project IS NOT NULL')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function findPage(DocumentListQuery $listQuery): Pagination
     {
         $queryBuilder = $this->createFilteredQueryBuilder($listQuery)
